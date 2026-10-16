@@ -16,10 +16,11 @@ type DecoderWorker = {
 async function decodeAndFree(
   decoder: DecoderWorker,
   data: Uint8Array,
+  decode = () => decoder.decode(data),
 ): Promise<WasmDecoderResult> {
   try {
     await decoder.ready;
-    const result = await decoder.decode(data);
+    const result = await decode();
     await decoder.free();
     return result;
   } catch (error) {
@@ -47,7 +48,8 @@ async function decodeWithWasm(
         "@wasm-audio-decoders/flac"
       );
       const decoder = new FLACDecoderWebWorker();
-      return await decodeAndFree(decoder, data);
+      // Streaming decode() retains the last frame until flush; this is a complete file.
+      return await decodeAndFree(decoder, data, () => decoder.decodeFile(data));
     }
     if (lowerExt === "ogg") {
       // Try Vorbis first, fall back to Opus

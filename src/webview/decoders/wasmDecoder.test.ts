@@ -12,6 +12,7 @@ function worker() {
   return {
     ready: Promise.resolve(),
     decode: jest.fn().mockResolvedValue(pcm),
+    decodeFile: jest.fn().mockResolvedValue(pcm),
     free: jest.fn().mockResolvedValue(undefined),
     terminate: jest.fn(),
   };
@@ -50,7 +51,9 @@ test.each(["mp3", "flac", "ogg", "opus"])(
 test.each(["mp3", "flac", "opus"])(
   "%s terminates a failed worker so native fallback can continue",
   async (ext) => {
-    workers[ext].decode.mockRejectedValue(new Error("invalid audio"));
+    workers[ext][ext === "flac" ? "decodeFile" : "decode"].mockRejectedValue(
+      new Error("invalid audio"),
+    );
     // Cleanup must not wait for a broken worker to answer a free() message.
     workers[ext].free.mockImplementation(() => new Promise(() => undefined));
     const decoder = new WasmDecoder(new Uint8Array([1, 2]), ext);
@@ -83,4 +86,27 @@ test("initialization and free failures terminate the worker", async () => {
     new WasmDecoder(new Uint8Array(), "flac").decodeAsync(),
   ).rejects.toThrow("failed to decode");
   expect(workers.flac.terminate).toHaveBeenCalledTimes(1);
+});
+
+test("FLAC preserves the final frame by decoding the complete file", async () => {
+  const complete = {
+    sampleRate: 48000,
+    samplesDecoded: 10000,
+    channelData: [new Float32Array(10000)],
+  };
+  complete.channelData[0][9999] = 0.75;
+  workers.flac.decode.mockResolvedValue({
+    ...complete,
+    samplesDecoded: 9216,
+    channelData: [complete.channelData[0].slice(0, 9216)],
+  });
+  workers.flac.decodeFile.mockResolvedValue(complete);
+  const input = new Uint8Array([1, 2]);
+  const decoder = new WasmDecoder(input, "flac");
+  await decoder.decodeAsync();
+  expect(workers.flac.decodeFile).toHaveBeenCalledWith(input);
+  expect(workers.flac.decode).not.toHaveBeenCalled();
+  expect(decoder.length).toBe(10000);
+  expect(decoder.duration).toBe(10000 / 48000);
+  expect(decoder.samples[0][9999]).toBe(0.75);
 });

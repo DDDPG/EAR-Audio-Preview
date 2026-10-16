@@ -1,6 +1,6 @@
 # Changelog
 
-## [0.6.0] - Unreleased
+## [0.6.0] - 2026-10-17
 
 - Decode AAC locally in a dedicated worker, preserve the final FLAC frame, and validate Ogg Opus and SPHERE playback. Include AAC library notices and corresponding sources in the VSIX.
 - Run comparison Essentia analysis in the extension host, settle failed reloads, and pin and validate loudness worklet extraction.

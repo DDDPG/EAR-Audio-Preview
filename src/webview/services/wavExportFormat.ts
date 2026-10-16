@@ -2,7 +2,7 @@ import { encodeToWav } from "../encoder";
 import {
   applyChannelMode,
   type OfflineFilterOptions,
-} from "./audioExportService";
+} from "./audioBufferTransforms";
 import type { ExportChannelMode } from "./editExportSettingsService";
 
 export interface WavExportFormat {

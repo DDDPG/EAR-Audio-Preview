@@ -1,3 +1,8 @@
+// Shared encoding must initialize without the single-file export orchestrator.
+jest.mock("./audioExportService", () => {
+  throw new Error("WAV encoding must not import audioExportService");
+});
+
 import { createAudioContext, MockAudioBuffer } from "../../__mocks__/helper";
 import {
   encodeRenderedWav,

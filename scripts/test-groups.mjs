@@ -44,7 +44,8 @@ export const groups = [
   {
     name: "contracts",
     description: "Message protocol and repository policy",
-    matches: /^src\/(message\.contract|eslintPolicy)\./,
+    matches:
+      /^src\/(message\.contract|eslintPolicy)\.|^src\/webview\/service\./,
   },
   {
     name: "integration",

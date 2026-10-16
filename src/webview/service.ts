@@ -1,49 +1,64 @@
 import { Disposable } from "../dispose";
 
+/** Native event semantics, with all registrations owned by this service. */
 export default class Service extends Disposable implements EventTarget {
-  private _listeners: Map<string, EventListener[]> = new Map();
-
-  constructor() {
-    super();
-  }
+  private readonly _eventTarget = new EventTarget();
+  private _registrations: {
+    type: string;
+    listener: EventListenerOrEventListenerObject;
+    capture: boolean;
+  }[] = [];
 
   public addEventListener(
     type: string,
-    listener: EventListenerOrEventListenerObject,
+    listener: EventListenerOrEventListenerObject | null,
+    options?: boolean | AddEventListenerOptions,
   ): void {
-    if (!this._listeners.has(type)) {
-      this._listeners.set(type, []);
+    if (!this._isDisposed) {
+      this._eventTarget.addEventListener(type, listener, options);
+      const capture =
+        typeof options === "boolean" ? options : !!options?.capture;
+      if (
+        listener &&
+        !this._registrations.some(
+          (entry) =>
+            entry.type === type &&
+            entry.listener === listener &&
+            entry.capture === capture,
+        )
+      ) {
+        this._registrations.push({ type, listener, capture });
+      }
     }
-    this._listeners.get(type).push(listener as EventListener);
   }
 
   public dispatchEvent(event: Event): boolean {
-    const listeners = this._listeners.get(event.type);
-    if (!listeners) {
-      return true;
-    }
-    for (const listener of listeners) {
-      listener(event);
-    }
-    return !event.defaultPrevented;
+    return this._eventTarget.dispatchEvent(event);
   }
 
   public removeEventListener(
     type: string,
-    callback: EventListenerOrEventListenerObject,
+    listener: EventListenerOrEventListenerObject | null,
+    options?: boolean | EventListenerOptions,
   ): void {
-    const listeners = this._listeners.get(type);
-    if (!listeners) {
-      return;
-    }
-    const index = listeners.indexOf(callback as EventListener);
-    if (index !== -1) {
-      listeners.splice(index, 1);
-    }
+    this._eventTarget.removeEventListener(type, listener, options);
+    const capture = typeof options === "boolean" ? options : !!options?.capture;
+    this._registrations = this._registrations.filter(
+      (entry) =>
+        !(
+          entry.type === type &&
+          entry.listener === listener &&
+          entry.capture === capture
+        ),
+    );
   }
 
-  public dispose() {
-    this._listeners.clear();
+  public dispose(): void {
+    // Release listeners, including object listeners and signal registrations.
+    for (const { type, listener, capture } of this._registrations) {
+      this._eventTarget.removeEventListener(type, listener, capture);
+    }
+    this._registrations = [];
     super.dispose();
   }
 }

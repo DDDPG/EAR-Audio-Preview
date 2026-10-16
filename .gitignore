@@ -5,6 +5,8 @@
 *.vsix
 /dist
 /artifacts
+/.tasks/
+/tmp_files/
 /bench/demo-captures
 .vscode-test
 .cursor

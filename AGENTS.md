@@ -12,19 +12,19 @@ Forked from [sukumo28/vscode-audio-preview](https://github.com/sukumo28/vscode-a
 
 ```sh
 npm install              # install dependencies
-npm run webpack          # one-shot production build → dist/
+npm run webpack          # one-shot development build → dist/
 npm run webpack-dev      # watch mode for development
 npm test                 # Jest unit tests (jsdom + jest-canvas-mock)
 npm run lint             # ESLint check
 npm run format           # Prettier auto-format
-npm run ci               # full CI pipeline: lint-check + format-check + test + webpack + vsix
+npm run ci               # types, lint, formatting, tooling, docs, tests, production VSIX and package audit
 ```
 
 **Run the extension**: Press **F5** in VS Code to launch Extension Development Host, then open any audio file.
 
 **Run a single test**: `npx jest --testPathPattern="<pattern>"` (e.g. `npx jest --testPathPattern="volumeMapping"`)
 
-**Package VSIX**: `npm run vsix` (requires `npm run webpack` first)
+**Package VSIX**: `npm run vsix` (cleans dist and runs the production build automatically)
 
 ## Architecture
 

@@ -2,6 +2,9 @@
 
 ## [0.6.0] - Unreleased
 
+- Decode AAC locally in a dedicated worker, preserve the final FLAC frame, and validate Ogg Opus and SPHERE playback. Include AAC library notices and corresponding sources in the VSIX.
+- Run comparison Essentia analysis in the extension host, settle failed reloads, and pin and validate loudness worklet extraction.
+- Separate playback transport interfaces, restore native service event dispatch, and isolate export transforms from playback state.
 - Add reversible same-rate integer-delay alignment through Compare Files → Align, with explicit estimate/apply/reset, optional polarity compensation, and a shared session copy for playback, analysis and export. Search uses at most the first 60 seconds within ±2 seconds; source files remain unchanged.
 - Publish bilingual [alignment design and ablation notes](doc/blog/audio-alignment-dsp.en.md), linked from the blog index and READMEs.
 

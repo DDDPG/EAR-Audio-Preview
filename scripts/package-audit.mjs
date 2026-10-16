@@ -5,9 +5,10 @@ import assert from "node:assert/strict";
 
 const args = process.argv.slice(2);
 if (!args[0]) {
-  throw new Error(
-    "Usage: node scripts/package-audit.mjs <file.vsix> [--save report.json]",
+  const pkg = JSON.parse(
+    fs.readFileSync(new URL("../package.json", import.meta.url), "utf8"),
   );
+  args.push(`${pkg.name}-${pkg.version}.vsix`);
 }
 const archive = fs.readFileSync(args[0]);
 let end = archive.length - 22;

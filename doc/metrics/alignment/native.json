@@ -1,0 +1,12 @@
+{
+  "passed": true,
+  "scope": "Real VS Code extension development host using the main working tree production build; native file loading, alignment apply and native save dialog.",
+  "offsetSamples": 523,
+  "sampleRate": 48000,
+  "polarity": -1,
+  "polarityCompensationOptIn": true,
+  "nativeExportPcmBytes": 38400,
+  "nativeExportEqualsBrowserAlignedExport": true,
+  "sourceFilesModified": false,
+  "timestamp": "2026-10-16T16:34:29.962Z"
+}

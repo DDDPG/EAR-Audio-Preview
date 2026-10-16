@@ -1,0 +1,27 @@
+{
+  "passed": true,
+  "featureCommit": "26f4700",
+  "integrationHead": "cd1862d",
+  "branch": "main",
+  "checks": {
+    "jest": {
+      "suites": 82,
+      "passed": 744,
+      "skipped": 1
+    },
+    "toolingTests": 11,
+    "typecheck": true,
+    "lint": true,
+    "format": true,
+    "documentation": true,
+    "productionBuild": true,
+    "vsix": true,
+    "exactResearchParityCases": 318,
+    "browser": true,
+    "nativeHostAndSave": true
+  },
+  "preExistingModifiedTrackedFiles": 45,
+  "preservedUnrelatedFileHashes": 43,
+  "scope": "Local main integration; existing uncommitted workspace changes retained; no remote push.",
+  "timestamp": "2026-10-16T16:34:40.765Z"
+}

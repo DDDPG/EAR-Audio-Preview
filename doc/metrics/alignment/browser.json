@@ -11,14 +11,11 @@
     "Mixed native sample rates rejected without implicit resampling",
     "No browser exceptions; original fixture bytes unchanged"
   ],
-  "screenshots": [
-    "alignment-preview.png",
-    "alignment-rejected-narrow.png"
-  ],
+  "screenshots": ["preview.png", "rejected-narrow.png"],
   "errors": [],
   "alignedExportMaxError": 0,
   "restoredExportMaxError": 0,
-  "timestamp": "2026-10-16T16:26:19.561Z",
-  "productionBundleSha256": "67a4dbe4526b4b050f45af27f091a5c5e9e2ac7cdb3a4334c515107a17fb988d",
-  "workerBundleSha256": "001f8bde6ef0c5e59aad1171fb0c228d55cdfeb8009e026e122a21fb39ce8c10"
+  "timestamp": "2026-10-16T16:30:35.089Z",
+  "productionBundleSha256": "38d7ff5d402ccfd49c1a744c1ed17e7dfaa68fc7bf31abd7111d25749b481295",
+  "workerBundleSha256": "7bacb77c79b630842c8f290d68f9e45ccc0fef64561986686a7bad047a7e2c0b"
 }

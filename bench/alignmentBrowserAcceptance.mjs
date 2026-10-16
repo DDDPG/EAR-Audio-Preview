@@ -27,6 +27,7 @@ const fixtures=new Map([
 ]);
 const hash=x=>crypto.createHash('sha256').update(x).digest('hex');
 const originalHashes=Object.fromEntries([...fixtures].map(([name,data])=>[name,hash(data)]));
+const fixtureDirectory=path.join(output,'fixtures');fs.mkdirSync(fixtureDirectory,{recursive:true});for(const [name,data]of fixtures)fs.writeFileSync(path.join(fixtureDirectory,name),data);
 const exports=[],errors=[],screenshots=[];
 const shim=`const manifest=await(await fetch('/manifest'+location.search)).json();
 const send=data=>window.postMessage(data,location.origin);

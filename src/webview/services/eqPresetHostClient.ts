@@ -1,49 +1,23 @@
 import {
+  ExtMessageType,
   WebviewMessageType,
   type EqPresetOp,
-  type ExtEqPresetOpResultMessage,
-  type PostMessage,
 } from "../../message";
+import type { PageRpcClient } from "./pageRpcClient";
 
-interface PendingEqPreset {
-  resolve: (value: unknown) => void;
-  reject: (err: Error) => void;
-}
-
-function newRequestId(): string {
-  return typeof crypto !== "undefined" && "randomUUID" in crypto
-    ? crypto.randomUUID()
-    : `eqpreset-${Date.now()}-${Math.random().toString(36).slice(2)}`;
-}
-
-/** Webview client for workspace EQ preset file ops in Extension Host. */
+/** File-dialog waits have no timeout; read/list operations are bounded. */
 export default class EqPresetHostClient {
-  private static _pending = new Map<string, PendingEqPreset>();
-
-  constructor(private _postMessage: PostMessage) {}
-
-  public static handleExtensionResponse(msg: ExtEqPresetOpResultMessage): void {
-    const pending = EqPresetHostClient._pending.get(msg.data.requestId);
-    if (!pending) {
-      return;
-    }
-    EqPresetHostClient._pending.delete(msg.data.requestId);
-    if (msg.data.error) {
-      pending.reject(new Error(msg.data.error));
-      return;
-    }
-    pending.resolve(msg.data.payload);
-  }
+  constructor(private readonly _rpc: PageRpcClient) {}
 
   private _request(op: EqPresetOp, payload?: unknown): Promise<unknown> {
-    const requestId = newRequestId();
-    return new Promise((resolve, reject) => {
-      EqPresetHostClient._pending.set(requestId, { resolve, reject });
-      this._postMessage({
+    return this._rpc.request(
+      ExtMessageType.EQ_PRESET_OP_RESULT,
+      (requestId) => ({
         type: WebviewMessageType.EQ_PRESET_OP,
         data: { requestId, op, payload },
-      });
-    });
+      }),
+      op === "import" || op === "write_library" ? null : 30000,
+    );
   }
 
   public importFile(): Promise<{ content: string; fileName: string }> {

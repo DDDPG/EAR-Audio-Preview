@@ -1,5 +1,8 @@
 import { comparisonTrackLimit } from "../../comparison/limits";
-import { defaultStftSettings } from "./stftSettings";
+import {
+  type ComparisonStftSettings,
+  defaultStftSettings,
+} from "./stftSettings";
 export { comparisonColors, themeVariants } from "./trackTheme";
 import { comparisonColors } from "./trackTheme";
 export type StftLayout = "auto" | "row" | "column";
@@ -25,6 +28,89 @@ export interface ComparisonView {
   end: number;
   minHz: number;
   maxHz: number;
+}
+
+export type ComparisonChangeReason =
+  | "gain"
+  | "tracks"
+  | "audio"
+  | "active"
+  | "mute"
+  | "focus"
+  | "file"
+  | "view"
+  | "selection"
+  | "loaded"
+  | "pane"
+  | "settings"
+  | "layout"
+  | "display"
+  | "waveform";
+
+interface ComparisonChangeEffects {
+  readonly cancelProfiles: boolean;
+  readonly prune: boolean;
+  readonly waves: boolean;
+  readonly figures: boolean;
+}
+
+/** Adding a change reason requires an explicit cancellation and redraw policy. */
+const comparisonEffects: Record<
+  ComparisonChangeReason,
+  ComparisonChangeEffects
+> = {
+  gain: { cancelProfiles: false, prune: false, waves: true, figures: false },
+  tracks: { cancelProfiles: true, prune: true, waves: true, figures: true },
+  audio: { cancelProfiles: true, prune: true, waves: true, figures: true },
+  active: { cancelProfiles: true, prune: true, waves: true, figures: true },
+  mute: { cancelProfiles: false, prune: false, waves: false, figures: false },
+  focus: { cancelProfiles: false, prune: false, waves: true, figures: false },
+  file: { cancelProfiles: false, prune: false, waves: false, figures: false },
+  view: { cancelProfiles: false, prune: false, waves: true, figures: true },
+  selection: {
+    cancelProfiles: false,
+    prune: false,
+    waves: false,
+    figures: false,
+  },
+  loaded: { cancelProfiles: false, prune: false, waves: true, figures: false },
+  pane: { cancelProfiles: true, prune: false, waves: true, figures: true },
+  settings: { cancelProfiles: false, prune: false, waves: true, figures: true },
+  layout: { cancelProfiles: false, prune: false, waves: true, figures: true },
+  display: { cancelProfiles: false, prune: false, waves: true, figures: true },
+  waveform: {
+    cancelProfiles: false,
+    prune: false,
+    waves: true,
+    figures: false,
+  },
+};
+export function comparisonChangeEffects(
+  reason: ComparisonChangeReason,
+): ComparisonChangeEffects {
+  return comparisonEffects[reason];
+}
+export interface ComparisonWaveformSettings {
+  waveformVisible: boolean;
+  waveformScale: number;
+  minAmplitude: number;
+  maxAmplitude: number;
+}
+export interface ComparisonAnalysisSettings {
+  windowMs: number;
+  hopMs: number;
+  tiltDbPerOct: number;
+  weighting: "none" | "a";
+}
+
+export interface ComparisonRestoredSettings {
+  layout?: StftLayout;
+  pane?: ComparisonPane;
+  stft?: Partial<ComparisonStftSettings>;
+  controls?: Partial<
+    ComparisonWaveformSettings &
+      ComparisonAnalysisSettings & { expanded: boolean }
+  >;
 }
 
 /** Domain state is independent of canvas, Web Audio graph, and host IPC. */
@@ -205,7 +291,88 @@ export class ComparisonSession extends EventTarget {
     };
     this.notify("selection");
   }
-  public notify(reason: string): void {
+  /** Restore one saved snapshot atomically; viewport waits for audio loading. */
+  public restoreSettings(state: ComparisonRestoredSettings): void {
+    if (["auto", "row", "column"].includes(state.layout)) {
+      this.stftLayout = state.layout;
+    }
+    if (["stft", "live", "edit", "loudness"].includes(state.pane)) {
+      this.pane = state.pane;
+    }
+    if (state.stft) {
+      const copy = <K extends keyof ComparisonStftSettings>(key: K): void => {
+        if (key in state.stft) {
+          this.stft[key] = state.stft[key] as ComparisonStftSettings[K];
+        }
+      };
+      for (const key of Object.keys(defaultStftSettings()) as Array<
+        keyof ComparisonStftSettings
+      >) {
+        copy(key);
+      }
+    }
+    const controls = state.controls;
+    if (controls) {
+      if ("windowMs" in controls) {
+        this.windowMs = controls.windowMs;
+      }
+      if ("hopMs" in controls) {
+        this.hopMs = controls.hopMs;
+      }
+      if ("tiltDbPerOct" in controls) {
+        this.tiltDbPerOct = controls.tiltDbPerOct;
+      }
+      if ("weighting" in controls) {
+        this.weighting = controls.weighting;
+      }
+      if ("waveformScale" in controls) {
+        this.waveformScale = controls.waveformScale;
+      }
+      if ("waveformVisible" in controls) {
+        this.waveformVisible = controls.waveformVisible;
+      }
+      if ("minAmplitude" in controls) {
+        this.minAmplitude = controls.minAmplitude;
+      }
+      if ("maxAmplitude" in controls) {
+        this.maxAmplitude = controls.maxAmplitude;
+      }
+      if ("expanded" in controls) {
+        this.expanded = controls.expanded;
+      }
+    }
+    this.notify("settings");
+  }
+  public updateWaveform(settings: Partial<ComparisonWaveformSettings>): void {
+    Object.assign(this, settings);
+    if (this.minAmplitude >= this.maxAmplitude) {
+      this.maxAmplitude = this.minAmplitude + 0.1;
+    }
+    this.notify("waveform");
+  }
+  public updateStft(settings: Partial<ComparisonStftSettings>): void {
+    Object.assign(this.stft, settings);
+    if (this.stft.dbLow >= this.stft.dbHigh) {
+      this.stft.dbHigh = this.stft.dbLow + 1;
+    }
+    this.notify("display");
+  }
+  public updateAnalysis(settings: Partial<ComparisonAnalysisSettings>): void {
+    Object.assign(this, settings);
+    this.notify("settings");
+  }
+  public setPane(pane: ComparisonPane): void {
+    if (this.pane === pane) {
+      return;
+    }
+    this.pane = pane;
+    this.notify("pane");
+  }
+  public setStftLayout(layout: StftLayout): void {
+    this.stftLayout = layout;
+    this.notify("layout");
+  }
+  public notify(reason: ComparisonChangeReason): void {
     this._revision++;
     this.dispatchEvent(
       new CustomEvent("change", {

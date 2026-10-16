@@ -6,9 +6,7 @@ import { WebviewMessageType } from "../../../message";
 import { parseEqPresetFile } from "../../../shared/parseEqPreset";
 import {
   compatibleTargets,
-  equalizeParametric,
-  fetchEntries,
-  fetchTargets,
+  type AutoEqApiClient,
 } from "../../services/autoEqApiClient";
 import type EqPresetHostClient from "../../services/eqPresetHostClient";
 import type HeadphoneEqSettingsService from "../../services/headphoneEqSettingsService";
@@ -59,6 +57,7 @@ export default class CurveCorrectionOverlayComponent extends Component {
     sampleRate: number,
     postMessage: PostMessage,
     eqPresetHost: EqPresetHostClient,
+    private readonly _autoEq: AutoEqApiClient,
   ) {
     super();
     this._settings = settings;
@@ -145,12 +144,15 @@ export default class CurveCorrectionOverlayComponent extends Component {
   }
 
   public open(): void {
-    if (this._isOpen) {
+    if (this._isDisposed || this._isOpen) {
       return;
     }
     this._isOpen = true;
     this._overlay.removeAttribute("hidden");
     requestAnimationFrame(() => {
+      if (this._isDisposed) {
+        return;
+      }
       this._overlay.classList.add("curveCorrectionOverlay--open");
       this._editor?.resize();
     });
@@ -168,7 +170,7 @@ export default class CurveCorrectionOverlayComponent extends Component {
     this._catalogListOpen = false;
     this._overlay.classList.remove("curveCorrectionOverlay--open");
     setTimeout(() => {
-      if (!this._isOpen) {
+      if (!this._isDisposed && !this._isOpen) {
         this._overlay.setAttribute("hidden", "");
       }
     }, 150);
@@ -339,6 +341,9 @@ export default class CurveCorrectionOverlayComponent extends Component {
   }
 
   private _setStatus(msg: string, isError = false): void {
+    if (this._isDisposed) {
+      return;
+    }
     const el = this._overlay.querySelector(".js-cc-status") as HTMLElement;
     el.textContent = msg;
     el.classList.toggle("curveCorrectionOverlay__status--error", isError);
@@ -350,9 +355,12 @@ export default class CurveCorrectionOverlayComponent extends Component {
     }
     try {
       const [entries, targets] = await Promise.all([
-        fetchEntries(),
-        fetchTargets(),
+        this._autoEq.fetchEntries(),
+        this._autoEq.fetchTargets(),
       ]);
+      if (this._isDisposed) {
+        return;
+      }
       this._entries = entries;
       this._targets = targets;
       const search = this._overlay.querySelector(
@@ -374,6 +382,9 @@ export default class CurveCorrectionOverlayComponent extends Component {
   private async _refreshWorkspacePresets(): Promise<void> {
     try {
       const result = await this._eqPresetHost.listWorkspacePresets();
+      if (this._isDisposed) {
+        return;
+      }
       this._workspacePresets = result.presets;
       this._hasWorkspace = result.hasWorkspace;
       this._updateWorkspaceSaveButton();
@@ -516,6 +527,9 @@ export default class CurveCorrectionOverlayComponent extends Component {
       const profile = (await this._eqPresetHost.readWorkspacePreset(
         fileName,
       )) as HeadphoneEqProfile;
+      if (this._isDisposed) {
+        return;
+      }
       this._settings.setProfile(profile, { keepBypass: true });
       this._postMessage({
         type: WebviewMessageType.WRITE_EQ_PROFILE,
@@ -545,7 +559,7 @@ export default class CurveCorrectionOverlayComponent extends Component {
   ): Promise<void> {
     try {
       const file = await this._eqPresetHost.importFile();
-      if (!file) {
+      if (this._isDisposed || !file) {
         return;
       }
       const profile = parseEqPresetFile(file.content, file.fileName);
@@ -632,12 +646,15 @@ export default class CurveCorrectionOverlayComponent extends Component {
     this._loading = true;
     this._setStatus("Fetching EQ from autoeq.app…");
     try {
-      const profile = await equalizeParametric({
+      const profile = await this._autoEq.equalizeParametric({
         name: this._selectedName,
         variant: this._selectedVariant,
         targetLabel: this._selectedTarget,
         fs: this._sampleRate,
       });
+      if (this._isDisposed) {
+        return;
+      }
       this._settings.setProfile(profile);
       this._syncEditorFromProfile();
       this._setStatus(`Applied ${profile.displayName}`);

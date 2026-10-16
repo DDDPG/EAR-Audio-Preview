@@ -255,7 +255,7 @@ describe("measurement input snapshots", () => {
 test("removing a reloading track releases the serial file-loading queue", async () => {
   add("a");
   const reject = jest.fn();
-  app["_reads"].set("a", {
+  app["_loader"]["_reads"].set("a", {
     file: { id: "a", uri: "a", name: "a", ext: "wav", revision: 2 },
     offset: 0,
     resolve: jest.fn(),
@@ -268,7 +268,7 @@ test("removing a reloading track releases the serial file-loading queue", async 
   document.querySelector<HTMLButtonElement>('[data-action="remove"]').click();
   await Promise.resolve();
   expect(reject).toHaveBeenCalledWith(expect.any(Error));
-  expect(app["_reads"].has("a")).toBe(false);
+  expect(app["_loader"]["_reads"].has("a")).toBe(false);
   expect(continueLoading).toHaveBeenCalled();
   app["receive"]({
     type: "compare.data",
@@ -321,7 +321,7 @@ test("mute toggles refresh Edit export availability immediately", () => {
 test("aligned audio revisions invalidate profiles but keep the real host file revision in sequence IPC", async () => {
   const track = add("aligned");
   track.revision = -7;
-  app["_files"].set(track.id, {
+  app["_loader"]["_files"].set(track.id, {
     id: track.id,
     uri: track.uri,
     name: track.name,
@@ -329,18 +329,24 @@ test("aligned audio revisions invalidate profiles but keep the real host file re
     revision: 3,
   });
   jest.spyOn(sequenceService, "default").mockImplementation(
-    (_buffer, post) =>
+    (_buffer, rpc) =>
       ({
         analyzeProfile: async () => {
-          post({
-            type: "ANALYZE_SEQUENCE_FEATURES",
-            data: {
-              requestId: "aligned-sequence",
-              samples: new ArrayBuffer(16),
-              sampleRate: 48000,
-              hopSec: 0.1,
-            },
-          });
+          rpc
+            .request(
+              "SEQUENCE_FEATURES",
+              () => ({
+                type: "ANALYZE_SEQUENCE_FEATURES",
+                data: {
+                  requestId: "aligned-sequence",
+                  samples: new ArrayBuffer(16),
+                  sampleRate: 48000,
+                  hopSec: 0.1,
+                },
+              }),
+              null,
+            )
+            .catch(() => undefined);
           return {
             timeSec: new Float32Array(0),
             f0Hz: new Float32Array(0),
@@ -352,7 +358,7 @@ test("aligned audio revisions invalidate profiles but keep the real host file re
   );
   jest.mocked(analyzeNativeLoudness).mockResolvedValue({} as LoudnessProfile);
   app.session.pane = "loudness";
-  await app["loadProfiles"]();
+  await app["_loudness"].loadProfiles();
   expect(app["_post"]).toHaveBeenCalledWith(
     expect.objectContaining({
       type: "compare.sequence",
@@ -534,8 +540,8 @@ test("new revisions settle old reads and ignore late chunks", async () => {
     resolve = jest.fn();
   app["_analysisReady"] = Promise.resolve(null);
   app["_loudnessWorkerReady"] = Promise.resolve("");
-  app["_files"].set("a", file);
-  app["_reads"].set("a", { file, offset: 0, reject, resolve });
+  app["_loader"]["_files"].set("a", file);
+  app["_loader"]["_reads"].set("a", { file, offset: 0, reject, resolve });
   app["receive"]({
     type: "compare.files",
     files: [{ ...file, revision: 2 }],
@@ -548,7 +554,7 @@ test("new revisions settle old reads and ignore late chunks", async () => {
     expect.objectContaining({ message: expect.stringContaining("superseded") }),
   );
   await flush();
-  expect(app["_reads"].get("a").file.revision).toBe(2);
+  expect(app["_loader"]["_reads"].get("a").file.revision).toBe(2);
   app["receive"]({
     type: "compare.data",
     id: "a",
@@ -557,7 +563,7 @@ test("new revisions settle old reads and ignore late chunks", async () => {
     length: 1,
     samples: new Uint8Array([1]).buffer,
   });
-  expect(app["_reads"].get("a").offset).toBe(0);
+  expect(app["_loader"]["_reads"].get("a").offset).toBe(0);
   expect(resolve).not.toHaveBeenCalled();
 });
 test("wheel scroll leaves axes alone; drag zoom updates all STFT figures", () => {
@@ -1163,4 +1169,73 @@ test("monitor opens above the dock and keeps it visible while interacting", () =
   ).not.toBe("");
   document.querySelector<HTMLButtonElement>("[data-close-monitor]").click();
   expect(document.getElementById("root").dataset.monitorOpen).toBeUndefined();
+});
+
+test("settings controls cannot assign arbitrary session fields", () => {
+  add("a");
+  const input = document.querySelector<HTMLInputElement>(
+    '[data-compare-setting="height"]',
+  );
+  input.dataset.compareSetting = "pane";
+  input.value = "300";
+  input.dispatchEvent(new Event("change", { bubbles: true }));
+  expect(app.session.pane).toBe("stft");
+});
+
+test("domain analysis updates invalidate cached requests without the settings UI", () => {
+  const cancel = jest.fn();
+  app["_analysis"] = { cancel, dispose: jest.fn() } as never;
+  const revision = app["_settingsRevision"];
+  app.session.updateAnalysis({ windowMs: 120 });
+  expect(app["_settingsRevision"]).toBe(revision + 1);
+  expect(cancel).toHaveBeenCalled();
+  expect(document.querySelector<HTMLInputElement>("[data-window]").value).toBe(
+    "120",
+  );
+});
+
+test("shared sequence RPC cancels the host job on pane exit and ignores a late reply", async () => {
+  const actual = jest.requireActual<
+    typeof import("../services/sequenceFeatureService")
+  >("../services/sequenceFeatureService").default;
+  jest
+    .spyOn(sequenceService, "default")
+    .mockImplementation((buffer, rpc) => new actual(buffer, rpc));
+  const track = add("a");
+  track.revision = -4;
+  app["_loader"]["_files"].set(track.id, {
+    id: track.id,
+    uri: track.uri,
+    name: track.name,
+    ext: "wav",
+    revision: 3,
+  });
+  jest.mocked(analyzeNativeLoudness).mockResolvedValue({} as LoudnessProfile);
+  app.session.setPane("loudness");
+  await flush();
+  const messages = jest
+    .mocked(app["_post"])
+    .mock.calls.map(([message]) => message);
+  const request = messages.find(
+    (message) => message.type === "compare.sequence",
+  );
+  expect(request).toMatchObject({ trackId: "a", revision: 3 });
+  if (request?.type !== "compare.sequence") {
+    throw new Error("Expected sequence request");
+  }
+  app.session.setPane("stft");
+  await flush();
+  expect(app["_post"]).toHaveBeenCalledWith({
+    type: "compare.cancelSequence",
+    requestId: request.requestId,
+  });
+  app["receive"]({
+    type: "compare.sequenceResult",
+    message: {
+      type: "SEQUENCE_FEATURES",
+      data: { requestId: request.requestId, profile: null },
+    },
+  });
+  await flush();
+  expect(app["_profiles"].has("a")).toBe(false);
 });

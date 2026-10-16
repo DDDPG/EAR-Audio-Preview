@@ -10,10 +10,6 @@ import type {
 import type { AutoEqRequestEndpoint } from "../../message";
 
 const CACHE_MAX = 48;
-const cache = new Map<string, HeadphoneEqProfile>();
-
-let entriesPromise: Promise<AutoEqEntries> | null = null;
-let targetsPromise: Promise<AutoEqTarget[]> | null = null;
 
 /** Single source of truth: the wire endpoint union from message.ts. */
 export type AutoEqEndpoint = AutoEqRequestEndpoint;
@@ -31,28 +27,6 @@ export interface AutoEqHostRequest {
 
 type AutoEqHostFn = (req: AutoEqHostRequest) => Promise<unknown>;
 
-let hostRequest: AutoEqHostFn | null = null;
-
-/** Route AutoEq HTTP through Extension Host (required: autoeq.app has no CORS for webviews). */
-export function bindAutoEqHost(fn: AutoEqHostFn): void {
-  hostRequest = fn;
-}
-
-export function unbindAutoEqHost(): void {
-  hostRequest = null;
-}
-
-async function fetchJson<T>(endpoint: AutoEqEndpoint): Promise<T> {
-  if (!hostRequest) {
-    // All AutoEq traffic must go through the Extension Host: the webview CSP
-    // has no connect-src for autoeq.app, so a direct fetch can never succeed.
-    throw new Error(
-      "AutoEq host bridge not initialized (bindAutoEqHost missing)",
-    );
-  }
-  return (await hostRequest({ endpoint })) as T;
-}
-
 function cacheKey(parts: {
   name: string;
   source: string;
@@ -63,7 +37,11 @@ function cacheKey(parts: {
   return `${parts.name}|${parts.source}|${parts.rig}|${parts.target}|${parts.fs}`;
 }
 
-function lruSet(key: string, value: HeadphoneEqProfile): void {
+function lruSet(
+  cache: Map<string, HeadphoneEqProfile>,
+  key: string,
+  value: HeadphoneEqProfile,
+): void {
   if (cache.has(key)) {
     cache.delete(key);
   }
@@ -165,26 +143,6 @@ export function mapEqualizeResponse(
   return profile;
 }
 
-export async function fetchEntries(): Promise<AutoEqEntries> {
-  if (!entriesPromise) {
-    entriesPromise = fetchJson<AutoEqEntries>("entries").catch((err) => {
-      entriesPromise = null;
-      throw err;
-    });
-  }
-  return entriesPromise;
-}
-
-export async function fetchTargets(): Promise<AutoEqTarget[]> {
-  if (!targetsPromise) {
-    targetsPromise = fetchJson<AutoEqTarget[]>("targets").catch((err) => {
-      targetsPromise = null;
-      throw err;
-    });
-  }
-  return targetsPromise;
-}
-
 export function compatibleTargets(
   targets: AutoEqTarget[],
   variant: AutoEqEntryVariant,
@@ -199,27 +157,64 @@ export function compatibleTargets(
   );
 }
 
-export async function equalizeParametric(opts: {
-  name: string;
-  variant: AutoEqEntryVariant;
-  targetLabel: string;
-  fs: number;
-}): Promise<HeadphoneEqProfile> {
-  const key = cacheKey({
-    name: opts.name,
-    source: opts.variant.source,
-    rig: opts.variant.rig,
-    target: opts.targetLabel,
-    fs: opts.fs,
-  });
-  const cached = cache.get(key);
-  if (cached) {
-    return structuredClone(cached);
+/** Instance caches follow the page-owned RPC connection; no global host binding. */
+export class AutoEqApiClient {
+  private _disposed = false;
+  private _cache = new Map<string, HeadphoneEqProfile>();
+  private _entriesPromise: Promise<AutoEqEntries> | null = null;
+  private _targetsPromise: Promise<AutoEqTarget[]> | null = null;
+  constructor(private readonly _requestHost: AutoEqHostFn) {}
+
+  public async fetchEntries(): Promise<AutoEqEntries> {
+    this.ensureActive();
+    if (!this._entriesPromise) {
+      this._entriesPromise = (
+        this._requestHost({ endpoint: "entries" }) as Promise<AutoEqEntries>
+      ).catch((err) => {
+        this._entriesPromise = null;
+        throw err;
+      });
+    }
+    const entries = await this._entriesPromise;
+    this.ensureActive();
+    return entries;
   }
 
-  let body: EqualizeResponse;
-  if (hostRequest) {
-    body = (await hostRequest({
+  public async fetchTargets(): Promise<AutoEqTarget[]> {
+    this.ensureActive();
+    if (!this._targetsPromise) {
+      this._targetsPromise = (
+        this._requestHost({ endpoint: "targets" }) as Promise<AutoEqTarget[]>
+      ).catch((err) => {
+        this._targetsPromise = null;
+        throw err;
+      });
+    }
+    const targets = await this._targetsPromise;
+    this.ensureActive();
+    return targets;
+  }
+
+  public async equalizeParametric(opts: {
+    name: string;
+    variant: AutoEqEntryVariant;
+    targetLabel: string;
+    fs: number;
+  }): Promise<HeadphoneEqProfile> {
+    this.ensureActive();
+    const key = cacheKey({
+      name: opts.name,
+      source: opts.variant.source,
+      rig: opts.variant.rig,
+      target: opts.targetLabel,
+      fs: opts.fs,
+    });
+    const cached = this._cache.get(key);
+    if (cached) {
+      return structuredClone(cached);
+    }
+
+    const body = (await this._requestHost({
       endpoint: "equalize",
       body: {
         name: opts.name,
@@ -229,24 +224,27 @@ export async function equalizeParametric(opts: {
         fs: opts.fs,
       },
     })) as EqualizeResponse;
-  } else {
-    throw new Error(
-      "AutoEq host bridge not initialized (bindAutoEqHost missing)",
+    this.ensureActive();
+    const profile = mapEqualizeResponse(
+      opts.name,
+      opts.variant,
+      opts.targetLabel,
+      body,
     );
+    lruSet(this._cache, key, profile);
+    return structuredClone(profile);
   }
-  const profile = mapEqualizeResponse(
-    opts.name,
-    opts.variant,
-    opts.targetLabel,
-    body,
-  );
-  lruSet(key, profile);
-  return structuredClone(profile);
-}
 
-/** Test-only reset of module caches. */
-export function _resetAutoEqClientForTests(): void {
-  cache.clear();
-  entriesPromise = null;
-  targetsPromise = null;
+  private ensureActive(): void {
+    if (this._disposed) {
+      throw new Error("AutoEq client disposed");
+    }
+  }
+
+  public dispose(): void {
+    this._disposed = true;
+    this._cache.clear();
+    this._entriesPromise = null;
+    this._targetsPromise = null;
+  }
 }

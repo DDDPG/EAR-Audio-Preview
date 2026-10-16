@@ -1,4 +1,7 @@
-import { ComparisonSession } from "./comparisonSession";
+import {
+  ComparisonSession,
+  comparisonChangeEffects,
+} from "./comparisonSession";
 import { MockAudioBuffer } from "../../__mocks__/helper";
 
 function file(id: string, seconds = 1, rate = 48000, channels = 2) {
@@ -95,4 +98,84 @@ test("gain updates are atomic, reset on replacement, and do not change decoded s
   s.setPlaybackGains(new Map([["b", 0.1]]));
   s.remove("b");
   expect(s.playbackGain("b")).toBe(1);
+});
+
+test("typed display updates repair ranges before a single change notification", () => {
+  const session = new ComparisonSession();
+  const changes: Array<{ reason: string; high: number }> = [];
+  session.addEventListener("change", (event: CustomEvent) => {
+    changes.push({ reason: event.detail.reason, high: session.stft.dbHigh });
+  });
+  session.updateStft({ dbLow: 5, dbHigh: 0 });
+  expect(changes).toEqual([{ reason: "display", high: 6 }]);
+  session.updateWaveform({ minAmplitude: 2, maxAmplitude: 1 });
+  expect(session.maxAmplitude).toBe(2.1);
+  session.setPane("live");
+  const revision = session.revision;
+  session.setPane("live");
+  expect(session.revision).toBe(revision);
+});
+
+test("state change rules keep selection and mute from restarting analysis", () => {
+  for (const reason of ["selection", "mute", "file"] as const) {
+    expect(comparisonChangeEffects(reason)).toMatchObject({
+      figures: false,
+      cancelProfiles: false,
+      waves: false,
+    });
+  }
+  for (const reason of ["tracks", "audio", "active"] as const) {
+    expect(comparisonChangeEffects(reason)).toEqual({
+      figures: true,
+      cancelProfiles: true,
+      waves: true,
+      prune: true,
+    });
+  }
+  expect(comparisonChangeEffects("display")).toMatchObject({
+    figures: true,
+    cancelProfiles: false,
+  });
+});
+
+test("saved settings restore false, zero and partial values with one notification", () => {
+  const session = new ComparisonSession();
+  const reasons: string[] = [];
+  session.addEventListener("change", (event: CustomEvent) =>
+    reasons.push(event.detail.reason),
+  );
+  session.restoreSettings({
+    layout: "row",
+    pane: "edit",
+    stft: { visible: false, dbHigh: 0 },
+    controls: {
+      waveformVisible: false,
+      expanded: false,
+      tiltDbPerOct: 0,
+      waveformScale: 0,
+    },
+  });
+  expect(session.stftLayout).toBe("row");
+  expect(session.pane).toBe("edit");
+  expect(session.stft.visible).toBe(false);
+  expect(session.stft.dbHigh).toBe(0);
+  expect(session.waveformVisible).toBe(false);
+  expect(session.expanded).toBe(false);
+  expect(session.waveformScale).toBe(0);
+  expect(session.windowMs).toBe(80);
+  expect(reasons).toEqual(["settings"]);
+});
+
+test("saved settings cannot overwrite session state outside the whitelist", () => {
+  const session = new ComparisonSession();
+  session.restoreSettings({
+    pane: "invalid",
+    layout: "invalid",
+    controls: { pane: "live", duration: 100 },
+    stft: { unknownSetting: true },
+  } as never);
+  expect(session.pane).toBe("stft");
+  expect(session.stftLayout).toBe("auto");
+  expect(session.duration).toBe(0);
+  expect(session.stft).not.toHaveProperty("unknownSetting");
 });

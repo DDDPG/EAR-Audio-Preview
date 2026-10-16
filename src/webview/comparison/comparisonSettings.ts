@@ -74,15 +74,52 @@ export class ComparisonSettings {
       if (["start", "end", "minHz", "maxHz"].includes(key)) {
         session.setView({ [key]: value });
       } else {
-        const target = key in session.stft ? session.stft : session;
-        Reflect.set(target, key, value);
-        if (session.minAmplitude >= session.maxAmplitude) {
-          session.maxAmplitude = session.minAmplitude + 0.1;
-        }
-        if (session.stft.dbLow >= session.stft.dbHigh) {
-          session.stft.dbHigh = session.stft.dbLow + 1;
-        }
-        session.notify(key in session.stft ? "display" : "waveform");
+        // Explicit setters keep DOM input names outside mutable domain state.
+        const setters: Record<string, () => void> = {
+          waveformVisible: () =>
+            session.updateWaveform({ waveformVisible: Boolean(value) }),
+          waveformScale: () =>
+            session.updateWaveform({ waveformScale: Number(value) }),
+          minAmplitude: () =>
+            session.updateWaveform({ minAmplitude: Number(value) }),
+          maxAmplitude: () =>
+            session.updateWaveform({ maxAmplitude: Number(value) }),
+          visible: () => session.updateStft({ visible: Boolean(value) }),
+          highResolution: () =>
+            session.updateStft({ highResolution: Boolean(value) }),
+          height: () => session.updateStft({ height: Number(value) }),
+          windowSamples: () =>
+            session.updateStft({ windowSamples: Number(value) }),
+          hybridRatio: () => session.updateStft({ hybridRatio: Number(value) }),
+          dbLow: () => session.updateStft({ dbLow: Number(value) }),
+          dbHigh: () => session.updateStft({ dbHigh: Number(value) }),
+          fftBackend: () => {
+            if (value === "ooura" || value === "essentia") {
+              session.updateStft({ fftBackend: value });
+            }
+          },
+          windowType: () => {
+            if (
+              value === "hann" ||
+              value === "hamming" ||
+              value === "blackman-harris" ||
+              value === "triangular"
+            ) {
+              session.updateStft({ windowType: value });
+            }
+          },
+          frequencyScale: () => {
+            if (
+              value === "linear" ||
+              value === "log" ||
+              value === "mel" ||
+              value === "hybrid"
+            ) {
+              session.updateStft({ frequencyScale: value });
+            }
+          },
+        };
+        setters[key]?.();
       }
       this.sync();
     };

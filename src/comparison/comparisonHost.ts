@@ -1,3 +1,4 @@
+import { hostAnalysisTasks } from "../extensionHost/analysisTaskQueue";
 import { comparisonTrackLimit } from "./limits";
 import { handleComparisonEqRequest } from "./comparisonEqHost";
 import * as vscode from "vscode";
@@ -72,6 +73,8 @@ export class ComparisonHost implements vscode.Disposable {
         localResourceRoots: [this._context.extensionUri],
       },
     );
+    // Keep the owner reference: VS Code may reject panel.webview after disposal.
+    const webview = panel.webview;
     this._panels.add(panel);
     const files = new Map<string, HostFile>();
     const sequenceJobs = new Map<string, AbortController>();
@@ -85,6 +88,7 @@ export class ComparisonHost implements vscode.Disposable {
       }
       disposed = true;
       listener?.dispose();
+      hostAnalysisTasks.cancel(webview);
       sequenceJobs.forEach((job) => job.abort());
       sequenceJobs.clear();
       files.forEach((f) => f.watcher.dispose());
@@ -95,7 +99,7 @@ export class ComparisonHost implements vscode.Disposable {
     panel.onDidDispose(cleanup);
     const post = (message: ComparisonResponse) => {
       if (!disposed) {
-        void panel.webview.postMessage(message);
+        void webview.postMessage(message);
       }
     };
     try {
@@ -134,7 +138,7 @@ export class ComparisonHost implements vscode.Disposable {
             false,
           ),
           headphoneEq,
-          workerUri: panel.webview
+          workerUri: webview
             .asWebviewUri(
               vscode.Uri.joinPath(
                 this._context.extensionUri,
@@ -143,7 +147,7 @@ export class ComparisonHost implements vscode.Disposable {
               ),
             )
             .toString(),
-          loudnessWorkerUri: panel.webview
+          loudnessWorkerUri: webview
             .asWebviewUri(
               vscode.Uri.joinPath(
                 this._context.extensionUri,
@@ -152,7 +156,7 @@ export class ComparisonHost implements vscode.Disposable {
               ),
             )
             .toString(),
-          loudnessWorkletUri: panel.webview
+          loudnessWorkletUri: webview
             .asWebviewUri(
               vscode.Uri.joinPath(
                 this._context.extensionUri,
@@ -210,7 +214,7 @@ export class ComparisonHost implements vscode.Disposable {
           }
         }
       });
-      listener = panel.webview.onDidReceiveMessage(
+      listener = webview.onDidReceiveMessage(
         async (message: ComparisonRequest) => {
           try {
             if (
@@ -346,45 +350,62 @@ export class ComparisonHost implements vscode.Disposable {
               case "compare.sequence": {
                 const job = new AbortController();
                 sequenceJobs.set(message.requestId, job);
-                try {
-                  const profile = await analyzeSequenceFeaturesInHost(
-                    new Float32Array(message.samples as ArrayBuffer),
-                    message.sampleRate,
-                    message.hopSec,
-                    undefined,
-                    () =>
+                await hostAnalysisTasks.run(
+                  webview,
+                  message.requestId,
+                  async (queueCancelled) => {
+                    const shouldCancel = () =>
+                      queueCancelled() ||
                       job.signal.aborted ||
                       disposed ||
                       files.get(message.trackId)?.info.revision !==
-                        message.revision,
-                  );
-                  post({
-                    type: "compare.sequenceResult",
-                    message: {
-                      type: ExtMessageType.SEQUENCE_FEATURES,
-                      data: {
-                        requestId: message.requestId,
-                        profile: profile ?? undefined,
-                      },
-                    },
-                  });
-                } catch (error) {
-                  post({
-                    type: "compare.sequenceResult",
-                    message: {
-                      type: ExtMessageType.SEQUENCE_FEATURES,
-                      data: {
-                        requestId: message.requestId,
-                        error: String(error),
-                      },
-                    },
-                  });
-                } finally {
-                  sequenceJobs.delete(message.requestId);
-                }
+                        message.revision;
+                    try {
+                      if (shouldCancel()) {
+                        return;
+                      }
+                      const profile = await analyzeSequenceFeaturesInHost(
+                        new Float32Array(message.samples as ArrayBuffer),
+                        message.sampleRate,
+                        message.hopSec,
+                        undefined,
+                        shouldCancel,
+                      );
+                      if (shouldCancel()) {
+                        return;
+                      }
+                      post({
+                        type: "compare.sequenceResult",
+                        message: {
+                          type: ExtMessageType.SEQUENCE_FEATURES,
+                          data: {
+                            requestId: message.requestId,
+                            profile: profile ?? undefined,
+                          },
+                        },
+                      });
+                    } catch (error) {
+                      if (shouldCancel()) {
+                        return;
+                      }
+                      post({
+                        type: "compare.sequenceResult",
+                        message: {
+                          type: ExtMessageType.SEQUENCE_FEATURES,
+                          data: {
+                            requestId: message.requestId,
+                            error: String(error),
+                          },
+                        },
+                      });
+                    }
+                  },
+                );
+                sequenceJobs.delete(message.requestId);
                 break;
               }
               case "compare.cancelSequence":
+                hostAnalysisTasks.cancel(webview, message.requestId);
                 sequenceJobs.get(message.requestId)?.abort();
                 break;
               case "compare.export": {
@@ -433,14 +454,14 @@ export class ComparisonHost implements vscode.Disposable {
         },
       );
       const nonce = getNonce();
-      const script = panel.webview.asWebviewUri(
+      const script = webview.asWebviewUri(
         vscode.Uri.joinPath(
           this._context.extensionUri,
           "dist",
           "comparison.js",
         ),
       );
-      panel.webview.html = `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src ${panel.webview.cspSource} blob:; style-src ${panel.webview.cspSource} 'unsafe-inline'; script-src 'wasm-unsafe-eval' 'nonce-${nonce}' blob: ${panel.webview.cspSource}; worker-src ${panel.webview.cspSource} blob:; connect-src ${panel.webview.cspSource} data:;"><title>Audio Comparison</title></head><body><div id="root"></div><script nonce="${nonce}" src="${script}"></script></body></html>`;
+      webview.html = `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src ${webview.cspSource} blob:; style-src ${webview.cspSource} 'unsafe-inline'; script-src 'wasm-unsafe-eval' 'nonce-${nonce}' blob: ${webview.cspSource}; worker-src ${webview.cspSource} blob:; connect-src ${webview.cspSource} data:;"><title>Audio Comparison</title></head><body><div id="root"></div><script nonce="${nonce}" src="${script}"></script></body></html>`;
     } catch (error) {
       cleanup();
       panel.dispose();

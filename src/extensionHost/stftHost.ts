@@ -9,9 +9,10 @@ export async function analyzeStftInHost(
   channelData: Float32Array,
   sampleRate: number,
   settings: StftSettingsWire,
+  shouldCancel?: () => boolean,
 ): Promise<StftSpectrogramWire | null> {
   const essentia = await loadEssentiaInNode();
-  if (!essentia) {
+  if (!essentia || shouldCancel?.()) {
     return null;
   }
   try {
@@ -20,8 +21,13 @@ export async function analyzeStftInHost(
       channelData,
       sampleRate,
       settings,
+      undefined,
+      shouldCancel,
     );
   } catch (err) {
+    if (shouldCancel?.()) {
+      return null;
+    }
     console.warn(
       "[stftHost] STFT failed:",
       err instanceof Error ? err.message : err,

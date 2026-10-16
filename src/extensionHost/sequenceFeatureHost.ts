@@ -14,7 +14,7 @@ export async function analyzeSequenceFeaturesInHost(
   shouldCancel?: () => boolean,
 ): Promise<SequenceFeatureProfileWire | null> {
   const essentia = await loadEssentiaInNode();
-  if (!essentia) {
+  if (!essentia || shouldCancel?.()) {
     return null;
   }
   try {
@@ -28,6 +28,9 @@ export async function analyzeSequenceFeaturesInHost(
     );
     return profileToWire(profile);
   } catch (err) {
+    if (shouldCancel?.()) {
+      return null;
+    }
     console.warn(
       "[sequenceFeatureHost] Analysis failed:",
       err instanceof Error ? err.message : err,

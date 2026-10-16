@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/naming-convention */
 import {
-  _resetAutoEqClientForTests,
   buildDisplayName,
   buildProfileId,
   compatibleTargets,
@@ -9,10 +8,6 @@ import {
 import type { AutoEqTarget } from "../types/headphoneEq";
 
 describe("autoEqApiClient", () => {
-  afterEach(() => {
-    _resetAutoEqClientForTests();
-  });
-
   test("mapEqualizeResponse maps PEQ filters and preamp", () => {
     const variant = { source: "oratory1990", rig: "crinacle", form: "raw" };
     const profile = mapEqualizeResponse("HD 650", variant, "Harman", {
@@ -67,3 +62,42 @@ describe("autoEqApiClient", () => {
     expect(compat.map((t) => t.label)).toEqual(["Harman"]);
   });
 });
+
+describe("page-owned AutoEq API", () => {
+  test("catalog caches are isolated across pages and failed fetches can retry", async () => {
+    const { AutoEqApiClient } = await import("./autoEqApiClient");
+    const firstHost = jest
+      .fn()
+      .mockRejectedValueOnce(new Error("offline"))
+      .mockResolvedValue({ first: [] });
+    const secondHost = jest.fn().mockResolvedValue({ second: [] });
+    const first = new AutoEqApiClient(firstHost),
+      second = new AutoEqApiClient(secondHost);
+    await expect(first.fetchEntries()).rejects.toThrow("offline");
+    await expect(first.fetchEntries()).resolves.toEqual({ first: [] });
+    await first.fetchEntries();
+    await expect(second.fetchEntries()).resolves.toEqual({ second: [] });
+    expect(firstHost).toHaveBeenCalledTimes(2);
+    expect(secondHost).toHaveBeenCalledTimes(1);
+    first.dispose();
+    second.dispose();
+    await expect(first.fetchEntries()).rejects.toThrow(/disposed/);
+  });
+});
+
+test.each(["fetchEntries", "fetchTargets"] as const)(
+  "%s rejects a reply resolved just before disposal",
+  async (method) => {
+    const { AutoEqApiClient } = await import("./autoEqApiClient");
+    let resolve!: (value: unknown) => void;
+    const gate = new Promise((done) => {
+      resolve = done;
+    });
+    const api = new AutoEqApiClient(() => gate);
+    const result = api[method]();
+    const rejected = expect(result).rejects.toThrow(/disposed/);
+    resolve([]);
+    api.dispose();
+    await rejected;
+  },
+);

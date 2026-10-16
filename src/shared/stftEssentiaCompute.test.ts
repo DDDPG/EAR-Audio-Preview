@@ -146,3 +146,27 @@ describe("essentiaWindowNames", () => {
     ]);
   });
 });
+
+test("cancelled STFT stops before invoking the next DSP frame", async () => {
+  const essentia = makeEssentia([new Float32Array(5).fill(1)]);
+  const spectrum = jest.spyOn(essentia, "Spectrum");
+  await expect(
+    computeEssentiaStftSpectrogram(
+      essentia,
+      new Float32Array(8),
+      8,
+      {
+        windowSize: 8,
+        windowType: "hann",
+        hopSize: 4,
+        minTime: 0,
+        maxTime: 1,
+        minFrequency: 0,
+        maxFrequency: 4,
+      },
+      undefined,
+      () => spectrum.mock.calls.length >= 1,
+    ),
+  ).rejects.toThrow("STFT cancelled");
+  expect(spectrum).toHaveBeenCalledTimes(1);
+});

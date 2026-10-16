@@ -1,6 +1,7 @@
 /** @jest-environment node */
 /* eslint-disable @typescript-eslint/naming-convention -- Mock properties match the VS Code API. */
 import * as vscode from "vscode";
+import { analyzeSequenceFeaturesInHost } from "../extensionHost/sequenceFeatureHost";
 import { ComparisonHost } from "./comparisonHost";
 import type { ComparisonRequest } from "./protocol";
 
@@ -66,7 +67,12 @@ function harness() {
     }),
   };
   const panel = {
-    webview,
+    get webview() {
+      if (closed) {
+        throw new Error("Webview is disposed");
+      }
+      return webview;
+    },
     onDidDispose: jest.fn((callback) => {
       disposeHandlers.push(callback);
     }),
@@ -193,4 +199,68 @@ test("host accepts eight files and rejects a ninth without creating a panel", as
     .find((message) => message.type === "compare.files");
   expect(manifest.files).toHaveLength(8);
   h.host.dispose();
+});
+
+test("sequence cancellation stops running host work and removes queued work", async () => {
+  const h = harness();
+  await h.host.open([uri("/workspace/a.wav")]);
+  const gate = deferred<null>();
+  jest.mocked(analyzeSequenceFeaturesInHost).mockReturnValueOnce(gate.promise);
+  const request = (requestId: string): ComparisonRequest => ({
+    type: "compare.sequence",
+    requestId,
+    trackId: "track-1",
+    revision: 1,
+    samples: new Float32Array(8).buffer,
+    sampleRate: 48000,
+    hopSec: 0.02,
+  });
+  const first = h.receive(request("running"));
+  const second = h.receive(request("queued"));
+  await Promise.resolve();
+  const shouldCancel = jest.mocked(analyzeSequenceFeaturesInHost).mock
+    .calls[0][4]!;
+  expect(shouldCancel()).toBe(false);
+  await h.receive({ type: "compare.cancelSequence", requestId: "queued" });
+  await second;
+  expect(analyzeSequenceFeaturesInHost).toHaveBeenCalledTimes(1);
+  await h.receive({ type: "compare.cancelSequence", requestId: "running" });
+  expect(shouldCancel()).toBe(true);
+  gate.resolve(null);
+  await first;
+  expect(
+    h.webview.postMessage.mock.calls.some(
+      ([message]) => message.type === "compare.sequenceResult",
+    ),
+  ).toBe(false);
+  h.host.dispose();
+});
+
+test("disposal cancels queued work without reading the disposed panel webview", async () => {
+  const h = harness();
+  await h.host.open([uri("/workspace/a.wav")]);
+  const gate = deferred<null>();
+  jest.mocked(analyzeSequenceFeaturesInHost).mockReturnValueOnce(gate.promise);
+  const request = (requestId: string): ComparisonRequest => ({
+    type: "compare.sequence",
+    requestId,
+    trackId: "track-1",
+    revision: 1,
+    samples: new Float32Array(8).buffer,
+    sampleRate: 48000,
+    hopSec: 0.02,
+  });
+  const first = h.receive(request("running"));
+  const second = h.receive(request("queued"));
+  await Promise.resolve();
+  expect(() => h.panel.dispose()).not.toThrow();
+  await second;
+  const shouldCancel = jest.mocked(analyzeSequenceFeaturesInHost).mock
+    .calls[0][4]!;
+  expect(shouldCancel()).toBe(true);
+  expect(h.listener.dispose).toHaveBeenCalledTimes(1);
+  expect(h.watcher.dispose).toHaveBeenCalledTimes(1);
+  gate.resolve(null);
+  await first;
+  expect(analyzeSequenceFeaturesInHost).toHaveBeenCalledTimes(1);
 });

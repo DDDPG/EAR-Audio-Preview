@@ -1,3 +1,4 @@
+import type { ComparisonChangeReason } from "./comparisonSession";
 import { ComparisonOnboarding } from "./comparisonOnboarding";
 import "../styles/vscode.css";
 import "../components/liveMeters/liveMeters.css";
@@ -20,37 +21,11 @@ const vscode = acquireVsCodeApi();
 let state = vscode.getState?.() ?? {};
 const root = document.getElementById("root");
 const app = new ComparisonApp(root, (message) => vscode.postMessage(message));
-if (["auto", "row", "column"].includes(state.layout)) {
-  app.session.stftLayout = state.layout;
-}
-if (["stft", "live", "edit", "loudness"].includes(state.pane)) {
-  app.session.pane = state.pane;
-}
-if (state.stft) {
-  Object.assign(app.session.stft, state.stft);
-}
-if (state.controls) {
-  for (const key of [
-    "windowMs",
-    "hopMs",
-    "tiltDbPerOct",
-    "weighting",
-    "waveformScale",
-    "waveformVisible",
-    "minAmplitude",
-    "maxAmplitude",
-    "expanded",
-  ]) {
-    if (key in state.controls) {
-      Reflect.set(app.session, key, Reflect.get(state.controls, key));
-    }
-  }
-}
-app.session.notify("settings");
+app.session.restoreSettings(state);
 let pendingView = state.view;
 app.session.addEventListener(
   "change",
-  (event: CustomEvent<{ reason: string }>) => {
+  (event: CustomEvent<{ reason: ComparisonChangeReason }>) => {
     if (pendingView && event.detail.reason === "loaded") {
       const view = pendingView;
       pendingView = undefined;

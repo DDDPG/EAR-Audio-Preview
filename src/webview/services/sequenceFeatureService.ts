@@ -1,14 +1,16 @@
+import { PageRpcClient } from "./pageRpcClient";
 import Service from "../service";
 import { computeAdaptiveSequenceHopSec } from "../../shared/sequenceHop";
 import {
   profileFromWire,
   type SequenceFeatureProfile,
   type SequenceAnalysisProgress,
+  type SequenceFeatureProfileWire,
 } from "../../shared/sequenceFeatureCompute";
 import {
-  PostMessage,
   WebviewMessageType,
-  type ExtSequenceFeaturesMessage,
+  ExtMessageType,
+  type PostMessage,
 } from "../../message";
 
 export type { SequenceFeatureProfile, SequenceAnalysisProgress };
@@ -26,49 +28,25 @@ function monoDownmix(buffer: AudioBuffer): Float32Array {
   return out;
 }
 
-interface PendingRequest {
-  owner: SequenceFeatureService;
-  resolve: (profile: SequenceFeatureProfile | null) => void;
-  reject: (err: Error) => void;
-  onProgress?: SequenceAnalysisProgress;
-}
-
 export default class SequenceFeatureService extends Service {
-  private static _pending = new Map<string, PendingRequest>();
-
-  private _audioBuffer: AudioBuffer;
-  private _postMessage: PostMessage;
+  private _requestIds = new Set<string>();
   private _profileCache: SequenceFeatureProfile | null = null;
   private _analyzePromise: Promise<SequenceFeatureProfile | null> | null = null;
 
-  constructor(audioBuffer: AudioBuffer, postMessage: PostMessage) {
+  constructor(
+    private _audioBuffer: AudioBuffer,
+    private _rpc: PageRpcClient,
+    private _send?: PostMessage,
+  ) {
     super();
-    this._audioBuffer = audioBuffer;
-    this._postMessage = postMessage;
-  }
-
-  /** Called from webview message handler when extension returns features. */
-  public static handleExtensionResponse(msg: ExtSequenceFeaturesMessage): void {
-    const pending = SequenceFeatureService._pending.get(msg.data.requestId);
-    if (!pending) {
-      return;
-    }
-    SequenceFeatureService._pending.delete(msg.data.requestId);
-    if (msg.data.error) {
-      pending.reject(new Error(msg.data.error));
-      return;
-    }
-    if (!msg.data.profile) {
-      pending.resolve(null);
-      return;
-    }
-    pending.resolve(profileFromWire(msg.data.profile));
   }
 
   public analyzeProfile(
     hopSec?: number,
     onProgress?: SequenceAnalysisProgress,
   ): Promise<SequenceFeatureProfile | null> {
+    // The host currently returns the final profile without incremental progress.
+    void onProgress;
     if (this._isDisposed) {
       return Promise.resolve(null);
     }
@@ -85,57 +63,58 @@ export default class SequenceFeatureService extends Service {
       return this._analyzePromise;
     }
 
-    this._analyzePromise = this._runAnalysis(effectiveHop, onProgress).finally(
-      () => {
-        this._analyzePromise = null;
-      },
-    );
+    this._analyzePromise = this._runAnalysis(effectiveHop).finally(() => {
+      this._analyzePromise = null;
+    });
     return this._analyzePromise;
   }
 
-  private _runAnalysis(
-    hopSec: number,
-    onProgress?: SequenceAnalysisProgress,
-  ): Promise<SequenceFeatureProfile | null> {
-    const requestId =
-      typeof crypto !== "undefined" && "randomUUID" in crypto
-        ? crypto.randomUUID()
-        : `seq-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  private _runAnalysis(hopSec: number): Promise<SequenceFeatureProfile | null> {
     const mono = monoDownmix(this._audioBuffer);
-    // monoDownmix always returns an owned full buffer, including mono inputs.
-    const samples = mono.buffer;
-
-    return new Promise((resolve, reject) => {
-      SequenceFeatureService._pending.set(requestId, {
-        owner: this,
-        resolve: (profile) => {
-          this._profileCache = profile;
-          resolve(profile);
+    let requestId = "";
+    return this._rpc
+      .request(
+        ExtMessageType.SEQUENCE_FEATURES,
+        (id) => {
+          requestId = id;
+          this._requestIds.add(id);
+          return {
+            type: WebviewMessageType.ANALYZE_SEQUENCE_FEATURES,
+            data: {
+              requestId: id,
+              samples: mono.buffer,
+              sampleRate: this._audioBuffer.sampleRate,
+              hopSec,
+            },
+          };
         },
-        reject,
-        onProgress,
-      });
-
-      this._postMessage({
-        type: WebviewMessageType.ANALYZE_SEQUENCE_FEATURES,
-        data: {
-          requestId,
-          samples,
-          sampleRate: this._audioBuffer.sampleRate,
-          hopSec,
-        },
-      });
-    });
+        10 * 60 * 1000,
+        () => this._rpc.postCancellation(requestId, this._send),
+        this._send,
+      )
+      .then((value) => {
+        if (this._isDisposed || !value) {
+          return null;
+        }
+        const profile = profileFromWire(value as SequenceFeatureProfileWire);
+        this._profileCache = profile;
+        return profile;
+      })
+      .catch((error) => {
+        if (this._isDisposed) {
+          return null;
+        }
+        throw error;
+      })
+      .finally(() => this._requestIds.delete(requestId));
   }
 
   public dispose(): void {
-    for (const [id, pending] of SequenceFeatureService._pending) {
-      if (pending.owner === this) {
-        SequenceFeatureService._pending.delete(id);
-        pending.resolve(null);
-      }
-    }
-    this._profileCache = null;
     super.dispose();
+    for (const id of this._requestIds) {
+      this._rpc.cancel(id);
+    }
+    this._requestIds.clear();
+    this._profileCache = null;
   }
 }

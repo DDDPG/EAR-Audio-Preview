@@ -5,7 +5,8 @@ import { WebviewMessageType, type PostMessage } from "../../message";
 import type HeadphoneEqSettingsService from "../services/headphoneEqSettingsService";
 import AutoEqHostClient from "../services/autoEqHostClient";
 import EqPresetHostClient from "../services/eqPresetHostClient";
-import { bindAutoEqHost, unbindAutoEqHost } from "../services/autoEqApiClient";
+import { AutoEqApiClient } from "../services/autoEqApiClient";
+import { PageRpcClient } from "../services/pageRpcClient";
 import LiveMonitoringBarComponent from "../components/liveMeters/liveMonitoringBarComponent";
 import CurveCorrectionOverlayComponent from "../components/curveCorrection/curveCorrectionOverlayComponent";
 import { createComparisonLiveSettings } from "./comparisonLiveView";
@@ -23,6 +24,7 @@ export class ComparisonMonitor extends Component {
   private readonly _trigger: HTMLButtonElement;
   private readonly _post: PostMessage;
   private readonly _presetHost: EqPresetHostClient;
+  private readonly _rpc: PageRpcClient;
   private _open = false;
 
   constructor(
@@ -30,6 +32,7 @@ export class ComparisonMonitor extends Component {
     transport: ComparisonTransport,
     eq: HeadphoneEqSettingsService,
     post: (message: ComparisonRequest) => void,
+    rpc?: PageRpcClient,
   ) {
     super();
     this._settings = createComparisonLiveSettings(
@@ -46,10 +49,12 @@ export class ComparisonMonitor extends Component {
         post({ type: "compare.eq", message });
       }
     };
-    const autoEq = new AutoEqHostClient(this._post);
-    bindAutoEqHost((request) => autoEq.request(request));
-    this._register({ dispose: () => unbindAutoEqHost() });
-    this._presetHost = new EqPresetHostClient(this._post);
+    this._rpc = rpc ?? this._register(new PageRpcClient(this._post));
+    const autoEq = new AutoEqHostClient(this._rpc);
+    const autoEqApi = this._register(
+      new AutoEqApiClient((request) => autoEq.request(request)),
+    );
+    this._presetHost = new EqPresetHostClient(this._rpc);
     this._trigger = root.querySelector("[data-open-monitor]");
     const mount = document.createElement("div");
     mount.innerHTML = `<section class="comparisonMonitorPanel" role="dialog" aria-label="Monitor" hidden><header><h2>Monitor</h2><button type="button" data-close-monitor aria-label="Close monitor">×</button></header><div id="comparisonMonitorMount"></div></section><div id="comparisonCurveMount"></div>`;
@@ -65,6 +70,7 @@ export class ComparisonMonitor extends Component {
           transport.context?.sampleRate || 48000,
           this._post,
           this._presetHost,
+          autoEqApi,
         );
         this._disposables.push(this._curve);
       }
@@ -136,19 +142,7 @@ export class ComparisonMonitor extends Component {
     if (message.type !== "compare.eqResult") {
       return;
     }
-    if (message.message.type === "AUTOEQ_RESULT") {
-      AutoEqHostClient.handleExtensionResponse(
-        message.message as Parameters<
-          typeof AutoEqHostClient.handleExtensionResponse
-        >[0],
-      );
-    } else {
-      EqPresetHostClient.handleExtensionResponse(
-        message.message as Parameters<
-          typeof EqPresetHostClient.handleExtensionResponse
-        >[0],
-      );
-    }
+    this._rpc.handleResponse(message.message);
   }
 
   private position(): void {

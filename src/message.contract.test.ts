@@ -38,6 +38,7 @@ describe("message type contract", () => {
       [
         "ANALYZE_SEQUENCE_FEATURES",
         "ANALYZE_STFT",
+        "CANCEL_ANALYSIS",
         "AUTOEQ_REQUEST",
         "CONFIG",
         "DATA",

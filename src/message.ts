@@ -155,6 +155,7 @@ export class WebviewMessageType {
   public static readonly SAVE_ONBOARDING_SEEN = "SAVE_ONBOARDING_SEEN";
   public static readonly ANALYZE_SEQUENCE_FEATURES =
     "ANALYZE_SEQUENCE_FEATURES";
+  public static readonly CANCEL_ANALYSIS = "CANCEL_ANALYSIS";
   public static readonly ANALYZE_STFT = "ANALYZE_STFT";
   public static readonly SAVE_EQ_SETTINGS = "SAVE_EQ_SETTINGS";
   public static readonly WRITE_EQ_PROFILE = "WRITE_EQ_PROFILE";
@@ -195,6 +196,12 @@ export class WebviewMessageType {
     return msg.type === WebviewMessageType.ANALYZE_SEQUENCE_FEATURES;
   }
 
+  public static isCancelAnalysis(
+    msg: WebviewMessage,
+  ): msg is WebviewCancelAnalysisMessage {
+    return msg.type === WebviewMessageType.CANCEL_ANALYSIS;
+  }
+
   public static isAnalyzeStft(
     msg: WebviewMessage,
   ): msg is WebviewAnalyzeStftMessage {
@@ -233,6 +240,7 @@ export type WebviewMessage =
   | WebviewErrorMessage
   | WebviewSaveAnalyzeUiMessage
   | WebviewSaveOnboardingSeenMessage
+  | WebviewCancelAnalysisMessage
   | WebviewAnalyzeSequenceFeaturesMessage
   | WebviewAnalyzeStftMessage
   | WebviewSaveEqSettingsMessage
@@ -345,3 +353,8 @@ export class WebviewEqPresetOpMessage {
 
 // Type of post message funtion
 export type PostMessage = (message: WebviewMessage) => void;
+
+export interface WebviewCancelAnalysisMessage {
+  type: typeof WebviewMessageType.CANCEL_ANALYSIS;
+  data: { requestId: string };
+}

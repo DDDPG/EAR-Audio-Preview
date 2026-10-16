@@ -225,6 +225,7 @@ test.each(["stft", "sequence", "preset"])(
       };
     }
     const receiving = h.receive(message);
+    await Promise.resolve();
     h.close();
     pending.reject(new Error("late failure"));
     await receiving;
@@ -502,5 +503,82 @@ test.each([
     expect(target.authority).toBe(authority);
     expect(target.path).toBe("/audio/export.wav");
     expect(bytes).toEqual(new Uint8Array([1, 2]));
+  },
+);
+
+test("analysis cancellation reaches running computation and skips queued requests", async () => {
+  const h = harness();
+  await h.open();
+  const pending = deferred<null>();
+  jest
+    .mocked(analyzeSequenceFeaturesInHost)
+    .mockReturnValueOnce(pending.promise);
+  const message = (requestId: string): WebviewMessage => ({
+    type: WebviewMessageType.ANALYZE_SEQUENCE_FEATURES,
+    data: {
+      requestId,
+      samples: new Float32Array(8).buffer,
+      sampleRate: 48000,
+      hopSec: 0.02,
+    },
+  });
+  const first = h.receive(message("running"));
+  const second = h.receive(message("queued"));
+  await Promise.resolve();
+  const shouldCancel = jest.mocked(analyzeSequenceFeaturesInHost).mock
+    .calls[0][4]!;
+  expect(shouldCancel()).toBe(false);
+  await h.receive({
+    type: WebviewMessageType.CANCEL_ANALYSIS,
+    data: { requestId: "queued" },
+  });
+  await second;
+  expect(analyzeSequenceFeaturesInHost).toHaveBeenCalledTimes(1);
+  await h.receive({
+    type: WebviewMessageType.CANCEL_ANALYSIS,
+    data: { requestId: "running" },
+  });
+  expect(shouldCancel()).toBe(true);
+  pending.resolve(null);
+  await first;
+  expect(h.webview.postMessage).not.toHaveBeenCalled();
+  h.close();
+});
+
+test.each(["reload", "document disposal"])(
+  "%s cancels in-flight analysis",
+  async (reason) => {
+    const h = harness();
+    const document = await h.open();
+    const gate = deferred<null>();
+    jest
+      .mocked(analyzeSequenceFeaturesInHost)
+      .mockReturnValueOnce(gate.promise);
+    const receiving = h.receive({
+      type: WebviewMessageType.ANALYZE_SEQUENCE_FEATURES,
+      data: {
+        requestId: "old",
+        samples: new Float32Array(8).buffer,
+        sampleRate: 48000,
+        hopSec: 0.02,
+      },
+    });
+    await Promise.resolve();
+    const shouldCancel = jest.mocked(analyzeSequenceFeaturesInHost).mock
+      .calls[0][4]!;
+    if (reason === "reload") {
+      jest
+        .mocked(vscode.workspace.fs.readFile)
+        .mockResolvedValueOnce(new Uint8Array([1]));
+      await h.change();
+    } else {
+      document.dispose();
+    }
+    expect(shouldCancel()).toBe(true);
+    h.webview.postMessage.mockClear();
+    gate.resolve(null);
+    await receiving;
+    expect(h.webview.postMessage).not.toHaveBeenCalled();
+    h.close();
   },
 );

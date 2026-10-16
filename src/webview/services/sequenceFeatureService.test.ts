@@ -1,3 +1,4 @@
+import { PageRpcClient } from "./pageRpcClient";
 import SequenceFeatureService from "./sequenceFeatureService";
 import {
   computeSequenceFeatures,
@@ -117,7 +118,7 @@ describe("SequenceFeatureService", () => {
       if (WebviewMessageType.isAnalyzeSequenceFeatures(msg)) {
         capturedRequestId = msg.data.requestId;
         queueMicrotask(() => {
-          SequenceFeatureService.handleExtensionResponse({
+          rpc.handleResponse({
             type: ExtMessageType.SEQUENCE_FEATURES,
             data: { requestId: capturedRequestId },
           });
@@ -125,7 +126,8 @@ describe("SequenceFeatureService", () => {
       }
     };
 
-    const svc = new SequenceFeatureService(buffer, postMessage);
+    const rpc = new PageRpcClient(postMessage);
+    const svc = new SequenceFeatureService(buffer, rpc);
     const profile = await svc.analyzeProfile(0.1);
     expect(profile).toBeNull();
   });
@@ -136,11 +138,11 @@ describe("SequenceFeatureService", () => {
       if (WebviewMessageType.isAnalyzeSequenceFeatures(msg)) {
         const { requestId } = msg.data;
         queueMicrotask(() => {
-          SequenceFeatureService.handleExtensionResponse({
+          rpc.handleResponse({
             type: ExtMessageType.SEQUENCE_FEATURES,
             data: {
               requestId,
-              profile: profileToWire({
+              payload: profileToWire({
                 timeSec: new Float32Array([0, 0.1]),
                 f0Hz: new Float32Array([220, 440]),
                 f0Confidence: new Float32Array([0.9, 0.9]),
@@ -154,10 +156,92 @@ describe("SequenceFeatureService", () => {
       }
     };
 
-    const svc = new SequenceFeatureService(buffer, postMessage);
+    const rpc = new PageRpcClient(postMessage);
+    const svc = new SequenceFeatureService(buffer, rpc);
     const first = await svc.analyzeProfile(0.1);
     const second = await svc.analyzeProfile(0.1);
     expect(first).not.toBeNull();
     expect(second).toBe(first);
   });
+});
+
+test("disposal sends cancellation only for its own request and ignores late results", async () => {
+  const post = jest.fn();
+  const rpc = new PageRpcClient(post);
+  const first = new SequenceFeatureService(makeAudioBuffer(44100), rpc);
+  const second = new SequenceFeatureService(makeAudioBuffer(44100), rpc);
+  const firstResult = first.analyzeProfile();
+  const firstId = post.mock.calls[0][0].data.requestId;
+  const secondResult = second.analyzeProfile();
+  const secondId = post.mock.calls[1][0].data.requestId;
+  first.dispose();
+  expect(await firstResult).toBeNull();
+  expect(post.mock.calls[2][0]).toEqual({
+    type: WebviewMessageType.CANCEL_ANALYSIS,
+    data: { requestId: firstId },
+  });
+  rpc.handleResponse({
+    type: ExtMessageType.SEQUENCE_FEATURES,
+    data: { requestId: firstId, error: "obsolete failure" },
+  });
+  rpc.handleResponse({
+    type: ExtMessageType.SEQUENCE_FEATURES,
+    data: { requestId: secondId },
+  });
+  expect(await secondResult).toBeNull();
+  second.dispose();
+  expect(post).toHaveBeenCalledTimes(3);
+});
+
+test("failed sends settle immediately and permit a fresh request", async () => {
+  const post = jest.fn().mockImplementationOnce(() => {
+    throw new Error("send failed");
+  });
+  const rpc = new PageRpcClient(post);
+  const service = new SequenceFeatureService(makeAudioBuffer(44100), rpc);
+  await expect(service.analyzeProfile()).rejects.toThrow("send failed");
+  const result = service.analyzeProfile();
+  const requestId = post.mock.calls[1][0].data.requestId;
+  rpc.handleResponse({
+    type: ExtMessageType.SEQUENCE_FEATURES,
+    data: { requestId },
+  });
+  expect(await result).toBeNull();
+  service.dispose();
+  expect(post).toHaveBeenCalledTimes(2);
+});
+
+test("analysis timeout cancels host work and permits a retry", async () => {
+  jest.useFakeTimers();
+  try {
+    const post = jest.fn();
+    const rpc = new PageRpcClient(post);
+    const service = new SequenceFeatureService(makeAudioBuffer(44100), rpc);
+    const result = service.analyzeProfile();
+    const failed = expect(result).rejects.toThrow("timed out");
+    const oldId = post.mock.calls[0][0].data.requestId;
+    jest.advanceTimersByTime(10 * 60 * 1000);
+    await failed;
+    expect(post.mock.calls[1][0]).toEqual({
+      type: WebviewMessageType.CANCEL_ANALYSIS,
+      data: { requestId: oldId },
+    });
+    expect(
+      rpc.handleResponse({
+        type: ExtMessageType.SEQUENCE_FEATURES,
+        data: { requestId: oldId },
+      }),
+    ).toBe(false);
+    const next = service.analyzeProfile();
+    const requestId = post.mock.calls[2][0].data.requestId;
+    rpc.handleResponse({
+      type: ExtMessageType.SEQUENCE_FEATURES,
+      data: { requestId },
+    });
+    expect(await next).toBeNull();
+    service.dispose();
+    rpc.dispose();
+  } finally {
+    jest.useRealTimers();
+  }
 });

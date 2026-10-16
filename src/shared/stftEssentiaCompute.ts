@@ -35,6 +35,7 @@ export async function computeEssentiaStftSpectrogram(
   sampleRate: number,
   settings: StftSettingsWire,
   onProgress?: StftAnalysisProgress,
+  shouldCancel?: () => boolean,
 ): Promise<StftSpectrogramWire> {
   const { windowSize, windowType, hopSize } = settings;
   const minFreqIndex = 0;
@@ -67,6 +68,9 @@ export async function computeEssentiaStftSpectrogram(
       lastYieldMs = Date.now();
     }
 
+    if (shouldCancel?.()) {
+      throw new Error("STFT cancelled");
+    }
     const s = center - windowSize / 2;
     for (let j = 0; j < windowSize; j++) {
       const idx = s + j;

@@ -1,20 +1,14 @@
+import { PageRpcClient } from "./pageRpcClient";
 import {
   WebviewMessageType,
-  type ExtStftResultMessage,
-  type PostMessage,
+  ExtMessageType,
   type StftSettingsWireMessage,
 } from "../../message";
 import {
   stftWireToSpectrogram,
   type StftSettingsWire,
+  type StftSpectrogramWire,
 } from "../../shared/stftEssentiaCompute";
-
-interface PendingStft {
-  owner: EssentiaHostClient;
-  cacheKey: string;
-  resolve: (spectrogram: number[][] | null) => void;
-  reject: (err: Error) => void;
-}
 
 function stftCacheKey(
   ch: number,
@@ -38,45 +32,19 @@ function stftCacheKey(
 
 /** Webview client for Essentia STFT in Extension Host (CSP-safe). */
 export default class EssentiaHostClient {
-  private static _pending = new Map<string, PendingStft>();
+  private _requestIds = new Set<string>();
   private _cache = new Map<string, number[][]>();
   private _disposed = false;
 
-  constructor(private _postMessage: PostMessage) {}
-
-  public static handleExtensionResponse(msg: ExtStftResultMessage): void {
-    const pending = EssentiaHostClient._pending.get(msg.data.requestId);
-    if (!pending) {
-      return;
-    }
-    EssentiaHostClient._pending.delete(msg.data.requestId);
-    if (msg.data.error) {
-      pending.reject(new Error(msg.data.error));
-      return;
-    }
-    if (!msg.data.wire || !msg.data.cacheKey) {
-      pending.resolve(null);
-      return;
-    }
-    const spectrogram = stftWireToSpectrogram(msg.data.wire);
-    // The request owns the key and audio lifetime; never trust a late response
-    // to populate a different document's cache.
-    pending.owner._cache.set(pending.cacheKey, spectrogram);
-    if (pending.owner._cache.size > 4) {
-      pending.owner._cache.delete(pending.owner._cache.keys().next().value);
-    }
-    pending.resolve(spectrogram);
-  }
+  constructor(private _rpc: PageRpcClient) {}
 
   public dispose(): void {
     this._disposed = true;
     this._cache.clear();
-    for (const [id, pending] of EssentiaHostClient._pending) {
-      if (pending.owner === this) {
-        EssentiaHostClient._pending.delete(id);
-        pending.resolve(null);
-      }
+    for (const id of this._requestIds) {
+      this._rpc.cancel(id);
     }
+    this._requestIds.clear();
   }
 
   public getCached(
@@ -113,40 +81,50 @@ export default class EssentiaHostClient {
       return Promise.resolve(cached);
     }
 
-    const requestId =
-      typeof crypto !== "undefined" && "randomUUID" in crypto
-        ? crypto.randomUUID()
-        : `stft-${Date.now()}-${Math.random().toString(36).slice(2)}`;
-
     const samples = channelData.buffer.slice(
       channelData.byteOffset,
       channelData.byteOffset + channelData.byteLength,
     );
-
-    return new Promise((resolve, reject) => {
-      EssentiaHostClient._pending.set(requestId, {
-        resolve,
-        reject,
-        owner: this,
-        cacheKey,
-      });
-      try {
-        this._postMessage({
-          type: WebviewMessageType.ANALYZE_STFT,
-          data: {
-            requestId,
-            cacheKey,
-            channel: ch,
-            samples,
-            sampleRate,
-            settings: settings as StftSettingsWireMessage,
-          },
-        });
-      } catch (err) {
-        EssentiaHostClient._pending.delete(requestId);
-        reject(err);
-      }
-    });
+    let requestId = "";
+    return this._rpc
+      .request(
+        ExtMessageType.STFT_RESULT,
+        (id) => {
+          requestId = id;
+          this._requestIds.add(id);
+          return {
+            type: WebviewMessageType.ANALYZE_STFT,
+            data: {
+              requestId: id,
+              cacheKey,
+              channel: ch,
+              samples,
+              sampleRate,
+              settings: settings as StftSettingsWireMessage,
+            },
+          };
+        },
+        10 * 60 * 1000,
+        () => this._rpc.postCancellation(requestId),
+      )
+      .then((value) => {
+        if (this._disposed || !value) {
+          return null;
+        }
+        const spectrogram = stftWireToSpectrogram(value as StftSpectrogramWire);
+        this._cache.set(cacheKey, spectrogram);
+        if (this._cache.size > 4) {
+          this._cache.delete(this._cache.keys().next().value);
+        }
+        return spectrogram;
+      })
+      .catch((error) => {
+        if (this._disposed) {
+          return null;
+        }
+        throw error;
+      })
+      .finally(() => this._requestIds.delete(requestId));
   }
 }
 

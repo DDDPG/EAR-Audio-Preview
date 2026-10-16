@@ -1,3 +1,5 @@
+import { ComparisonLoudnessController } from "./comparisonLoudnessController";
+import { ComparisonFileLoader } from "./comparisonFileLoader";
 import {
   commonMeasurementRange,
   measureRms,
@@ -13,7 +15,7 @@ import { ComparisonMonitor } from "./comparisonMonitor";
 import { updateEarEqSlidingFocus } from "../utils/earEqSlidingFocus";
 import { ComparisonSettings } from "./comparisonSettings";
 import KeyboardShortcutsOverlayComponent from "../components/keyboardShortcuts/keyboardShortcutsOverlayComponent";
-import { StftCache } from "./stftCache";
+import { ComparisonStftController } from "./comparisonStftController";
 import { comparisonFrequencyAt } from "./stftSettings";
 import SettingsOverlayComponent from "../components/settingsOverlay/settingsOverlayComponent";
 import AnalyzeSettingsComponent from "../components/analyzeSettings/analyzeSettingsComponent";
@@ -23,17 +25,16 @@ import {
   ComparisonLiveView,
   createComparisonLiveSettings,
 } from "./comparisonLiveView";
-import AnalyzeSettingsService, {
-  inferFftWindowSamplesForTimeRange,
-} from "../services/analyzeSettingsService";
+import AnalyzeSettingsService from "../services/analyzeSettingsService";
 import HeadphoneEqSettingsService from "../services/headphoneEqSettingsService";
 import type {
-  ComparisonFile,
   ComparisonRequest,
   ComparisonResponse,
 } from "../../comparison/protocol";
 import {
   ComparisonSession,
+  comparisonChangeEffects,
+  type ComparisonChangeReason,
   type ComparisonTrack,
   type ComparisonPane,
   type StftLayout,
@@ -48,7 +49,6 @@ import {
   type StftTile,
 } from "./comparisonDsp";
 import { ComparisonWaveforms, canvasContext } from "./waveformStrip";
-import { createDecoder } from "../decoders/decoderFactory";
 import {
   ContextMenu,
   type ContextMenuItem,
@@ -59,58 +59,70 @@ import {
 } from "../components/editExport/wavFormatControls";
 import { renderMix, encodeRenderedWav } from "../services/wavExportFormat";
 import type { ExportChannelMode } from "../services/editExportSettingsService";
-import type { LoudnessProfile } from "../services/loudnessService";
-import { analyzeNativeLoudness } from "./loudnessAnalysis";
-import SequenceFeatureService, {
-  type SequenceFeatureProfile,
-} from "../services/sequenceFeatureService";
+import { PageRpcClient } from "../services/pageRpcClient";
 import { WebviewMessageType } from "../../message";
 import { setLoudnessWorkletModuleUrl } from "../utils/loudnessWorkletLoader";
 import { colorStftColumns } from "./stftColor";
 import { ComparisonAlignment } from "./comparisonAlignment";
 
-interface PendingRead {
-  file: ComparisonFile;
-  bytes?: Uint8Array;
-  offset: number;
-  resolve: (value: Uint8Array) => void;
-  reject: (reason: Error) => void;
-}
-interface Profile {
-  revision: number;
-  complete?: boolean;
-  loudness?: LoudnessProfile;
-  sequence?: SequenceFeatureProfile;
-  error?: string;
-}
-
 export class ComparisonApp {
   private readonly _alignment: ComparisonAlignment;
+  private readonly _rpc = new PageRpcClient((message) => {
+    if (WebviewMessageType.isAnalyzeSequenceFeatures(message)) {
+      this._loudness.postSequence(message);
+    } else if (WebviewMessageType.isCancelAnalysis(message)) {
+      this._post({
+        type: "compare.cancelSequence",
+        requestId: message.data.requestId,
+      });
+    } else if (
+      WebviewMessageType.isAutoEqRequest(message) ||
+      WebviewMessageType.isEqPresetOp(message) ||
+      WebviewMessageType.isSaveEqSettings(message) ||
+      WebviewMessageType.isWriteEqProfile(message)
+    ) {
+      this._post({ type: "compare.eq", message });
+    }
+  });
   public readonly session = new ComparisonSession();
   public readonly transport: ComparisonTransport;
   private readonly _waveforms = new ComparisonWaveforms(this.session);
   private readonly _menu = new ContextMenu();
   private readonly _format = new WavFormatControls({ bitDepth: 32 });
   private _analysis: ComparisonAnalysisClient | null = null;
+  private readonly _loader = new ComparisonFileLoader(
+    this.session,
+    (message) => this._post(message),
+    (message) => this.status(message),
+    () => this._analysisReady,
+    (id) => {
+      this.transport.pause();
+      this._analysis?.cancel(id);
+      this._profiles.delete(id);
+    },
+    (track) => this._waveforms.prepare(track),
+  );
   private _analysisReady: Promise<ComparisonAnalysisClient> | null = null;
   private _measurementBusy = false;
   private _measurementDialog: HTMLDialogElement | null = null;
   private _workerUrl: string | null = null;
   private _loudnessWorkerReady: Promise<string> | null = null;
   private _loudnessWorkerUrl: string | null = null;
-  private _profileAbort: AbortController | null = null;
-  private _profileSequence: SequenceFeatureService | null = null;
-  private _sequenceRequestId: string | null = null;
-  private _files = new Map<string, ComparisonFile>();
-  private _reads = new Map<string, PendingRead>();
-  private _confirmations = new Map<string, (accepted: boolean) => void>();
   private _exportRequests = new Map<
     string,
     (response: ComparisonResponse & { type: "compare.exported" }) => void
   >();
-  private _queue: Promise<void> = Promise.resolve();
-  private _profiles = new Map<string, Profile>();
-  private _profileBusy = false;
+  private readonly _loudness = new ComparisonLoudnessController(
+    this.session,
+    (message) => this._post(message),
+    (message) => this.status(message),
+    () => this._disposed,
+    (id) => this._loader.revision(id),
+    () => this._loudnessWorkerReady,
+    () => this.drawProfiles(),
+    this._rpc,
+  );
+  private readonly _profiles = this._loudness.profiles;
   private _settingsRevision = 0;
   private _visualRevision = 0;
   private _liveView: ComparisonLiveView | null = null;
@@ -123,9 +135,17 @@ export class ComparisonApp {
   private _liveBusy = false;
   private _desiredLiveTime: number | null = null;
   private _liveFrames = new Map<string, SpectrumFrame>();
-  private readonly _stftCache = new StftCache();
+  private readonly _stft = new ComparisonStftController(
+    this.session,
+    () => this._analysis,
+    () => this._disposed,
+    () => this._settingsRevision,
+    (bins) => this.options(bins),
+    (canvas) => this._surfaces.delete(canvas),
+    (canvas, tile, first, count) => this.drawTile(canvas, tile, first, count),
+    (message) => this.status(message),
+  );
   private _stftStructure = "";
-  private _stftAnalysisSignature = "";
   private _surfaces = new WeakMap<
     HTMLCanvasElement,
     { image: HTMLCanvasElement; pixels: ImageData }
@@ -145,7 +165,7 @@ export class ComparisonApp {
   private readonly _onPageHide = () => this.dispose();
   private readonly _onSessionChange = (event: Event) =>
     this.onStateChange(
-      (event as CustomEvent<{ reason: string }>).detail.reason,
+      (event as CustomEvent<{ reason: ComparisonChangeReason }>).detail.reason,
     );
   private _meterData = new Float32Array(2048);
   private _meterDataRight = new Float32Array(2048);
@@ -213,7 +233,7 @@ export class ComparisonApp {
       async (track) => {
         this._analysis?.cancel(track.id);
         this._profiles.delete(track.id);
-        this._stftCache.clear();
+        this._stft.clear();
         await this._waveforms.prepare(track);
         if (!this._disposed) {
           this.session.notify("loaded");
@@ -341,49 +361,40 @@ export class ComparisonApp {
     )) {
       button.onclick = () => {
         const pane = button.dataset.pane as ComparisonPane;
-        if (this.session.pane !== pane) {
-          this.session.pane = pane;
-          this.session.notify("pane");
-        }
+        this.session.setPane(pane);
       };
     }
     for (const key of ["window", "hop", "tilt", "weight"]) {
       this.element<HTMLInputElement>(`[data-${key}]`).onchange = () => {
-        this.session.windowMs = Math.min(
+        const windowMs = Math.min(
           320,
           Math.max(
             10,
             Number(this.element<HTMLInputElement>("[data-window]").value) || 80,
           ),
         );
-        this.session.hopMs = Math.min(
+        const hopMs = Math.min(
           200,
           Math.max(
             5,
             Number(this.element<HTMLInputElement>("[data-hop]").value) || 20,
           ),
         );
-        this.session.tiltDbPerOct = Math.min(
+        const tiltDbPerOct = Math.min(
           12,
           Math.max(
             -12,
             Number(this.element<HTMLInputElement>("[data-tilt]").value) || 0,
           ),
         );
-        this.session.weighting = this.element<HTMLSelectElement>(
-          "[data-weight]",
-        ).value as "none" | "a";
-        if (
-          this._liveSettings &&
-          this._liveSettings.liveSpectrumTiltDbPerOct !==
-            this.session.tiltDbPerOct
-        ) {
-          this._liveSettings.liveSpectrumTiltDbPerOct =
-            this.session.tiltDbPerOct;
-        }
-        this._settingsRevision++;
-        this._analysis?.cancel();
-        this.session.notify("settings");
+        const weighting = this.element<HTMLSelectElement>("[data-weight]")
+          .value as "none" | "a";
+        this.session.updateAnalysis({
+          windowMs,
+          hopMs,
+          tiltDbPerOct,
+          weighting,
+        });
       };
     }
     this._monitor = new ComparisonMonitor(
@@ -391,6 +402,7 @@ export class ComparisonApp {
       this.transport,
       this._headphoneEq,
       this._post,
+      this._rpc,
     );
     this.session.addEventListener("change", this._onSessionChange);
     window.addEventListener("message", this._onMessage);
@@ -488,213 +500,39 @@ export class ComparisonApp {
             });
         }
         setLoudnessWorkletModuleUrl(message.loudnessWorkletUri);
-        const delta = message.files.filter(
-          (file) => this._files.get(file.id)?.revision !== file.revision,
-        );
-        for (const file of delta) {
-          const pending = this._reads.get(file.id);
-          if (pending && pending.file.revision !== file.revision) {
-            this._reads.delete(file.id);
-            pending.reject(
-              new Error("Audio load superseded by a newer revision"),
-            );
-          }
-        }
-        message.files.forEach((file) => this._files.set(file.id, file));
-        this._queue = this._queue
-          .then(async () => {
-            await this._analysisReady;
-            await this.loadFiles(delta, message.initial);
-          })
-          .catch((error) => this.status(String(error)));
+        this._loader.receive(message);
         break;
       }
-      case "compare.data": {
-        const pending = this._reads.get(message.id);
-        if (
-          !pending ||
-          pending.file.revision !== message.revision ||
-          pending.offset !== message.offset
-        ) {
-          return;
-        }
-        pending.bytes ??= new Uint8Array(message.length);
-        const bytes = new Uint8Array(message.samples);
-        pending.bytes.set(bytes, message.offset);
-        pending.offset += bytes.length;
-        this.status(
-          `Loading ${pending.file.name} · ${Math.round((pending.offset / Math.max(1, message.length)) * 100)}%`,
-        );
-        if (pending.offset >= message.length) {
-          this._reads.delete(message.id);
-          pending.resolve(pending.bytes);
-        } else {
-          this._post({
-            type: "compare.read",
-            id: message.id,
-            revision: message.revision,
-            offset: pending.offset,
-          });
-        }
+      case "compare.data":
+        this._loader.receive(message);
         break;
-      }
       case "compare.changed":
         if (this.session.tracks.some((t) => t.id === message.id)) {
           this.session.markChanged(message.id);
         }
         break;
       case "compare.confirmed":
-        this._confirmations.get(message.requestId)?.(message.accepted);
-        this._confirmations.delete(message.requestId);
+        this._loader.receive(message);
         break;
       case "compare.exported":
         this._exportRequests.get(message.requestId)?.(message);
         this._exportRequests.delete(message.requestId);
         break;
       case "compare.sequenceResult":
-        SequenceFeatureService.handleExtensionResponse(message.message);
-        break;
-      case "compare.failure": {
-        const pending = this._reads.get(message.id);
-        if (
-          pending &&
-          (!message.revision || message.revision === pending.file.revision)
-        ) {
-          this._reads.delete(message.id);
-          pending.reject(new Error(message.message));
-        }
-        this.status(message.message);
-        break;
-      }
-    }
-  }
-  private async loadFiles(
-    files: ComparisonFile[],
-    initial: boolean,
-  ): Promise<void> {
-    const staged: Array<
-      Omit<ComparisonTrack, "color" | "active" | "muted" | "changed">
-    > = [];
-    for (const file of files) {
-      if (
-        this._disposed ||
-        this._files.get(file.id)?.revision !== file.revision
-      ) {
-        continue;
-      }
-      try {
-        const bytes = await new Promise<Uint8Array>((resolve, reject) => {
-          this._reads.set(file.id, { file, offset: 0, resolve, reject });
-          this._post({
-            type: "compare.read",
-            id: file.id,
-            revision: file.revision,
-            offset: 0,
-          });
+        this._rpc.handleResponse({
+          ...message.message,
+          data: {
+            ...message.message.data,
+            payload: message.message.data.profile,
+          },
         });
-        const decoder = await createDecoder(bytes, file.ext);
-        try {
-          if (decoder.numChannels < 1 || decoder.numChannels > 2) {
-            throw new Error("Comparison supports mono and stereo audio only");
-          }
-          const buffer = new AudioBuffer({
-            numberOfChannels: decoder.numChannels,
-            length: decoder.length,
-            sampleRate: decoder.sampleRate,
-          });
-          const channels = decoder.samples;
-          for (let channel = 0; channel < decoder.numChannels; channel++) {
-            buffer.copyToChannel(channels[channel], channel);
-          }
-          if (
-            this._disposed ||
-            this._files.get(file.id)?.revision !== file.revision
-          ) {
-            continue;
-          }
-          staged.push({
-            ...file,
-            buffer,
-            sourceSampleRate: decoder.sourceSampleRate ?? null,
-            bitDepth: decoder.bitDepth,
-          });
-        } finally {
-          decoder.dispose();
-        }
-      } catch (error) {
-        this.status(`${file.name}: ${String(error)}`);
-        if (
-          !this.session.tracks.some((t) => t.id === file.id) &&
-          this._files.get(file.id)?.revision === file.revision
-        ) {
-          this._files.delete(file.id);
-          this._post({ type: "compare.remove", id: file.id });
-        }
-      }
-    }
-    const unchanged = this.session.tracks.filter(
-      (t) => !staged.some((s) => s.id === t.id),
-    );
-    const all = [...unchanged, ...staged];
-    const rates = new Set(all.map((t) => t.buffer.sampleRate));
-    const warning =
-      rates.size > 1 ||
-      all.some(
-        (t) =>
-          !t.sourceSampleRate || t.sourceSampleRate !== t.buffer.sampleRate,
-      );
-    if (staged.length && warning) {
-      const requestId = `rates-${Date.now()}`;
-      const detail =
-        all
-          .map(
-            (t) =>
-              `${t.name}: ${t.sourceSampleRate ? `${t.sourceSampleRate} Hz source` : "source rate unknown"}; ${t.buffer.sampleRate} Hz decoded`,
-          )
-          .join("\n") +
-        "\n\nAnalysis retains each decoded rate. Playback adapts to the output device; export rate is selectable.";
-      const accepted = await new Promise<boolean>((resolve) => {
-        this._confirmations.set(requestId, resolve);
-        this._post({ type: "compare.confirm", requestId, detail });
-      });
-      if (!accepted) {
-        for (const track of staged) {
-          if (!this.session.tracks.some((t) => t.id === track.id)) {
-            this._files.delete(track.id);
-            this._post({ type: "compare.remove", id: track.id });
-          }
-        }
-        this.status("Comparison change cancelled");
-        return;
-      }
-    }
-    for (const track of staged) {
-      if (
-        this._disposed ||
-        this._files.get(track.id)?.revision !== track.revision
-      ) {
-        continue;
-      }
-      if (this.session.tracks.some((t) => t.id === track.id)) {
-        this.transport.pause();
-        this._analysis?.cancel(track.id);
-        this._profiles.delete(track.id);
-        this.session.replace(track.id, track);
-      } else {
-        this.session.add(track, initial);
-      }
-      await this._waveforms.prepare(
-        this.session.tracks.find((t) => t.id === track.id),
-      );
-    }
-    if (!this._disposed) {
-      this.session.notify("loaded");
-      this.status(
-        `${this.session.tracks.length} / ${comparisonTrackLimit} audio files · analysis uses original decoded signals`,
-      );
+        break;
+      case "compare.failure":
+        this._loader.receive(message);
+        break;
     }
   }
-  private onStateChange(reason: string): void {
+  private onStateChange(reason: ComparisonChangeReason): void {
     this.preserveScroll(() => this.applyStateChange(reason));
   }
   private preserveScroll(update: () => void): void {
@@ -717,12 +555,24 @@ export class ComparisonApp {
       }
     }
   }
-  private applyStateChange(reason: string): void {
+  private applyStateChange(reason: ComparisonChangeReason): void {
     if (this._disposed) {
       return;
     }
-    if (["tracks", "audio", "active", "pane"].includes(reason)) {
-      this.cancelProfiles();
+    const effects = comparisonChangeEffects(reason);
+    if (reason === "settings") {
+      this._settingsRevision++;
+      this._analysis?.cancel();
+      if (
+        this._liveSettings &&
+        this._liveSettings.liveSpectrumTiltDbPerOct !==
+          this.session.tiltDbPerOct
+      ) {
+        this._liveSettings.liveSpectrumTiltDbPerOct = this.session.tiltDbPerOct;
+      }
+    }
+    if (effects.cancelProfiles) {
+      this._loudness.cancelProfiles();
     }
     this._comparisonSettings?.sync();
     for (const [key, value] of [
@@ -740,7 +590,7 @@ export class ComparisonApp {
       exportButton.disabled =
         this._busyExport || !this.session.audibleTracks.length;
     }
-    if (["tracks", "audio", "active"].includes(reason)) {
+    if (effects.prune) {
       this._waveforms.prune();
       for (const id of new Set([
         ...this._profiles.keys(),
@@ -752,25 +602,14 @@ export class ComparisonApp {
         }
       }
     }
-    if (!["mute", "file", "selection"].includes(reason)) {
+    if (effects.waves) {
       this.renderWaves();
       const editWaves = this.element("[data-edit-waves]");
       if (editWaves) {
         this.renderWaves(editWaves);
       }
     }
-    if (
-      [
-        "tracks",
-        "audio",
-        "active",
-        "view",
-        "pane",
-        "settings",
-        "layout",
-        "display",
-      ].includes(reason)
-    ) {
+    if (effects.figures) {
       if (
         this.session.pane === "live" &&
         this._liveView &&
@@ -836,10 +675,7 @@ export class ComparisonApp {
           '[data-action="remove"]',
         ).onclick = () => {
           this._analysis?.cancel(track.id);
-          const pending = this._reads.get(track.id);
-          this._reads.delete(track.id);
-          this._files.delete(track.id);
-          pending?.reject(new Error("Audio load cancelled by removal"));
+          this._loader.remove(track.id);
           this.session.remove(track.id);
           this._post({ type: "compare.remove", id: track.id });
         };
@@ -868,7 +704,7 @@ export class ComparisonApp {
         !track.changed;
     }
     this.element<HTMLButtonElement>("[data-add]").disabled =
-      this._files.size >= comparisonTrackLimit;
+      this._loader.size >= comparisonTrackLimit;
     this.element<HTMLButtonElement>("[data-play]").disabled =
       !this.session.activeTracks.length;
   }
@@ -953,18 +789,7 @@ export class ComparisonApp {
       nativeSettings.hidden = this.session.pane !== "live";
     }
     ++this._visualRevision;
-    const analysisSignature =
-      this.session.pane === "stft"
-        ? JSON.stringify(this.session.activeTracks.map((t) => this._stftKey(t)))
-        : "";
-    if (
-      analysisSignature !== this._stftAnalysisSignature ||
-      this.session.pane !== "stft"
-    ) {
-      this._stftCache.cancelPending();
-      this._analysis?.cancel();
-      this._stftAnalysisSignature = analysisSignature;
-    }
+    this._stft.beginRender();
     this._liveView?.dispose();
     this._liveView = null;
     const root = this.element("[data-deck]");
@@ -1075,7 +900,7 @@ export class ComparisonApp {
           this.bindMenu(canvas.parentElement, true);
         }
         if (this.session.stft.visible && track.active) {
-          void this.loadStft(track, canvas);
+          void this._stft.loadStft(track, canvas);
         }
       }
     } else if (this.session.pane === "live") {
@@ -1173,157 +998,6 @@ export class ComparisonApp {
       weighting: this.session.weighting,
     };
   }
-  private stftOptions(track: ComparisonTrack): AnalysisOptions {
-    return {
-      ...this.options(this.session.stft.highResolution ? 512 : 256),
-      windowMs:
-        this.session.stft.windowSamples === -1
-          ? (inferFftWindowSamplesForTimeRange(
-              this.session.view.end - this.session.view.start,
-              track.buffer.sampleRate,
-              1200,
-            ) /
-              track.buffer.sampleRate) *
-            1000
-          : this.session.stft.windowSamples
-            ? (this.session.stft.windowSamples / track.buffer.sampleRate) * 1000
-            : this.session.windowMs,
-      fftBackend: this.session.stft.fftBackend,
-      windowType: this.session.stft.windowType,
-      frequencyScale: this.session.stft.frequencyScale,
-      hybridRatio: this.session.stft.hybridRatio,
-    };
-  }
-  private _stftKey(track: ComparisonTrack): string {
-    const { start, end } = this.session.view,
-      options = this.stftOptions(track);
-    const columns = Math.min(
-      1200,
-      Math.max(1, Math.ceil(((end - start) * 1000) / this.session.hopMs)),
-      1200,
-    );
-    return JSON.stringify([
-      track.id,
-      track.revision,
-      start,
-      end,
-      options,
-      this.session.hopMs,
-      columns,
-    ]);
-  }
-  private async loadStft(
-    track: ComparisonTrack,
-    canvas: HTMLCanvasElement,
-  ): Promise<void> {
-    const { start, end } = this.session.view,
-      options = this.stftOptions(track);
-    const columns = Math.min(
-      1200,
-      Math.max(1, Math.ceil(((end - start) * 1000) / this.session.hopMs)),
-      1200,
-    );
-    const key = this._stftKey(track);
-    if (canvas.dataset.requestedKey !== key) {
-      this._surfaces.delete(canvas);
-      delete canvas.dataset.drawnKey;
-    }
-    canvas.dataset.requestedKey = key;
-    const draw = (tile: StftTile, first = 0, count = tile.columns) => {
-      if (
-        !this._disposed &&
-        canvas.isConnected &&
-        canvas.dataset.requestedKey === key
-      ) {
-        this.drawTile(canvas, tile, first, count);
-      }
-    };
-    const colorKey = JSON.stringify([
-      key,
-      this.session.stft.dbLow,
-      this.session.stft.dbHigh,
-    ]);
-    if (canvas.dataset.drawnKey === colorKey) {
-      return;
-    }
-    const cached = this._stftCache.get(key);
-    if (cached) {
-      draw(cached);
-      canvas.dataset.drawnKey = colorKey;
-      return;
-    }
-    if (!this._analysis) {
-      return;
-    }
-    const audioRevision = track.revision;
-    const resultTile = await this._stftCache.load(key, async () => {
-      const values = new Float32Array(columns * options.bins);
-      values.fill(NaN);
-      const tile: StftTile = {
-        values,
-        columns,
-        bins: options.bins,
-        start,
-        end,
-      };
-      // A tile request only transfers a bounded segment, never the whole track.
-      const columnsPerChunk = Math.max(
-        1,
-        Math.floor((10 * columns) / Math.max(0.001, end - start)),
-      );
-      for (let first = 0; first < columns; first += columnsPerChunk) {
-        if (
-          this._disposed ||
-          track.revision !== audioRevision ||
-          !this.session.tracks.includes(track)
-        ) {
-          return null;
-        }
-        const count = Math.min(columnsPerChunk, columns - first);
-        const chunkStart = start + ((end - start) * first) / columns;
-        const chunkEnd = start + ((end - start) * (first + count)) / columns;
-        if (chunkStart >= track.buffer.duration) {
-          break;
-        }
-        const audio = sliceNativeWindow(
-          track.buffer,
-          chunkStart - options.windowMs / 1000,
-          chunkEnd + options.windowMs / 1000,
-        );
-        const result = await this._analysis.request({
-          kind: "stft",
-          trackId: track.id,
-          audioRevision: track.revision,
-          settingsRevision: this._settingsRevision,
-          audio,
-          options,
-          time: chunkStart,
-          end: chunkEnd,
-          columns: count,
-          hopMs: this.session.hopMs,
-        });
-        if (result?.error) {
-          this.status(`STFT analysis failed: ${result.error}`);
-        }
-        if (!result?.tile || track.revision !== audioRevision) {
-          return null;
-        }
-        values.set(result.tile.values, first * options.bins);
-        draw(tile, first, count);
-      }
-      return tile;
-    });
-    if (
-      resultTile &&
-      !this._disposed &&
-      canvas.isConnected &&
-      canvas.dataset.requestedKey === key
-    ) {
-      draw(resultTile);
-      canvas.dataset.drawnKey = colorKey;
-    }
-  }
-
   private drawTile(
     canvas: HTMLCanvasElement,
     tile: StftTile,
@@ -1612,7 +1286,7 @@ export class ComparisonApp {
       this.bindLoudnessHover(canvas);
     }
     this.drawProfiles();
-    void this.loadProfiles();
+    void this._loudness.loadProfiles();
   }
   private updateLoudnessSummary(): void {
     const host = this.element<HTMLElement>("[data-loudness-summary]");
@@ -1703,117 +1377,6 @@ export class ComparisonApp {
     canvas.addEventListener("mouseleave", () => {
       readout.textContent = "";
     });
-  }
-  private async loadProfiles(): Promise<void> {
-    if (this._profileBusy) {
-      return;
-    }
-    this._profileBusy = true;
-    try {
-      for (const track of this.session.activeTracks) {
-        if (this._disposed || this.session.pane !== "loudness") {
-          break;
-        }
-        if (
-          !this.session.tracks.some(
-            (t) =>
-              t.id === track.id && t.revision === track.revision && t.active,
-          )
-        ) {
-          continue;
-        }
-        if (
-          this._profiles.get(track.id)?.revision === track.revision &&
-          this._profiles.get(track.id)?.complete
-        ) {
-          continue;
-        }
-        const state: Profile = { revision: track.revision };
-        this._profiles.set(track.id, state);
-        const abort = new AbortController();
-        this._profileAbort = abort;
-        this.status(`Analyzing loudness and pitch · ${track.name}`);
-        try {
-          const sequence = new SequenceFeatureService(
-            track.buffer,
-            (message) => {
-              if (WebviewMessageType.isAnalyzeSequenceFeatures(message)) {
-                this._sequenceRequestId = message.data.requestId;
-                this._post({
-                  type: "compare.sequence",
-                  trackId: track.id,
-                  // Host cancellation follows the source file; caches use the
-                  // local audio revision so session alignment can invalidate them.
-                  revision:
-                    this._files.get(track.id)?.revision ?? track.revision,
-                  ...message.data,
-                });
-              }
-            },
-          );
-          this._profileSequence = sequence;
-          const url = await this._loudnessWorkerReady;
-          state.loudness = await analyzeNativeLoudness(
-            track.buffer,
-            url,
-            abort.signal,
-          );
-          if (
-            abort.signal.aborted ||
-            this._disposed ||
-            !this.session.tracks.some(
-              (t) =>
-                t.id === track.id && t.revision === state.revision && t.active,
-            )
-          ) {
-            sequence.dispose();
-            continue;
-          }
-          state.sequence = await sequence.analyzeProfile();
-          sequence.dispose();
-          state.complete = !abort.signal.aborted;
-        } catch (error) {
-          if (!abort.signal.aborted) {
-            state.error = String(error);
-            state.complete = true;
-            this.status(`${track.name}: ${state.error}`);
-          }
-        } finally {
-          this._profileSequence?.dispose();
-          this._profileSequence = null;
-          this._sequenceRequestId = null;
-          if (!state.complete && this._profiles.get(track.id) === state) {
-            this._profiles.delete(track.id);
-          }
-        }
-        if (!this._disposed && this.session.pane === "loudness") {
-          this.drawProfiles();
-        }
-      }
-    } finally {
-      this._profileBusy = false;
-      this._profileAbort = null;
-      if (
-        !this._disposed &&
-        this.session.pane === "loudness" &&
-        this.session.activeTracks.some((t) => {
-          const p = this._profiles.get(t.id);
-          return !p?.complete || p.revision !== t.revision;
-        })
-      ) {
-        void this.loadProfiles();
-      }
-    }
-  }
-  private cancelProfiles(): void {
-    this._profileAbort?.abort();
-    this._profileSequence?.dispose();
-    if (this._sequenceRequestId) {
-      this._post({
-        type: "compare.cancelSequence",
-        requestId: this._sequenceRequestId,
-      });
-    }
   }
   private drawProfiles(): void {
     this.updateLoudnessSummary();
@@ -2259,8 +1822,7 @@ export class ComparisonApp {
             label,
             checked: this.session.stftLayout === layout,
             action: () => {
-              this.session.stftLayout = layout as StftLayout;
-              this.session.notify("layout");
+              this.session.setStftLayout(layout as StftLayout);
             },
           });
         }
@@ -2403,7 +1965,7 @@ export class ComparisonApp {
     this._headphoneEq.dispose();
     this._liveView?.dispose();
     this._liveView = null;
-    this._stftCache.clear();
+    this._stft.clear();
     this._comparisonSettings.dispose();
     this._shortcuts.dispose();
     this._settingsOverlay.dispose();
@@ -2412,21 +1974,15 @@ export class ComparisonApp {
     this._liveSettings?.dispose();
     this._liveSettings = null;
     this._menu.dispose();
-    this.cancelProfiles();
+    this._loudness.cancelProfiles();
+    this._rpc.dispose();
     if (this._workerUrl) {
       URL.revokeObjectURL(this._workerUrl);
     }
     if (this._loudnessWorkerUrl) {
       URL.revokeObjectURL(this._loudnessWorkerUrl);
     }
-    for (const pending of this._reads.values()) {
-      pending.reject(new Error("Comparison closed"));
-    }
-    this._reads.clear();
-    for (const resolve of this._confirmations.values()) {
-      resolve(false);
-    }
-    this._confirmations.clear();
+    this._loader.dispose();
     for (const [requestId, resolve] of this._exportRequests) {
       resolve({ type: "compare.exported", requestId });
     }

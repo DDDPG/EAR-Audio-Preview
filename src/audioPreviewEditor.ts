@@ -1,3 +1,4 @@
+import { hostAnalysisTasks } from "./extensionHost/analysisTaskQueue";
 import * as path from "path";
 import * as vscode from "vscode";
 import { Disposable, disposeAll } from "./dispose";
@@ -136,6 +137,7 @@ export class AudioPreviewEditorProvider
 
   private readonly webviews = new WebviewCollection();
 
+  private readonly analysisTasks = hostAnalysisTasks;
   private readonly webviewLifetimes = new WeakMap<
     vscode.Webview,
     { active: boolean }
@@ -229,6 +231,9 @@ export class AudioPreviewEditorProvider
     listeners.push(
       document.onDidChange(async () => {
         try {
+          for (const panel of this.webviews.get(document.uri)) {
+            this.analysisTasks.cancel(panel.webview);
+          }
           if (!(await document.reload())) {
             return;
           }
@@ -245,7 +250,12 @@ export class AudioPreviewEditorProvider
       }),
     );
 
-    document.onDidDispose(() => disposeAll(listeners));
+    document.onDidDispose(() => {
+      for (const panel of this.webviews.get(document.uri)) {
+        this.analysisTasks.cancel(panel.webview);
+      }
+      disposeAll(listeners);
+    });
 
     return document;
   }
@@ -268,6 +278,7 @@ export class AudioPreviewEditorProvider
     const listeners: vscode.Disposable[] = [];
     const dispose = () => {
       lifetime.active = false;
+      this.analysisTasks.cancel(webview);
       disposeAll(listeners);
     };
     listeners.push(webviewPanel.onDidDispose(dispose));
@@ -528,28 +539,49 @@ export class AudioPreviewEditorProvider
         }
         break;
 
+      case WebviewMessageType.CANCEL_ANALYSIS:
+        if (WebviewMessageType.isCancelAnalysis(msg)) {
+          this.analysisTasks.cancel(webview, msg.data.requestId);
+        }
+        break;
+
       case WebviewMessageType.ANALYZE_SEQUENCE_FEATURES:
         if (WebviewMessageType.isAnalyzeSequenceFeatures(msg)) {
           const { requestId, samples, sampleRate, hopSec } = msg.data;
           const buf = samples as ArrayBuffer;
           const mono = new Float32Array(buf, 0, buf.byteLength / 4);
-          try {
-            const profile = await analyzeSequenceFeaturesInHost(
-              mono,
-              sampleRate,
-              hopSec,
-            );
-            this.postMessage(webview, {
-              type: ExtMessageType.SEQUENCE_FEATURES,
-              data: { requestId, profile: profile ?? undefined },
-            });
-          } catch (err) {
-            const message = err instanceof Error ? err.message : String(err);
-            this.postMessage(webview, {
-              type: ExtMessageType.SEQUENCE_FEATURES,
-              data: { requestId, error: message },
-            });
-          }
+          await this.analysisTasks.run(
+            webview,
+            requestId,
+            async (shouldCancel) => {
+              try {
+                const profile = await analyzeSequenceFeaturesInHost(
+                  mono,
+                  sampleRate,
+                  hopSec,
+                  undefined,
+                  shouldCancel,
+                );
+                if (shouldCancel()) {
+                  return;
+                }
+                this.postMessage(webview, {
+                  type: ExtMessageType.SEQUENCE_FEATURES,
+                  data: { requestId, profile: profile ?? undefined },
+                });
+              } catch (err) {
+                if (shouldCancel()) {
+                  return;
+                }
+                const message =
+                  err instanceof Error ? err.message : String(err);
+                this.postMessage(webview, {
+                  type: ExtMessageType.SEQUENCE_FEATURES,
+                  data: { requestId, error: message },
+                });
+              }
+            },
+          );
         }
         break;
 
@@ -559,27 +591,41 @@ export class AudioPreviewEditorProvider
             msg.data;
           const buf = samples as ArrayBuffer;
           const channelData = new Float32Array(buf, 0, buf.byteLength / 4);
-          try {
-            const wire = await analyzeStftInHost(
-              channelData,
-              sampleRate,
-              settings,
-            );
-            this.postMessage(webview, {
-              type: ExtMessageType.STFT_RESULT,
-              data: {
-                requestId,
-                cacheKey,
-                wire: wire ?? undefined,
-              },
-            });
-          } catch (err) {
-            const message = err instanceof Error ? err.message : String(err);
-            this.postMessage(webview, {
-              type: ExtMessageType.STFT_RESULT,
-              data: { requestId, cacheKey, error: message },
-            });
-          }
+          await this.analysisTasks.run(
+            webview,
+            requestId,
+            async (shouldCancel) => {
+              try {
+                const wire = await analyzeStftInHost(
+                  channelData,
+                  sampleRate,
+                  settings,
+                  shouldCancel,
+                );
+                if (shouldCancel()) {
+                  return;
+                }
+                this.postMessage(webview, {
+                  type: ExtMessageType.STFT_RESULT,
+                  data: {
+                    requestId,
+                    cacheKey,
+                    wire: wire ?? undefined,
+                  },
+                });
+              } catch (err) {
+                if (shouldCancel()) {
+                  return;
+                }
+                const message =
+                  err instanceof Error ? err.message : String(err);
+                this.postMessage(webview, {
+                  type: ExtMessageType.STFT_RESULT,
+                  data: { requestId, cacheKey, error: message },
+                });
+              }
+            },
+          );
         }
         break;
     }

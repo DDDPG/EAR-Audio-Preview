@@ -28,10 +28,8 @@ import SequenceFeatureService from "../../services/sequenceFeatureService";
 import EssentiaHostClient from "../../services/essentiaHostClient";
 import AutoEqHostClient from "../../services/autoEqHostClient";
 import EqPresetHostClient from "../../services/eqPresetHostClient";
-import {
-  bindAutoEqHost,
-  unbindAutoEqHost,
-} from "../../services/autoEqApiClient";
+import { AutoEqApiClient } from "../../services/autoEqApiClient";
+import { PageRpcClient } from "../../services/pageRpcClient";
 import { setLoudnessWorkletModuleUrl } from "../../utils/loudnessWorkletLoader";
 import { setActiveWorkspacePane } from "../../workspacePane";
 import { updateEarEqSlidingFocus } from "../../utils/earEqSlidingFocus";
@@ -72,6 +70,7 @@ export default class WebView extends Component {
   private _fileData: Uint8Array;
 
   private _postMessage: PostMessage;
+  private _rpc: PageRpcClient;
   private _createAudioContext: CreateAudioContext;
   private _createDecoder: CreateDecoder;
   private _fileExt: string = "";
@@ -106,6 +105,7 @@ export default class WebView extends Component {
 
   private initWebview() {
     this._isDisposed = false;
+    this._rpc = this._register(new PageRpcClient(this._postMessage));
     this._fileData = undefined;
 
     this._addEventlistener(
@@ -505,25 +505,31 @@ export default class WebView extends Component {
 
       case ExtMessageType.SEQUENCE_FEATURES:
         if (ExtMessageType.isSequenceFeatures(msg)) {
-          SequenceFeatureService.handleExtensionResponse(msg);
+          this._rpc.handleResponse({
+            ...msg,
+            data: { ...msg.data, payload: msg.data.profile },
+          });
         }
         break;
 
       case ExtMessageType.STFT_RESULT:
         if (ExtMessageType.isStftResult(msg)) {
-          EssentiaHostClient.handleExtensionResponse(msg);
+          this._rpc.handleResponse({
+            ...msg,
+            data: { ...msg.data, payload: msg.data.wire },
+          });
         }
         break;
 
       case ExtMessageType.AUTOEQ_RESULT:
         if (ExtMessageType.isAutoEqResult(msg)) {
-          AutoEqHostClient.handleExtensionResponse(msg);
+          this._rpc.handleResponse(msg);
         }
         break;
 
       case ExtMessageType.EQ_PRESET_OP_RESULT:
         if (ExtMessageType.isEqPresetOpResult(msg)) {
-          EqPresetHostClient.handleExtensionResponse(msg);
+          this._rpc.handleResponse(msg);
         }
         break;
     }
@@ -571,7 +577,7 @@ export default class WebView extends Component {
 
     const analyzeService = new AnalyzeService(audioBuffer);
     analyzeService.attachEssentiaHostClient(
-      this._register(new EssentiaHostClient(this._postMessage)),
+      this._register(new EssentiaHostClient(this._rpc)),
     );
     const loudnessService = new LoudnessService(audioBuffer);
     const analyzeSettingsService = AnalyzeSettingsService.fromDefaultSetting(
@@ -586,15 +592,11 @@ export default class WebView extends Component {
     headphoneEqSettings.loadPersisted(this._config.headphoneEq);
     this._disposables.push(headphoneEqSettings);
 
-    const autoEqHostClient = new AutoEqHostClient(this._postMessage);
-    bindAutoEqHost((req) => autoEqHostClient.request(req));
-    this._register({
-      dispose: () => {
-        unbindAutoEqHost();
-      },
-    });
-
-    const eqPresetHostClient = new EqPresetHostClient(this._postMessage);
+    const autoEqHostClient = new AutoEqHostClient(this._rpc);
+    const autoEqApi = this._register(
+      new AutoEqApiClient((request) => autoEqHostClient.request(request)),
+    );
+    const eqPresetHostClient = new EqPresetHostClient(this._rpc);
 
     const curveCorrectionOverlay = new CurveCorrectionOverlayComponent(
       "#curveCorrectionOverlayMount",
@@ -602,6 +604,7 @@ export default class WebView extends Component {
       decoder.sampleRate,
       this._postMessage,
       eqPresetHostClient,
+      autoEqApi,
     );
     this._disposables.push(curveCorrectionOverlay);
 
@@ -1043,7 +1046,7 @@ export default class WebView extends Component {
       }
       const sequenceFeatureService = new SequenceFeatureService(
         audioBuffer,
-        this._postMessage,
+        this._rpc,
       );
       this._disposables.push(sequenceFeatureService);
       loudnessGraphMount.removeAttribute("hidden");

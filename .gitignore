@@ -4,6 +4,8 @@
 /bench/current.json
 *.vsix
 /dist
+/artifacts
+/bench/demo-captures
 .vscode-test
 .cursor
 .claude
@@ -12,3 +14,5 @@ docs/*
 CLAUDE.md
 .DS_Store
 **/.DS_Store
+
+/bench/.competitor-cache

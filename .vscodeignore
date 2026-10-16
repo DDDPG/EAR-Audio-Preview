@@ -11,6 +11,10 @@ design-demo/
 .qoder/
 tmp_files/**
 bench/**
+assets/**
+scripts/**
+artifacts/**
+canvases/**
 .bench/**
 .cross-gan/**
 .tasks/**
@@ -21,6 +25,7 @@ tsconfig.bench.json
 .prettierrc
 .yarnrc
 CLAUDE.md
+AGENTS.md
 jest.config.js
 earlab.png
 **/.DS_Store

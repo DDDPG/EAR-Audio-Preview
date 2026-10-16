@@ -1,3 +1,4 @@
+import { comparisonTrackLimit } from "../../comparison/limits";
 import { defaultStftSettings } from "./stftSettings";
 export { comparisonColors, themeVariants } from "./trackTheme";
 import { comparisonColors } from "./trackTheme";
@@ -31,6 +32,20 @@ export class ComparisonSession extends EventTarget {
   private _tracks: ComparisonTrack[] = [];
   private _focus: string | null = null;
   private _revision = 0;
+  private _playbackGains = new Map<string, number>();
+  public playbackGain(id: string): number {
+    return this._playbackGains.get(id) ?? 1;
+  }
+  public setPlaybackGains(gains: Map<string, number>): void {
+    for (const [id, gain] of gains) {
+      this.find(id);
+      if (!Number.isFinite(gain) || gain < 0 || gain > 1) {
+        throw new Error("Invalid matching gain");
+      }
+    }
+    this._playbackGains = new Map(gains);
+    this.notify("gain");
+  }
   public view: ComparisonView = { start: 0, end: 0, minHz: 20, maxHz: 24000 };
   public selection = { start: 0, end: 0 };
   public readonly stft = defaultStftSettings();
@@ -77,8 +92,8 @@ export class ComparisonSession extends EventTarget {
     if (this._tracks.some((t) => t.uri === track.uri)) {
       throw new Error("This file is already in the comparison");
     }
-    if (this._tracks.length >= 4) {
-      throw new Error("A comparison supports at most four files");
+    if (this._tracks.length >= comparisonTrackLimit) {
+      throw new Error("A comparison supports at most eight files");
     }
     if (
       track.buffer.numberOfChannels < 1 ||
@@ -109,6 +124,7 @@ export class ComparisonSession extends EventTarget {
 
   public remove(id: string): void {
     const oldDuration = this.duration;
+    this._playbackGains.delete(id);
     this._tracks = this._tracks.filter((t) => t.id !== id);
     this.repairFocus();
     this.updateExtent(oldDuration);
@@ -124,6 +140,7 @@ export class ComparisonSession extends EventTarget {
   ): void {
     const oldDuration = this.duration;
     const track = this.find(id);
+    this._playbackGains.delete(id);
     Object.assign(track, audio, { changed: false });
     this.updateExtent(oldDuration);
     this.notify("audio");

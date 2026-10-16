@@ -1,3 +1,14 @@
+import {
+  commonMeasurementRange,
+  measureRms,
+  matchingGains,
+  measureResidual,
+} from "./comparisonMeasurements";
+import {
+  applyExportEq,
+  snapshotExportEq,
+} from "../services/headphoneEqService";
+import { comparisonTrackLimit } from "../../comparison/limits";
 import { ComparisonMonitor } from "./comparisonMonitor";
 import { updateEarEqSlidingFocus } from "../utils/earEqSlidingFocus";
 import { ComparisonSettings } from "./comparisonSettings";
@@ -82,6 +93,8 @@ export class ComparisonApp {
   private readonly _format = new WavFormatControls({ bitDepth: 32 });
   private _analysis: ComparisonAnalysisClient | null = null;
   private _analysisReady: Promise<ComparisonAnalysisClient> | null = null;
+  private _measurementBusy = false;
+  private _measurementDialog: HTMLDialogElement | null = null;
   private _workerUrl: string | null = null;
   private _loudnessWorkerReady: Promise<string> | null = null;
   private _loudnessWorkerUrl: string | null = null;
@@ -677,7 +690,7 @@ export class ComparisonApp {
     if (!this._disposed) {
       this.session.notify("loaded");
       this.status(
-        `${this.session.tracks.length} / 4 audio files · analysis uses original decoded signals`,
+        `${this.session.tracks.length} / ${comparisonTrackLimit} audio files · analysis uses original decoded signals`,
       );
     }
   }
@@ -793,6 +806,7 @@ export class ComparisonApp {
         item.className = "comparisonTrack";
         item.dataset.trackId = track.id;
         item.innerHTML = `<button class="comparisonTrack__active" data-action="active" aria-label="Participate in comparison"><span aria-hidden="true"></span></button><button class="comparisonTrack__name" data-action="focus"></button><div class="comparisonTrack__actions"><button class="comparisonTrack__icon" data-action="mute" aria-label="Mute track"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4z"/><path class="speakerOn" d="M15 8a6 6 0 0 1 0 8m3-11a10 10 0 0 1 0 14"/><path class="speakerOff" d="m16 9 5 6m0-6-5 6"/></svg></button><button class="comparisonTrack__icon" data-action="reload" aria-label="Reload changed source file" title="Reload changed source file" hidden>↻</button><button class="comparisonTrack__icon" data-action="remove" aria-label="Remove from comparison" title="Remove from comparison (does not delete file)">×</button></div>`;
+        this.bindMenu(item, false);
         const current = () =>
           this.session.tracks.find((t) => t.id === track.id);
         item.querySelector<HTMLButtonElement>(
@@ -822,7 +836,10 @@ export class ComparisonApp {
           '[data-action="remove"]',
         ).onclick = () => {
           this._analysis?.cancel(track.id);
+          const pending = this._reads.get(track.id);
+          this._reads.delete(track.id);
           this._files.delete(track.id);
+          pending?.reject(new Error("Audio load cancelled by removal"));
           this.session.remove(track.id);
           this._post({ type: "compare.remove", id: track.id });
         };
@@ -835,7 +852,7 @@ export class ComparisonApp {
         '[data-action="focus"]',
       );
       name.textContent = track.name;
-      name.title = `${track.name}\n${track.buffer.sampleRate / 1000} kHz · ${track.buffer.numberOfChannels === 1 ? "mono" : "stereo"} · ${track.buffer.duration.toFixed(2)} s`;
+      name.title = `${track.name}\nRMS match: ${(20 * Math.log10(this.session.playbackGain(track.id))).toFixed(2)} dB\n${track.buffer.sampleRate / 1000} kHz · ${track.buffer.numberOfChannels === 1 ? "mono" : "stereo"} · ${track.buffer.duration.toFixed(2)} s`;
       const active = item.querySelector<HTMLButtonElement>(
         '[data-action="active"]',
       );
@@ -851,7 +868,7 @@ export class ComparisonApp {
         !track.changed;
     }
     this.element<HTMLButtonElement>("[data-add]").disabled =
-      this._files.size >= 4;
+      this._files.size >= comparisonTrackLimit;
     this.element<HTMLButtonElement>("[data-play]").disabled =
       !this.session.activeTracks.length;
   }
@@ -991,7 +1008,7 @@ export class ComparisonApp {
           ? 1
           : this.session.stftLayout === "row"
             ? count
-            : count === 4
+            : count >= 4
               ? 2
               : count;
       grid.style.setProperty("--columns", String(columns));
@@ -1484,7 +1501,7 @@ export class ComparisonApp {
       this._busyExport || !this.session.audibleTracks.length;
     const hint = document.createElement("p");
     hint.textContent =
-      "Exports active, unmuted sources. Mono is center-panned at −3.01 dB per channel. Master volume and headphone monitoring are excluded.";
+      "Exports active, unmuted sources. Mono is center-panned at −3.01 dB per channel. RMS matching gains are included. Master volume is excluded; headphone EQ is optional.";
     root.append(hint);
     // This is the same waveform strip as the overview, not a second implementation.
     const waves = document.createElement("div");
@@ -1527,6 +1544,9 @@ export class ComparisonApp {
             controls.querySelector<HTMLInputElement>("[data-export-lpf]").value,
           );
       this.status("Rendering selected mix…");
+      const eq = this._format.applyHeadphoneEq
+        ? snapshotExportEq(this._headphoneEq)
+        : undefined;
       const rendered = await renderMix(
         tracks.map((track) => track.buffer),
         start,
@@ -1534,9 +1554,11 @@ export class ComparisonApp {
         rate,
         { enableHpf: hpf > 0, hpfHz: hpf, enableLpf: lpf > 0, lpfHz: lpf },
         true,
+        tracks.map((track) => this.session.playbackGain(track.id)),
       );
+      const processed = await applyExportEq(rendered, eq);
       const bytes = await encodeRenderedWav(
-        rendered,
+        processed,
         format,
         null,
         chooseOverload,
@@ -1645,7 +1667,7 @@ export class ComparisonApp {
         ((event.clientX - rect.left) / Math.max(1, rect.width)) *
           (this.session.view.end - this.session.view.start);
       const feature = canvas.dataset.feature;
-      const parts: string[] = [`${time.toFixed(2)} s`];
+      readout.replaceChildren(document.createTextNode(`${time.toFixed(2)} s`));
       for (const track of this.session.activeTracks) {
         const profile = this._profiles.get(track.id);
         if (!profile?.complete) {
@@ -1671,12 +1693,12 @@ export class ComparisonApp {
           }
         }
         if (text) {
-          parts.push(
-            `<span style="color:${variants.base}">${track.name}</span> ${text}`,
-          );
+          const name = document.createElement("span");
+          name.style.color = variants.base;
+          name.textContent = track.name;
+          readout.append(" · ", name, ` ${text}`);
         }
       }
-      readout.innerHTML = parts.join(" · ");
     });
     canvas.addEventListener("mouseleave", () => {
       readout.textContent = "";
@@ -2080,6 +2102,150 @@ export class ComparisonApp {
       to.value = String(selected.end);
     }
   }
+  private async runMeasurement(residual: boolean): Promise<void> {
+    if (this._measurementBusy || this._disposed) {
+      return;
+    }
+    this._measurementBusy = true;
+    // Snapshot inputs because replacing a file mutates its existing track object.
+    const tracks = this.session.activeTracks.map((track) => ({
+      id: track.id,
+      name: track.name,
+      revision: track.revision,
+      buffer: track.buffer,
+      gain: this.session.playbackGain(track.id),
+    }));
+    const selection = { ...this.session.selection };
+    const reference = tracks.find(
+      (track) => track.id === this.session.focus?.id,
+    );
+    const cancelled = () => {
+      if (
+        this._disposed ||
+        this.session.selection.start !== selection.start ||
+        this.session.selection.end !== selection.end ||
+        (residual && this.session.focus?.id !== reference?.id)
+      ) {
+        return true;
+      }
+      const current = this.session.activeTracks;
+      return (
+        current.length !== tracks.length ||
+        tracks.some(
+          (track) =>
+            !current.some(
+              (item) =>
+                item.id === track.id &&
+                item.revision === track.revision &&
+                item.buffer === track.buffer,
+            ) ||
+            (residual && this.session.playbackGain(track.id) !== track.gain),
+        )
+      );
+    };
+    try {
+      if (tracks.length < 2 || (residual && !reference)) {
+        return;
+      }
+      const range = commonMeasurementRange(
+        tracks.map((t) => t.buffer),
+        selection,
+      );
+      this.status(
+        residual ? "Measuring residuals…" : "Measuring shared-region RMS…",
+      );
+      if (!residual) {
+        const levels: number[] = [];
+        for (const track of tracks) {
+          levels.push(await measureRms(track.buffer, range, cancelled));
+          await new Promise<void>((resolve) => setTimeout(resolve, 0));
+        }
+        if (cancelled()) {
+          throw new Error("Measurement cancelled: comparison changed");
+        }
+        const gains = matchingGains(levels);
+        this.session.setPlaybackGains(
+          new Map(tracks.map((track, i) => [track.id, gains[i]])),
+        );
+        this.status(
+          `RMS matched over ${range.start.toFixed(2)}–${range.end.toFixed(2)} s · ${tracks.map((track, i) => `${track.name}: ${(20 * Math.log10(gains[i])).toFixed(2)} dB`).join(" · ")}`,
+        );
+      } else {
+        const rows: string[][] = [];
+        const db = (value: number) =>
+          Number.isNaN(value)
+            ? "n/a"
+            : value === -Infinity
+              ? "−∞"
+              : value.toFixed(2);
+        for (const track of tracks.filter((t) => t !== reference)) {
+          if (track.buffer.sampleRate !== reference.buffer.sampleRate) {
+            rows.push([track.name, "Different sample rate", "—", "—"]);
+            continue;
+          }
+          const result = await measureResidual(
+            reference.buffer,
+            track.buffer,
+            range,
+            reference.gain,
+            track.gain,
+            cancelled,
+          );
+          await new Promise<void>((resolve) => setTimeout(resolve, 0));
+          rows.push([
+            track.name,
+            db(result.rmsDbfs),
+            db(result.peakDbfs),
+            db(result.relativeDb),
+          ]);
+        }
+        if (cancelled()) {
+          throw new Error("Measurement cancelled: comparison changed");
+        }
+        this._measurementDialog?.remove();
+        const dialog = document.createElement("dialog");
+        this._measurementDialog = dialog;
+        dialog.className = "earExportDialog comparisonResidualDialog";
+        dialog.setAttribute("aria-label", "Residual measurements");
+        const title = document.createElement("h3");
+        title.textContent = `Residual vs ${reference.name}`;
+        const hint = document.createElement("p");
+        hint.textContent = `${range.start.toFixed(2)}–${range.end.toFixed(2)} s · current RMS matching gains · same timeline positions, no automatic alignment.`;
+        const table = document.createElement("table");
+        for (const [i, row] of [
+          ["File", "RMS dBFS", "Peak dBFS", "Relative dB"],
+          ...rows,
+        ].entries()) {
+          const tr = document.createElement("tr");
+          for (const value of row) {
+            const cell = document.createElement(i === 0 ? "th" : "td");
+            cell.textContent = value;
+            tr.append(cell);
+          }
+          table.append(tr);
+        }
+        const close = document.createElement("button");
+        close.textContent = "Close";
+        close.onclick = () => dialog.close();
+        dialog.onclose = () => {
+          dialog.remove();
+          if (this._measurementDialog === dialog) {
+            this._measurementDialog = null;
+          }
+        };
+        dialog.append(title, hint, table, close);
+        document.body.append(dialog);
+        dialog.showModal();
+        this.status("Residual measurements ready");
+      }
+    } catch (error) {
+      if (!this._disposed) {
+        this.status(String(error));
+      }
+    } finally {
+      this._measurementBusy = false;
+    }
+  }
   private bindMenu(target: HTMLElement, stft: boolean): void {
     target.oncontextmenu = (event) => {
       const items: ContextMenuItem[] = [];
@@ -2127,6 +2293,21 @@ export class ComparisonApp {
       items.push({
         label: "Reset view",
         action: () => this.session.resetView(),
+      });
+      if (this.session.activeTracks.length > 1) {
+        items.push({
+          label: "Match RMS levels (shared region)",
+          separator: true,
+          action: () => void this.runMeasurement(false),
+        });
+        items.push({
+          label: "Measure residual vs focused file…",
+          action: () => void this.runMeasurement(true),
+        });
+      }
+      items.push({
+        label: "Reset matching gains",
+        action: () => this.session.setPlaybackGains(new Map()),
       });
       this._menu.open(event, items);
     };
@@ -2218,6 +2399,7 @@ export class ComparisonApp {
     this.transport.dispose();
     this._waveforms.dispose();
     this._monitor.dispose();
+    this._measurementDialog?.remove();
     this._headphoneEq.dispose();
     this._liveView?.dispose();
     this._liveView = null;

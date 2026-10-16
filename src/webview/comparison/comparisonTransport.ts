@@ -44,7 +44,7 @@ export class ComparisonTransport extends EventTarget implements ITransport {
   private _eqSettings: HeadphoneEqSettingsService | null = null;
   private readonly _onChange = (event: Event) => {
     const reason = (event as CustomEvent<{ reason: string }>).detail.reason;
-    if (["tracks", "audio", "active", "mute"].includes(reason)) {
+    if (["tracks", "audio", "active", "mute", "gain"].includes(reason)) {
       if (
         this._playing &&
         (!this.session.activeTracks.length ||
@@ -284,11 +284,7 @@ export class ComparisonTransport extends EventTarget implements ITransport {
         const source = this.context.createBufferSource();
         source.buffer = track.buffer;
         const gain = this.context.createGain();
-        gain.gain.value = track.muted
-          ? 0
-          : track.buffer.numberOfChannels === 1
-            ? Math.SQRT1_2
-            : 1;
+        gain.gain.value = this.trackGain(track.id);
         source.connect(gain).connect(this._bus);
         entry = { source, gain, revision: track.revision };
         this._sources.set(track.id, entry);
@@ -296,16 +292,19 @@ export class ComparisonTransport extends EventTarget implements ITransport {
       }
       if (entry) {
         entry.gain.gain.setTargetAtTime(
-          track.muted
-            ? 0
-            : track.buffer.numberOfChannels === 1
-              ? Math.SQRT1_2
-              : 1,
+          this.trackGain(track.id),
           this.context.currentTime,
           0.003,
         );
       }
     }
+  }
+  private trackGain(id: string): number {
+    const track = this.session.tracks.find((t) => t.id === id);
+    return !track || track.muted
+      ? 0
+      : this.session.playbackGain(id) *
+          (track.buffer.numberOfChannels === 1 ? Math.SQRT1_2 : 1);
   }
   private stopSource(id: string): void {
     const entry = this._sources.get(id);

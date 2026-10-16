@@ -1,4 +1,5 @@
 import { NativeSpectrum } from "./comparisonDsp";
+import type { AnalysisOptions } from "./comparisonDsp";
 const options = {
   windowMs: 100,
   minHz: 1000,
@@ -97,3 +98,39 @@ test.each([
     expect(frame.db[1]).toBeGreaterThan(frame.db[2] + 20);
   },
 );
+
+test("reusing a spectrum engine across settings and rate changes matches fresh analysis", () => {
+  const engine = new NativeSpectrum();
+  for (const sampleRate of [44100, 48000, 96000, 192000, 48000]) {
+    const left = Float32Array.from(
+      { length: sampleRate / 2 },
+      (_, i) => Math.sin((2 * Math.PI * 997 * i) / sampleRate) * 0.25,
+    );
+    const audio = { left, sampleRate, origin: 0.125 };
+    for (const windowMs of [8, 80, 320]) {
+      for (const weighting of ["none", "a"] as const) {
+        const config: AnalysisOptions = {
+          ...options,
+          windowMs,
+          minHz: 10,
+          maxHz: 96000,
+          bins: 256,
+          tiltDbPerOct: weighting === "a" ? -3 : 6,
+          weighting,
+          frequencyScale: weighting === "a" ? "hybrid" : "log",
+          hybridRatio: 0.7,
+        };
+        const expected = new NativeSpectrum().compute(audio, 0.4, config);
+        for (const time of [0.4, 0.4]) {
+          const actual = engine.compute(audio, time, config);
+          for (const key of ["db", "rho", "polarL", "polarR"] as const) {
+            expect(new Uint8Array(actual[key].buffer)).toEqual(
+              new Uint8Array(expected[key].buffer),
+            );
+          }
+          expect(actual.broadbandRho).toBe(expected.broadbandRho);
+        }
+      }
+    }
+  }
+});

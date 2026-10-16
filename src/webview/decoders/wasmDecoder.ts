@@ -7,6 +7,29 @@ type WasmDecoderResult = {
   sampleRate: number;
 };
 
+type DecoderWorker = {
+  ready: Promise<unknown>;
+  decode(data: Uint8Array): WasmDecoderResult | Promise<WasmDecoderResult>;
+  free(): void | Promise<void>;
+};
+
+async function decodeAndFree(
+  decoder: DecoderWorker,
+  data: Uint8Array,
+): Promise<WasmDecoderResult> {
+  try {
+    await decoder.ready;
+    const result = await decoder.decode(data);
+    await decoder.free();
+    return result;
+  } catch (error) {
+    // All four implementations inherit WASMAudioDecoderWorker (Worker).
+    // free() waits for a worker reply; a failed worker may never reply.
+    (decoder as unknown as Worker).terminate();
+    throw error;
+  }
+}
+
 /* eslint-disable @typescript-eslint/naming-convention */
 async function decodeWithWasm(
   data: Uint8Array,
@@ -17,20 +40,14 @@ async function decodeWithWasm(
     if (lowerExt === "mp3") {
       const { MPEGDecoderWebWorker } = await import("mpg123-decoder");
       const decoder = new MPEGDecoderWebWorker();
-      await decoder.ready;
-      const result = await decoder.decode(data);
-      await decoder.free();
-      return result;
+      return await decodeAndFree(decoder, data);
     }
     if (lowerExt === "flac") {
       const { FLACDecoderWebWorker } = await import(
         "@wasm-audio-decoders/flac"
       );
       const decoder = new FLACDecoderWebWorker();
-      await decoder.ready;
-      const result = await decoder.decode(data);
-      await decoder.free();
-      return result;
+      return await decodeAndFree(decoder, data);
     }
     if (lowerExt === "ogg") {
       // Try Vorbis first, fall back to Opus
@@ -39,35 +56,18 @@ async function decodeWithWasm(
           "@wasm-audio-decoders/ogg-vorbis"
         );
         const decoder = new OggVorbisDecoderWebWorker();
-        await decoder.ready;
-        const result = await decoder.decode(data);
-        await decoder.free();
-        return result;
+        return await decodeAndFree(decoder, data);
       } catch {
         const { OggOpusDecoderWebWorker } = await import("ogg-opus-decoder");
         const decoder = new OggOpusDecoderWebWorker();
-        await decoder.ready;
         // ogg-opus-decoder's decode signature varies; cast to access it
-        const result = await (
-          decoder as unknown as {
-            decode: (d: Uint8Array) => Promise<WasmDecoderResult>;
-          }
-        ).decode(data);
-        await decoder.free();
-        return result;
+        return await decodeAndFree(decoder as unknown as DecoderWorker, data);
       }
     }
     if (lowerExt === "opus") {
       const { OggOpusDecoderWebWorker } = await import("ogg-opus-decoder");
       const decoder = new OggOpusDecoderWebWorker();
-      await decoder.ready;
-      const result = await (
-        decoder as unknown as {
-          decode: (d: Uint8Array) => Promise<WasmDecoderResult>;
-        }
-      ).decode(data);
-      await decoder.free();
-      return result;
+      return await decodeAndFree(decoder as unknown as DecoderWorker, data);
     }
   } catch {
     return null;

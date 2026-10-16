@@ -4,6 +4,10 @@ export const comparisonColors = [
   "#00b4d8",
   "#ff9800",
   "#c77dff",
+  "#ff6685",
+  "#e2cf4a",
+  "#61d4bf",
+  "#859dff",
 ] as const;
 
 export interface TrackThemeVariants {

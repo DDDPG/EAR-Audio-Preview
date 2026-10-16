@@ -53,6 +53,7 @@ class AudioPreviewDocument extends Disposable implements vscode.CustomDocument {
 
   private readonly _uri: vscode.Uri;
   private _documentData: Uint8Array;
+  private _reloadGeneration = 0;
   public get documentData() {
     return this._documentData;
   }
@@ -62,11 +63,8 @@ class AudioPreviewDocument extends Disposable implements vscode.CustomDocument {
     super();
     this._uri = uri;
     this._documentData = initialContent;
-    this._fsWatcher = vscode.workspace.createFileSystemWatcher(
-      uri.fsPath,
-      true,
-      false,
-      true,
+    this._fsWatcher = this._register(
+      vscode.workspace.createFileSystemWatcher(uri.fsPath, true, false, true),
     );
     this.onDidChange = this._fsWatcher.onDidChange;
   }
@@ -77,8 +75,25 @@ class AudioPreviewDocument extends Disposable implements vscode.CustomDocument {
 
   public onDidChange: vscode.Event<vscode.Uri>;
 
-  public async reload() {
-    this._documentData = await AudioPreviewDocument.readFile(this.uri);
+  public async reload(): Promise<boolean> {
+    if (this._isDisposed) {
+      return false;
+    }
+    const generation = ++this._reloadGeneration;
+    let data: Uint8Array;
+    try {
+      data = await AudioPreviewDocument.readFile(this.uri);
+    } catch (error) {
+      if (this._isDisposed || generation !== this._reloadGeneration) {
+        return false;
+      }
+      throw error;
+    }
+    if (this._isDisposed || generation !== this._reloadGeneration) {
+      return false;
+    }
+    this._documentData = data;
+    return true;
   }
 
   private readonly _onDidDispose = this._register(
@@ -92,6 +107,10 @@ class AudioPreviewDocument extends Disposable implements vscode.CustomDocument {
    * This happens when all editors for it have been closed.
    */
   dispose(): void {
+    if (this._isDisposed) {
+      return;
+    }
+    this._reloadGeneration++;
     this._onDidDispose.fire();
     super.dispose();
   }
@@ -116,6 +135,11 @@ export class AudioPreviewEditorProvider
   private static readonly viewType = "earAudioPreview.audioPreview";
 
   private readonly webviews = new WebviewCollection();
+
+  private readonly webviewLifetimes = new WeakMap<
+    vscode.Webview,
+    { active: boolean }
+  >();
 
   constructor(private readonly _context: vscode.ExtensionContext) {}
 
@@ -204,11 +228,19 @@ export class AudioPreviewEditorProvider
 
     listeners.push(
       document.onDidChange(async () => {
-        await document.reload();
-        for (const webviewPanel of this.webviews.get(document.uri)) {
-          this.postMessage(webviewPanel.webview, {
-            type: ExtMessageType.RELOAD,
-          });
+        try {
+          if (!(await document.reload())) {
+            return;
+          }
+          for (const webviewPanel of this.webviews.get(document.uri)) {
+            this.postMessage(webviewPanel.webview, {
+              type: ExtMessageType.RELOAD,
+            });
+          }
+        } catch (error) {
+          for (const webviewPanel of this.webviews.get(document.uri)) {
+            this.reportWebviewError(webviewPanel.webview, error);
+          }
         }
       }),
     );
@@ -221,43 +253,62 @@ export class AudioPreviewEditorProvider
   async resolveCustomEditor(
     document: AudioPreviewDocument,
     webviewPanel: vscode.WebviewPanel,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    _token: vscode.CancellationToken,
+    token: vscode.CancellationToken,
   ): Promise<void> {
+    if (token.isCancellationRequested) {
+      return;
+    }
     // Add the webview to our internal set of active webviews
     this.webviews.add(document.uri, webviewPanel);
 
     // Setup initial content for the webview
-    webviewPanel.webview.options = {
+    const webview = webviewPanel.webview;
+    const lifetime = { active: true };
+    this.webviewLifetimes.set(webview, lifetime);
+    const listeners: vscode.Disposable[] = [];
+    const dispose = () => {
+      lifetime.active = false;
+      disposeAll(listeners);
+    };
+    listeners.push(webviewPanel.onDidDispose(dispose));
+    listeners.push(token.onCancellationRequested(dispose));
+    webview.options = {
       enableScripts: true,
     };
-    webviewPanel.webview.html = this.getHtmlForWebview(webviewPanel.webview);
+    webview.html = this.getHtmlForWebview(webview);
 
     // Wait for the webview to be properly ready before we init
-    webviewPanel.webview.onDidReceiveMessage(async (msg: WebviewMessage) => {
-      try {
-        await this.onReceiveMessage(msg, webviewPanel, document);
-      } catch (err) {
-        const message = err instanceof Error ? err.message : String(err);
-        vscode.window.showErrorMessage(message);
-      }
-    });
+    listeners.push(
+      webview.onDidReceiveMessage(async (msg: WebviewMessage) => {
+        if (!lifetime.active) {
+          return;
+        }
+        try {
+          await this.onReceiveMessage(msg, webview, document);
+        } catch (err) {
+          this.reportWebviewError(webview, err);
+        }
+      }),
+    );
   }
 
   private async onReceiveMessage(
     msg: WebviewMessage,
-    webviewPanel: vscode.WebviewPanel,
+    webview: vscode.Webview,
     document: AudioPreviewDocument,
   ) {
     switch (msg.type) {
       case WebviewMessageType.CONFIG: {
         const headphoneEq = await this.loadHeadphoneEqState(document);
+        if (!this.webviewLifetimes.get(webview)?.active) {
+          return;
+        }
         const data = {
           ...this.buildWebviewConfig(document),
           headphoneEq,
           onboardingSeen:
             this._context.globalState.get(onboardingSeenKey) === true,
-          loudnessWorkletUri: webviewPanel.webview
+          loudnessWorkletUri: webview
             .asWebviewUri(
               vscode.Uri.joinPath(
                 this._context.extensionUri,
@@ -267,7 +318,7 @@ export class AudioPreviewEditorProvider
             )
             .toString(),
         };
-        this.postMessage(webviewPanel.webview, {
+        this.postMessage(webview, {
           type: ExtMessageType.CONFIG,
           data,
         });
@@ -304,7 +355,7 @@ export class AudioPreviewEditorProvider
           const samples = new Uint8Array(dd.slice(msg.data.start, msg.data.end))
             .buffer;
 
-          this.postMessage(webviewPanel.webview, {
+          this.postMessage(webview, {
             type: ExtMessageType.DATA,
             data: {
               samples: samples,
@@ -322,10 +373,7 @@ export class AudioPreviewEditorProvider
           const destination = msg.data.destination ?? "workspace_root";
           let wavUri: vscode.Uri;
           if (destination === "source_dir") {
-            wavUri = vscode.Uri.joinPath(
-              vscode.Uri.file(path.dirname(document.uri.fsPath)),
-              msg.data.filename,
-            );
+            wavUri = vscode.Uri.joinPath(document.uri, "..", msg.data.filename);
           } else {
             const dir = vscode.workspace.getWorkspaceFolder(document.uri);
             if (!dir) {
@@ -393,13 +441,13 @@ export class AudioPreviewEditorProvider
             } else {
               throw new Error("AutoEq equalize request missing body");
             }
-            this.postMessage(webviewPanel.webview, {
+            this.postMessage(webview, {
               type: ExtMessageType.AUTOEQ_RESULT,
               data: { requestId, endpoint, payload },
             });
           } catch (err) {
             const message = err instanceof Error ? err.message : String(err);
-            this.postMessage(webviewPanel.webview, {
+            this.postMessage(webview, {
               type: ExtMessageType.AUTOEQ_RESULT,
               data: { requestId, endpoint, error: message },
             });
@@ -460,13 +508,13 @@ export class AudioPreviewEditorProvider
               default:
                 throw new Error(`Unknown EQ preset op: ${op}`);
             }
-            this.postMessage(webviewPanel.webview, {
+            this.postMessage(webview, {
               type: ExtMessageType.EQ_PRESET_OP_RESULT,
               data: { requestId, payload: result },
             });
           } catch (err) {
             const message = err instanceof Error ? err.message : String(err);
-            this.postMessage(webviewPanel.webview, {
+            this.postMessage(webview, {
               type: ExtMessageType.EQ_PRESET_OP_RESULT,
               data: { requestId, error: message },
             });
@@ -491,13 +539,13 @@ export class AudioPreviewEditorProvider
               sampleRate,
               hopSec,
             );
-            this.postMessage(webviewPanel.webview, {
+            this.postMessage(webview, {
               type: ExtMessageType.SEQUENCE_FEATURES,
               data: { requestId, profile: profile ?? undefined },
             });
           } catch (err) {
             const message = err instanceof Error ? err.message : String(err);
-            this.postMessage(webviewPanel.webview, {
+            this.postMessage(webview, {
               type: ExtMessageType.SEQUENCE_FEATURES,
               data: { requestId, error: message },
             });
@@ -517,7 +565,7 @@ export class AudioPreviewEditorProvider
               sampleRate,
               settings,
             );
-            this.postMessage(webviewPanel.webview, {
+            this.postMessage(webview, {
               type: ExtMessageType.STFT_RESULT,
               data: {
                 requestId,
@@ -527,7 +575,7 @@ export class AudioPreviewEditorProvider
             });
           } catch (err) {
             const message = err instanceof Error ? err.message : String(err);
-            this.postMessage(webviewPanel.webview, {
+            this.postMessage(webview, {
               type: ExtMessageType.STFT_RESULT,
               data: { requestId, cacheKey, error: message },
             });
@@ -538,7 +586,23 @@ export class AudioPreviewEditorProvider
   }
 
   private postMessage(webview: vscode.Webview, message: ExtMessage) {
-    webview.postMessage(message);
+    if (!this.webviewLifetimes.get(webview)?.active) {
+      return;
+    }
+    try {
+      void Promise.resolve(webview.postMessage(message)).catch((error) => {
+        this.reportWebviewError(webview, error);
+      });
+    } catch (error) {
+      this.reportWebviewError(webview, error);
+    }
+  }
+
+  private reportWebviewError(webview: vscode.Webview, error: unknown) {
+    if (this.webviewLifetimes.get(webview)?.active) {
+      const message = error instanceof Error ? error.message : String(error);
+      void vscode.window.showErrorMessage(message);
+    }
   }
 
   /**

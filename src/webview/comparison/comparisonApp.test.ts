@@ -91,6 +91,220 @@ afterEach(() => {
   globalThis.AudioBuffer = originalAudioBuffer;
   jest.restoreAllMocks();
 });
+
+describe("measurement input snapshots", () => {
+  const originalShowModal = Object.getOwnPropertyDescriptor(
+    HTMLDialogElement.prototype,
+    "showModal",
+  );
+  beforeEach(() => {
+    for (const [id, level] of [
+      ["a", 0.5],
+      ["b", 0.25],
+    ] as const) {
+      const track = add(id);
+      for (let channel = 0; channel < 2; channel++) {
+        track.buffer.getChannelData(channel).fill(level);
+      }
+    }
+    Object.defineProperty(HTMLDialogElement.prototype, "showModal", {
+      configurable: true,
+      value: jest.fn(),
+    });
+    jest.useFakeTimers();
+    jest.spyOn(performance, "now").mockReturnValue(0);
+  });
+  afterEach(() => {
+    jest.useRealTimers();
+    if (originalShowModal) {
+      Object.defineProperty(
+        HTMLDialogElement.prototype,
+        "showModal",
+        originalShowModal,
+      );
+    } else {
+      Reflect.deleteProperty(HTMLDialogElement.prototype, "showModal");
+    }
+  });
+
+  const changes = {
+    view: () => app.session.setView({ end: 0.005 }),
+    mute: () => app.session.setMuted("a", true),
+    layout: () => {
+      app.session.stftLayout = "column";
+      app.session.notify("layout");
+    },
+    display: () => {
+      app.session.stft.dbLow = -60;
+      app.session.notify("display");
+    },
+    file: () => app.session.markChanged("a"),
+    focus: () => app.session.setFocus("b"),
+    gains: () => app.session.setPlaybackGains(new Map([["a", 0.75]])),
+    selection: () => app.session.setSelection(0.001, 0.005),
+    active: () => app.session.setActive("b", false),
+    remove: () => app.session.remove("b"),
+    add: () => {
+      add("c");
+    },
+    revision: () => {
+      const track = app.session.tracks[0];
+      app.session.replace(track.id, { ...track, revision: track.revision + 1 });
+    },
+    buffer: () => {
+      const track = app.session.tracks[0];
+      app.session.replace(track.id, {
+        ...track,
+        buffer: new MockAudioBuffer(2, 480, 48000) as unknown as AudioBuffer,
+      });
+    },
+  };
+
+  const finishAtLastYield = async (residual: boolean, change: () => void) => {
+    const measurement = app["runMeasurement"](residual);
+    await Promise.resolve();
+    if (!residual) {
+      // RMS yields after each of the two files; residual has just one pair.
+      jest.runOnlyPendingTimers();
+      await Promise.resolve();
+      await Promise.resolve();
+    }
+    change();
+    jest.runOnlyPendingTimers();
+    await measurement;
+    expect(app["_measurementBusy"]).toBe(false);
+  };
+
+  test.each([
+    "view",
+    "mute",
+    "layout",
+    "display",
+    "file",
+    "focus",
+    "gains",
+  ] as const)("RMS matching survives a %s change", async (change) => {
+    await finishAtLastYield(false, changes[change]);
+    expect(app.session.playbackGain("a")).toBe(0.5);
+    expect(app.session.playbackGain("b")).toBe(1);
+    expect(document.querySelector("[data-status]").textContent).toMatch(
+      /^RMS matched/,
+    );
+  });
+
+  test.each(["view", "mute", "layout", "display", "file"] as const)(
+    "residual measurement survives a %s change",
+    async (change) => {
+      await finishAtLastYield(true, changes[change]);
+      expect(document.querySelector("[data-status]").textContent).toBe(
+        "Residual measurements ready",
+      );
+      expect(app["_measurementDialog"]?.textContent).toContain("Residual vs a");
+    },
+  );
+
+  describe.each([false, true])("changed inputs (residual=%s)", (residual) => {
+    test.each([
+      "selection",
+      "active",
+      "remove",
+      "add",
+      "revision",
+      "buffer",
+    ] as const)(
+      "%s cancels measurement even at the final yield",
+      async (change) => {
+        await finishAtLastYield(residual, changes[change]);
+        expect(app.session.playbackGain("a")).toBe(1);
+        expect(app["_measurementDialog"]).toBeNull();
+        expect(document.querySelector("[data-status]").textContent).toMatch(
+          /Measurement cancelled/,
+        );
+      },
+    );
+  });
+
+  test.each(["focus", "gains"] as const)(
+    "residual cancels when %s changes",
+    async (change) => {
+      await finishAtLastYield(true, changes[change]);
+      expect(app["_measurementDialog"]).toBeNull();
+      expect(document.querySelector("[data-status]").textContent).toMatch(
+        /Measurement cancelled/,
+      );
+    },
+  );
+
+  test.each([false, true])(
+    "disposed measurements do not update the UI (residual=%s)",
+    async (residual) => {
+      const status = jest.spyOn(
+        app as unknown as { status(message: string): void },
+        "status",
+      );
+      await finishAtLastYield(residual, () => {
+        app.dispose();
+        status.mockClear();
+      });
+      expect(status).not.toHaveBeenCalled();
+      expect(app["_measurementDialog"]).toBeNull();
+    },
+  );
+});
+
+test("removing a reloading track releases the serial file-loading queue", async () => {
+  add("a");
+  const reject = jest.fn();
+  app["_reads"].set("a", {
+    file: { id: "a", uri: "a", name: "a", ext: "wav", revision: 2 },
+    offset: 0,
+    resolve: jest.fn(),
+    reject,
+  });
+  const continueLoading = jest.fn();
+  app["_queue"] = new Promise<void>((resolve) => {
+    reject.mockImplementation(resolve);
+  }).then(continueLoading);
+  document.querySelector<HTMLButtonElement>('[data-action="remove"]').click();
+  await Promise.resolve();
+  expect(reject).toHaveBeenCalledWith(expect.any(Error));
+  expect(app["_reads"].has("a")).toBe(false);
+  expect(continueLoading).toHaveBeenCalled();
+  app["receive"]({
+    type: "compare.data",
+    id: "a",
+    revision: 2,
+    offset: 0,
+    length: 2,
+    samples: new ArrayBuffer(2),
+  });
+  expect(app.session.tracks).toHaveLength(0);
+});
+test("loudness hover displays special filenames as text", () => {
+  const track = add("mix<img src=x>.wav");
+  app["_profiles"].set(track.id, {
+    revision: track.revision,
+    complete: true,
+    sequence: {
+      timeSec: new Float32Array([0]),
+      f0Hz: new Float32Array([100]),
+      f0Confidence: new Float32Array([1]),
+      onsetFlux: new Float32Array([0]),
+      sampleRate: 48000,
+      hopSec: 0.1,
+    },
+  });
+  const host = document.createElement("div");
+  host.innerHTML =
+    '<div class="comparisonFigure__frequencies"></div><canvas data-feature="f0"></canvas>';
+  document.body.append(host);
+  const canvas = host.querySelector("canvas");
+  app["bindLoudnessHover"](canvas);
+  canvas.dispatchEvent(new MouseEvent("mousemove", { clientX: 0 }));
+  const readout = host.querySelector(".comparisonFigure__frequencies");
+  expect(readout.textContent).toContain("mix<img src=x>.wav 100.0 Hz");
+  expect(readout.querySelector("img")).toBeNull();
+});
 test("mute toggles refresh Edit export availability immediately", () => {
   add("a");
   app.session.setMuted("a", true);

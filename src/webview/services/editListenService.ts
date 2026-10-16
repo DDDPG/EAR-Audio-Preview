@@ -135,6 +135,8 @@ export default class EditListenService extends Service {
     if (this._active || this._isDisposed) {
       return;
     }
+    const wasPlaying = this._playerService.isPlaying;
+    this._pauseIfPlaying();
     this._active = true;
     this._analyzeSnapshot = {
       minTime: this._analyzeSettings.minTime,
@@ -144,7 +146,7 @@ export default class EditListenService extends Service {
       this._editExportSettings.regionStartSec,
       this._editExportSettings.regionEndSec,
     );
-    void this._updatePlayerListenState();
+    void this._updatePlayerListenState(wasPlaying);
     this.dispatchEvent(
       new CustomEvent(EventType.EL_UPDATE_ACTIVE, {
         detail: { value: true },
@@ -254,7 +256,7 @@ export default class EditListenService extends Service {
     return this._processedPromise;
   }
 
-  private async _updatePlayerListenState() {
+  private async _updatePlayerListenState(resumePlayback = false) {
     if (!this._active) {
       return;
     }
@@ -264,6 +266,16 @@ export default class EditListenService extends Service {
     const generation = ++this._listenGeneration;
     const settingsKey = this._settingsCacheKey();
     let processedBuffer: AudioBuffer | null = null;
+
+    // Block playback of the old source/processed buffer while rendering the
+    // current selection. Dry mode is ready synchronously.
+    this._playerService.setEditListenState({
+      active: true,
+      mode,
+      regionStart,
+      regionEnd,
+      processedBuffer,
+    });
 
     if (mode === "processed") {
       processedBuffer = await this.getProcessedBuffer();
@@ -286,6 +298,13 @@ export default class EditListenService extends Service {
       regionEnd,
       processedBuffer,
     });
+    if (
+      resumePlayback &&
+      !this._playerService.isPlaying &&
+      (mode === "dry" || processedBuffer)
+    ) {
+      this._playerService.play();
+    }
   }
 
   public scheduleProcessedRefresh() {
@@ -325,6 +344,7 @@ export default class EditListenService extends Service {
   }
 
   public dispose(): void {
+    this._pauseIfPlaying();
     this.leave();
     this.invalidateCache();
     super.dispose();

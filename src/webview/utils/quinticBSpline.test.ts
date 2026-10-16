@@ -37,6 +37,38 @@ describe("quinticBSplineSmooth", () => {
 });
 
 describe("quinticBSplineSmoothInto", () => {
+  test("matches the clamped convolution bit-for-bit, including short arrays", () => {
+    for (const length of [0, 1, 2, 3, 4, 5, 33, 300, 4096]) {
+      for (const typed of [false, true]) {
+        const values = Array.from(
+          { length },
+          (_, i) => Math.sin(i * 1.37) * 120,
+        );
+        const data = typed ? new Float32Array(values) : values;
+        const expected = new Float32Array(length);
+        for (let i = 0; i < length; i++) {
+          expected[i] =
+            (1 / 120) * data[Math.max(0, i - 2)] +
+            (26 / 120) * data[Math.max(0, i - 1)] +
+            (66 / 120) * data[i] +
+            (26 / 120) * data[Math.min(length - 1, i + 1)] +
+            (1 / 120) * data[Math.min(length - 1, i + 2)];
+        }
+        expect(new Uint8Array(quinticBSplineSmooth(data).buffer)).toEqual(
+          new Uint8Array(expected.buffer),
+        );
+        const out = new Float32Array(length);
+        quinticBSplineSmoothInto(data, out);
+        expect(new Uint8Array(out.buffer)).toEqual(
+          new Uint8Array(expected.buffer),
+        );
+        expect(Array.from(data)).toEqual(
+          typed ? Array.from(new Float32Array(values)) : values,
+        );
+      }
+    }
+  });
+
   test("matches the allocating variant element-for-element", () => {
     const data = Array.from({ length: 33 }, (_, i) => Math.sin(i * 0.37) * 5);
     const out = new Float32Array(data.length);

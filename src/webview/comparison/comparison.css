@@ -1,6 +1,35 @@
 @import "../styles/earEqTokens.css";
 @import "../styles/earPrimitives.css";
 @import "../styles/panelSurface.css";
+.comparisonResidualDialog {
+  box-sizing: border-box;
+  width: min(600px, calc(100vw - 40px));
+  max-width: 600px;
+  max-height: calc(100vh - 40px);
+  margin: auto;
+  overflow: auto;
+}
+.comparisonResidualDialog::backdrop {
+  background: var(--backdrop-dim, #0008);
+}
+.comparisonResidualDialog table {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+  margin: 16px 0;
+  font-variant-numeric: tabular-nums;
+}
+.comparisonResidualDialog th,
+.comparisonResidualDialog td {
+  padding: 8px 4px;
+  text-align: right;
+  border-bottom: 1px solid var(--edge-line);
+  overflow-wrap: anywhere;
+}
+.comparisonResidualDialog th:first-child,
+.comparisonResidualDialog td:first-child {
+  text-align: left;
+}
 .comparisonApp {
   max-width: 1800px;
   margin: 0 auto;
@@ -69,7 +98,7 @@
 .comparisonTrack {
   position: relative;
   flex: 1 1 0;
-  min-width: 0;
+  min-width: 160px;
   border-right: 1px solid var(--edge-line);
   box-sizing: border-box;
   display: flex;

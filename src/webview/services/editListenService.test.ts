@@ -153,4 +153,97 @@ describe("EditListenService", () => {
     expect(playSpy).not.toHaveBeenCalled();
     playSpy.mockRestore();
   });
+
+  test("enter during playback replaces the old source with the dry selection loop", () => {
+    const create = jest.spyOn(playerService.audioContext, "createBufferSource");
+    playerService.play();
+    const original = create.mock.results[0].value as AudioBufferSourceNode;
+    const stop = jest.spyOn(original, "stop");
+    editListen.enter();
+    expect(stop).toHaveBeenCalledTimes(1);
+    expect(create).toHaveBeenCalledTimes(2);
+    const loop = create.mock.results[1].value as AudioBufferSourceNode;
+    expect(loop.buffer).toBe(audioBuffer);
+    expect(loop.loop).toBe(true);
+    expect(loop.loopStart).toBe(1);
+    expect(loop.loopEnd).toBe(3);
+    expect(playerService.isPlaying).toBe(true);
+  });
+
+  test("processed entry stops immediately and resumes only the rendered selection", async () => {
+    let resolve: (buffer: AudioBuffer) => void;
+    jest.spyOn(audioExport, "renderExportBuffer").mockImplementation(
+      () =>
+        new Promise((done) => {
+          resolve = done;
+        }),
+    );
+    const create = jest.spyOn(playerService.audioContext, "createBufferSource");
+    editExportSettings.listenMode = "processed";
+    playerService.play();
+    const stop = jest.spyOn(create.mock.results[0].value, "stop");
+    editListen.enter();
+    expect(stop).toHaveBeenCalledTimes(1);
+    expect(playerService.isPlaying).toBe(false);
+    expect(playerService.editListenActive).toBe(true);
+    playerService.play();
+    expect(create).toHaveBeenCalledTimes(1);
+    const processed = playerService.audioContext.createBuffer(2, 88200, 44100);
+    resolve(processed);
+    await new Promise((done) => setTimeout(done, 0));
+    expect(create).toHaveBeenCalledTimes(2);
+    const source = create.mock.results[1].value as AudioBufferSourceNode;
+    expect(source.buffer).toBe(processed);
+    expect(source.loop).toBe(true);
+    expect(source.loopEnd).toBe(2);
+    expect(playerService.isPlaying).toBe(true);
+  });
+
+  test.each(["leave", "dispose", "mode", "region"] as const)(
+    "processed entry cannot restart stale playback after %s",
+    async (action) => {
+      const resolvers: Array<(buffer: AudioBuffer) => void> = [];
+      jest
+        .spyOn(audioExport, "renderExportBuffer")
+        .mockImplementation(() => new Promise((done) => resolvers.push(done)));
+      const create = jest.spyOn(
+        playerService.audioContext,
+        "createBufferSource",
+      );
+      editExportSettings.listenMode = "processed";
+      playerService.play();
+      editListen.enter();
+      if (action === "mode") {
+        editExportSettings.listenMode = "dry";
+      } else if (action === "region") {
+        editExportSettings.setRegion(2, 4);
+      } else {
+        editListen[action]();
+      }
+      for (const resolve of resolvers) {
+        resolve(audioBuffer);
+      }
+      await new Promise((done) => setTimeout(done, 0));
+      expect(playerService.isPlaying).toBe(false);
+      expect(create).toHaveBeenCalledTimes(1);
+    },
+  );
+
+  test.each(["dry", "processed"] as const)(
+    "entering %s while idle does not start playback",
+    async (mode) => {
+      jest
+        .spyOn(audioExport, "renderExportBuffer")
+        .mockResolvedValue(audioBuffer);
+      const create = jest.spyOn(
+        playerService.audioContext,
+        "createBufferSource",
+      );
+      editExportSettings.listenMode = mode;
+      editListen.enter();
+      await new Promise((done) => setTimeout(done, 0));
+      expect(playerService.isPlaying).toBe(false);
+      expect(create).not.toHaveBeenCalled();
+    },
+  );
 });

@@ -1,0 +1,63 @@
+name: Verify and package
+
+on:
+  workflow_call:
+    inputs:
+      checkout_ref:
+        type: string
+        default: ""
+      release_version:
+        type: string
+        default: ""
+    outputs:
+      tag:
+        value: ${{ jobs.check.outputs.tag }}
+      commit:
+        value: ${{ jobs.check.outputs.commit }}
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    outputs:
+      tag: ${{ steps.metadata.outputs.tag }}
+      commit: ${{ steps.metadata.outputs.commit }}
+    env:
+      NODE_OPTIONS: --max-old-space-size=4096
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.checkout_ref || github.ref }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - run: npm ci
+      - name: Validate release and README versions
+        env:
+          RELEASE_VERSION: ${{ inputs.release_version }}
+        run: node scripts/release-notes.mjs --output artifacts/release-notes.md
+      - name: Package metadata
+        id: metadata
+        run: |
+          node -p '"tag=v" + require("./package.json").version' >> "$GITHUB_OUTPUT"
+          echo "commit=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+      - run: npm run typecheck
+      - run: npm run lint-check
+      - run: npm run format-check
+      - run: npm run test:tooling
+      - run: npm test -- --maxWorkers=2 --workerIdleMemoryLimit=512MB
+      # vsce runs vscode:prepublish, which cleans dist and builds production once.
+      - name: Build and package production VSIX
+        run: npm run vsix -- --out artifacts/ear-audio-preview.vsix
+      - name: Audit shipped contents
+        run: node scripts/package-audit.mjs artifacts/ear-audio-preview.vsix --save artifacts/package-audit.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ear-audio-preview-package
+          path: artifacts/
+          if-no-files-found: error
+          retention-days: 14

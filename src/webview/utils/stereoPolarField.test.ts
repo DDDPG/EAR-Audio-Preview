@@ -26,6 +26,80 @@ import {
 } from "./stereoPolarField";
 
 describe("stereoPolarField", () => {
+  test("RMS energy agrees with the hypot reference across Float32 scales and bin boundaries", () => {
+    for (const scale of [
+      0, 1e-40, 0.9999999e-9, 1e-9, 1.0000001e-9, 1, 1e10, 1e38,
+    ]) {
+      const left = new Float32Array(
+        Array.from({ length: 1031 }, (_, i) => Math.sin(i * 1.37) * scale),
+      );
+      const right = new Float32Array(
+        Array.from({ length: 1031 }, (_, i) => Math.cos(i * 0.71) * scale),
+      );
+      for (const bins of [1, 2, 7, 64]) {
+        for (const stride of [1, 4, 6]) {
+          for (const mix of [0, 0.18, 1]) {
+            const sum = new Float32Array(bins);
+            const count = new Uint16Array(bins);
+            const expected = new Float32Array(bins);
+            for (let i = 0; i < left.length; i += stride) {
+              const magnitude = Math.hypot(left[i], right[i]);
+              if (magnitude < 1e-9) {
+                continue;
+              }
+              // Cartesian reference for the corrected upper-half-plane
+              // geometry; energy still uses the independent hypot oracle.
+              const mid = left[i] + right[i];
+              const side = mid < 0 ? right[i] - left[i] : left[i] - right[i];
+              const angle = Math.atan2(Math.abs(mid), -side);
+              const index = Math.min(
+                bins - 1,
+                Math.max(0, Math.floor((angle / Math.PI) * bins)),
+              );
+              sum[index] += magnitude * magnitude;
+              count[index]++;
+            }
+            for (let i = 0; i < bins; i++) {
+              if (count[i]) {
+                expected[i] = Math.sqrt(sum[i] / count[i]);
+              }
+            }
+            if (mix > 0) {
+              const spread = new Float32Array(bins);
+              for (let i = 0; i < bins; i++) {
+                if (expected[i] <= 0) {
+                  continue;
+                }
+                spread[i] += expected[i] * (1 - mix);
+                if (i > 0) {
+                  spread[i - 1] += expected[i] * (mix * 0.5);
+                }
+                if (i < bins - 1) {
+                  spread[i + 1] += expected[i] * (mix * 0.5);
+                }
+              }
+              for (let i = 0; i < bins; i++) {
+                expected[i] = Math.max(expected[i], spread[i]);
+              }
+            }
+            const actual = new Float32Array(bins);
+            computeInstantPolarBins(left, right, actual, stride, mix);
+            // Accumulation stays Float32; no display-level change is allowed.
+            for (let i = 0; i < bins; i++) {
+              if (Number.isFinite(expected[i])) {
+                expect(Math.abs(actual[i] - expected[i])).toBeLessThanOrEqual(
+                  Math.max(1e-30, Math.abs(expected[i]) * 2 ** -22),
+                );
+              } else {
+                expect(actual[i]).toBe(expected[i]);
+              }
+            }
+          }
+        }
+      }
+    }
+  });
+
   test("stereoFieldAngleRad maps in-phase L/R to ±45° from M", () => {
     expect(stereoFieldAngleRad(1, 0)).toBeCloseTo((3 * Math.PI) / 4, 5);
     expect(stereoFieldAngleRad(0, 1)).toBeCloseTo(Math.PI / 4, 5);
@@ -50,9 +124,9 @@ describe("stereoPolarField", () => {
     expect(isInPhaseStereoAngle(stereoFieldAngleRad(1, -1))).toBe(false);
   });
 
-  test("polarBinToAngleRad spans left to right", () => {
-    expect(polarBinToAngleRad(0, 4)).toBeCloseTo((7 * Math.PI) / 8, 5);
-    expect(polarBinToAngleRad(3, 4)).toBeCloseTo(Math.PI / 8, 5);
+  test("polarBinToAngleRad follows deposition from right to left", () => {
+    expect(polarBinToAngleRad(0, 4)).toBeCloseTo(Math.PI / 8, 5);
+    expect(polarBinToAngleRad(3, 4)).toBeCloseTo((7 * Math.PI) / 8, 5);
   });
 
   test("computeInstantPolarBins places pure L in left bins", () => {

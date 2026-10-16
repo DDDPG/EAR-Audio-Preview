@@ -44,6 +44,16 @@ export class NativeSpectrum {
   private _windowType = "";
   private _frequencyKey = "";
   private _frequencies = new Float64Array(0);
+  private _frequencyPlan: {
+    key: string;
+    size: number;
+    sampleRate: number;
+    tilt: number;
+    weighting: AnalysisOptions["weighting"];
+    bins: Float64Array;
+    tiltDb: Float64Array;
+    weightDb: Float64Array;
+  } | null = null;
   private _fft: Ooura;
   private _window: Float64Array;
   private _sum = 1;
@@ -156,19 +166,48 @@ export class NativeSpectrum {
         ),
       );
     }
+    let plan = this._frequencyPlan;
+    if (
+      !plan ||
+      plan.key !== frequencyKey ||
+      plan.size !== size ||
+      !Object.is(plan.sampleRate, audio.sampleRate) ||
+      !Object.is(plan.tilt, options.tiltDbPerOct) ||
+      plan.weighting !== options.weighting
+    ) {
+      plan = {
+        key: frequencyKey,
+        size,
+        sampleRate: audio.sampleRate,
+        tilt: options.tiltDbPerOct,
+        weighting: options.weighting,
+        // Float64 preserves both double precision and NaN bin behavior.
+        bins: new Float64Array(options.bins),
+        tiltDb: new Float64Array(options.bins),
+        weightDb: new Float64Array(options.bins),
+      };
+      for (let i = 0; i < options.bins; i++) {
+        const hz = this._frequencies[i];
+        plan.bins[i] = Math.max(
+          1,
+          Math.min(
+            this._reL.length - 1,
+            Math.round((hz * size) / audio.sampleRate),
+          ),
+        );
+        plan.tiltDb[i] =
+          options.tiltDbPerOct * Math.log2(Math.max(1, hz) / 1000);
+        plan.weightDb[i] = options.weighting === "a" ? aWeightDb(hz) : 0;
+      }
+      this._frequencyPlan = plan;
+    }
     for (let i = 0; i < options.bins; i++) {
       const hz = this._frequencies[i];
       if (hz > audio.sampleRate / 2) {
         db[i] = rho[i] = NaN;
         continue;
       }
-      const bin = Math.max(
-        1,
-        Math.min(
-          this._reL.length - 1,
-          Math.round((hz * size) / audio.sampleRate),
-        ),
-      );
+      const bin = plan.bins[i];
       const lr = this._reL[bin],
         li = this._imL[bin],
         rr = this._reR[bin],
@@ -178,8 +217,8 @@ export class NativeSpectrum {
       const amplitude = (Math.sqrt((lp + rp) * 0.5) * 2) / this._sum;
       db[i] =
         20 * Math.log10(Math.max(1e-8, amplitude)) +
-        options.tiltDbPerOct * Math.log2(Math.max(1, hz) / 1000) +
-        (options.weighting === "a" ? aWeightDb(hz) : 0);
+        plan.tiltDb[i] +
+        plan.weightDb[i];
       if (phase) {
         rho[i] =
           lp * rp > 1e-20

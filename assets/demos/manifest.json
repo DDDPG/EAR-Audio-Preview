@@ -1,0 +1,142 @@
+{
+  "version": 2,
+  "date": "2026-10-16",
+  "source": "Actual production UI and DSP; real local A.mp3 through D.mp3; VS Code file IPC replaced; offline preset import",
+  "audioSources": [
+    {
+      "id": "track-1",
+      "uri": "demo:A.mp3",
+      "name": "A.mp3",
+      "ext": "mp3",
+      "revision": 1,
+      "sha256": "28901f9baf84c9b0635420d7a01fb8799834b140279a81b5d4f371c11892161c"
+    },
+    {
+      "id": "track-2",
+      "uri": "demo:B.mp3",
+      "name": "B.mp3",
+      "ext": "mp3",
+      "revision": 1,
+      "sha256": "37062d106a360495202d16e28b463842d9637b657c3a230d41d145d1884827de"
+    },
+    {
+      "id": "track-3",
+      "uri": "demo:C.mp3",
+      "name": "C.mp3",
+      "ext": "mp3",
+      "revision": 1,
+      "sha256": "6f5cfaca190f6407973e96cc718e975a5e4811530b6376257fe7fadbd8bb355b"
+    },
+    {
+      "id": "track-4",
+      "uri": "demo:D.mp3",
+      "name": "D.mp3",
+      "ext": "mp3",
+      "revision": 1,
+      "sha256": "2baa1c00780b25a077d3eab616efaf83e40180ba3007db411deed96f8c97acb0"
+    }
+  ],
+  "preset": {
+    "url": "https://raw.githubusercontent.com/jaakkopasanen/AutoEq/master/results/oratory1990/over-ear/Sennheiser%20HD%20650/Sennheiser%20HD%20650%20ParametricEQ.txt",
+    "retrievedAt": "2026-10-16T12:27:08.093Z",
+    "sha256": "c5bb0c16eccfedba82326eb68480f27f7e28ed92bb5534d2bb5d0a1d6c28ad67"
+  },
+  "validation": {
+    "allFramesDecoded": true,
+    "sourceAndScreenshotHashesVerified": true,
+    "frameOrderAndDurationsVerified": true,
+    "singleFilePlaybackVerifiedEveryFrame": true,
+    "eqBypassSequenceVerified": true,
+    "fourSourcesAudibleInParallelVerified": true,
+    "hostDialogsIncluded": false,
+    "paletteColors": 128,
+    "fullContactSheetsInspected": true,
+    "fullSizeKeyFramesInspected": true
+  },
+  "gifs": [
+    {
+      "name": "multi-audio-workflow",
+      "path": "assets/demos/multi-audio-workflow.gif",
+      "bytes": 3755522,
+      "sha256": "d2091a224ea8d6a6a4468a149613b86d2667065fba30b6cb07c2ffc92610586c",
+      "dimensions": [
+        1040,
+        843
+      ],
+      "frames": 56,
+      "milliseconds": 12220,
+      "maximumMeanPixelError": 1.753583432186635
+    },
+    {
+      "name": "single-audio-workflow",
+      "path": "assets/demos/single-audio-workflow.gif",
+      "bytes": 3148930,
+      "sha256": "6f1b27edeb273bed16be47063e5beec53630cb28ad0be7edcba8156c8d762a9f",
+      "dimensions": [
+        1040,
+        843
+      ],
+      "frames": 60,
+      "milliseconds": 12940,
+      "maximumMeanPixelError": 2.6715789153511573
+    }
+  ],
+  "capture": [
+    {
+      "scene": "multi-audio-workflow",
+      "frames": 56,
+      "bundleSha256": "7dac4bd993d06e76201955f016c0c03d218248997c1842bc153d5c92c7265321",
+      "browserErrors": [],
+      "audioSources": [
+        {
+          "id": "track-1",
+          "uri": "demo:A.mp3",
+          "name": "A.mp3",
+          "ext": "mp3",
+          "revision": 1,
+          "sha256": "28901f9baf84c9b0635420d7a01fb8799834b140279a81b5d4f371c11892161c"
+        },
+        {
+          "id": "track-2",
+          "uri": "demo:B.mp3",
+          "name": "B.mp3",
+          "ext": "mp3",
+          "revision": 1,
+          "sha256": "37062d106a360495202d16e28b463842d9637b657c3a230d41d145d1884827de"
+        },
+        {
+          "id": "track-3",
+          "uri": "demo:C.mp3",
+          "name": "C.mp3",
+          "ext": "mp3",
+          "revision": 1,
+          "sha256": "6f5cfaca190f6407973e96cc718e975a5e4811530b6376257fe7fadbd8bb355b"
+        },
+        {
+          "id": "track-4",
+          "uri": "demo:D.mp3",
+          "name": "D.mp3",
+          "ext": "mp3",
+          "revision": 1,
+          "sha256": "2baa1c00780b25a077d3eab616efaf83e40180ba3007db411deed96f8c97acb0"
+        }
+      ]
+    },
+    {
+      "scene": "single-audio-workflow",
+      "frames": 60,
+      "bundleSha256": "6ca7ab760255191874d0db1d55ced36ff9f088df5be2380d6699e1fa2362e1e9",
+      "browserErrors": [],
+      "audioSources": [
+        {
+          "id": "track-2",
+          "uri": "demo:B.mp3",
+          "name": "B.mp3",
+          "ext": "mp3",
+          "revision": 1,
+          "sha256": "37062d106a360495202d16e28b463842d9637b657c3a230d41d145d1884827de"
+        }
+      ]
+    }
+  ]
+}

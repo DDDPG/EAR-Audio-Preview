@@ -2,6 +2,9 @@
 const fs = require("fs");
 const path = require("path");
 const webpack = require("webpack");
+const essentiaAlias = {
+  "essentia.js$": path.resolve(__dirname, "scripts/essentia-runtime.cjs"),
+};
 
 /** Extract loudness-worklet processor source to dist/loudness.worklet.js (CSP-safe). */
 class ExtractLoudnessWorkletPlugin {
@@ -54,6 +57,7 @@ const extensionConfig = {
   resolve: {
     // support reading TypeScript and JavaScript files, 📖 -> https://github.com/TypeStrong/ts-loader
     extensions: [".ts", ".js"],
+    alias: essentiaAlias,
   },
   module: {
     rules: [
@@ -86,6 +90,7 @@ const webviewConfig = {
       path: require.resolve("path-browserify"),
     },
     alias: {
+      ...essentiaAlias,
       fs: false,
       crypto: false,
       "process/browser": require.resolve("process/browser.js"),
@@ -124,6 +129,11 @@ const webviewConfig = {
     asyncWebAssembly: true,
   },
   plugins: [
+    // No caller enables speechQualityEnhancement. Keep standard Opus decoding
+    // and exclude the optional 3.9 MiB LACE/NoLACE model chunk at build time.
+    new webpack.IgnorePlugin({
+      resourceRegExp: /^@wasm-audio-decoders\/opus-ml$/,
+    }),
     new webpack.ProvidePlugin({
       process: "process/browser", // provide a shim for the global `process` variable
     }),
@@ -156,6 +166,7 @@ const webExtensionConfig = {
       https: false,
     },
     alias: {
+      ...essentiaAlias,
       fs: false,
       crypto: false,
     },

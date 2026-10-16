@@ -12,7 +12,7 @@ export class WavFormatControls {
   private readonly _depth: HTMLSelectElement;
   constructor(defaults: Partial<WavExportFormat> = {}) {
     this.element.className = "wavFormatControls";
-    this.element.innerHTML = `<label>Sample rate <select aria-label="Export sample rate"><option value="auto">Source / mix rate</option>${exportSampleRates.map((rate) => `<option value="${rate}">${rate / 1000} kHz</option>`).join("")}</select></label><label>WAV encoding <select aria-label="WAV encoding"><option value="auto">Source depth / float32</option><option value="8">8-bit PCM</option><option value="16">16-bit PCM</option><option value="24">24-bit PCM</option><option value="32">32-bit float</option></select></label>`;
+    this.element.innerHTML = `<label>Sample rate <select aria-label="Export sample rate"><option value="auto">Source / mix rate</option>${exportSampleRates.map((rate) => `<option value="${rate}">${rate / 1000} kHz</option>`).join("")}</select></label><label>WAV encoding <select aria-label="WAV encoding"><option value="auto">Source depth / float32</option><option value="8">8-bit PCM</option><option value="16">16-bit PCM</option><option value="24">24-bit PCM</option><option value="32">32-bit float</option></select></label><label title="Bake the enabled headphone correction into the WAV; master volume is excluded"><input type="checkbox" data-export-eq>Apply headphone EQ to WAV</label>`;
     [this._rate, this._depth] = Array.from(
       this.element.querySelectorAll("select"),
     );
@@ -20,6 +20,10 @@ export class WavFormatControls {
       ? String(defaults.sampleRate)
       : "auto";
     this._depth.value = String(defaults.bitDepth ?? "auto");
+  }
+  public get applyHeadphoneEq(): boolean {
+    return this.element.querySelector<HTMLInputElement>("[data-export-eq]")
+      .checked;
   }
   public get value(): WavExportFormat {
     return {

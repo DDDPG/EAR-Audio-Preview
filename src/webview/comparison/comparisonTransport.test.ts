@@ -152,3 +152,29 @@ test("bypassing the last track while resume is pending cancels playback", async 
   expect(h.created.some((n) => n.start.mock.calls.length)).toBe(false);
   transport.dispose();
 });
+
+test("eight native-rate sources share one clock; RMS matching only changes gains", async () => {
+  const h = harness();
+  for (let i = 0; i < 8; i++) {
+    h.add(String(i), i % 2 ? 44100 : 48000);
+    h.session.setMuted(String(i), false);
+  }
+  const transport = new ComparisonTransport(
+    h.session,
+    h.context as unknown as AudioContext,
+  );
+  await transport.play();
+  const sources = h.created.filter((n) => n.start.mock.calls.length);
+  expect(sources).toHaveLength(8);
+  expect(sources.every((n) => n.start.mock.calls[0][0] === 1.02)).toBe(true);
+  h.session.setPlaybackGains(new Map([["0", 0.5]]));
+  expect(
+    h.created.some((n) =>
+      n.gain.setTargetAtTime.mock.calls.some(([v]) => v === 0.5),
+    ),
+  ).toBe(true);
+  expect(h.created.filter((n) => n.start.mock.calls.length)).toHaveLength(8);
+  h.session.setPlaybackGains(new Map());
+  expect(h.session.playbackGain("0")).toBe(1);
+  transport.dispose();
+});

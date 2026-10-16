@@ -1,5 +1,6 @@
 import Service from "../service";
 import { EventType } from "../events";
+import { isHeadphoneEqProfile } from "../../shared/headphoneEqValidation";
 import type {
   HeadphoneEqPersistedState,
   HeadphoneEqProfile,
@@ -38,6 +39,9 @@ export default class HeadphoneEqSettingsService extends Service {
     profile: HeadphoneEqProfile | null,
     opts?: { keepBypass?: boolean },
   ) {
+    if (profile !== null && !isHeadphoneEqProfile(profile)) {
+      throw new Error("Invalid headphone EQ profile");
+    }
     this._profile = profile ? structuredClone(profile) : null;
     if (profile && opts?.keepBypass !== true) {
       this._bypassed = false;
@@ -89,11 +93,22 @@ export default class HeadphoneEqSettingsService extends Service {
     if (!state || typeof state !== "object") {
       return;
     }
-    this._bypassed = state.bypassed !== false;
-    this._profile = state.profile ? structuredClone(state.profile) : null;
-    if (this._profile?.baseSnapshot) {
-      this._profile.baseSnapshot = structuredClone(this._profile.baseSnapshot);
+    let invalidProfile =
+      state.profile !== null &&
+      state.profile !== undefined &&
+      !isHeadphoneEqProfile(state.profile);
+    let restored: HeadphoneEqProfile | null = null;
+    if (!invalidProfile && state.profile) {
+      try {
+        restored = structuredClone(state.profile);
+      } catch {
+        // A deeply nested or non-cloneable external state must not prevent
+        // opening the audio file. Leave monitoring safely bypassed instead.
+        invalidProfile = true;
+      }
     }
+    this._bypassed = invalidProfile || state.bypassed !== false;
+    this._profile = restored;
     this.dispatchEvent(
       new CustomEvent(EventType.HE_UPDATE_PROFILE, {
         detail: { profile: this._profile },

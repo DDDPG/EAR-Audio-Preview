@@ -478,7 +478,8 @@ export default class SpectralAnalyzerComponent extends Component {
       this._timeBufR = new Float32Array(fftSize);
       this._timeMixL = new Float32Array(fftSize);
       this._timeMixR = new Float32Array(fftSize);
-      this._resetBallistics();
+      // Native time slices can differ by one sample. Resizing input scratch
+      // must not restart the display envelope; mode/axis changes reset it.
     }
 
     if (!pazCacheValid(this._cqtCache, layout, sampleRate, fftSize)) {

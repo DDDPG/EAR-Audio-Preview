@@ -1,6 +1,10 @@
 import { createAudioContext } from "../../__mocks__/helper";
 import HeadphoneEqSettingsService from "./headphoneEqSettingsService";
-import { createEqChain } from "./headphoneEqService";
+import {
+  createEqChain,
+  snapshotExportEq,
+  applyExportEq,
+} from "./headphoneEqService";
 import type { HeadphoneEqProfile } from "../types/headphoneEq";
 
 function mockProfile(): HeadphoneEqProfile {
@@ -64,4 +68,21 @@ describe("headphoneEqService", () => {
     expect(chain?.input).toHaveProperty("gain");
     expect(chain?.output).toHaveProperty("gain");
   });
+});
+
+test("export EQ snapshot is independent of subsequent monitor edits and requires enabled EQ", () => {
+  const settings = new HeadphoneEqSettingsService();
+  expect(() => snapshotExportEq(settings)).toThrow(/Enable/);
+  settings.setProfile(mockProfile());
+  const snapshot = snapshotExportEq(settings);
+  settings.profile.filters[0].gainDb = -10;
+  settings.bypassed = true;
+  expect(snapshot.profile.filters[0].gainDb).toBe(3);
+  expect(snapshot.shouldApplyEq()).toBe(true);
+  expect(() => snapshotExportEq(settings)).toThrow(/Enable/);
+});
+
+test("default export leaves source PCM and buffer identity untouched", async () => {
+  const buffer = {} as AudioBuffer;
+  expect(await applyExportEq(buffer)).toBe(buffer);
 });

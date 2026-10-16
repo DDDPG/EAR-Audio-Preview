@@ -214,14 +214,8 @@ export default class PlayerService extends Service implements ITransport {
       );
     }
 
-    // rebuild live graph when toggles change
-    const onLiveToggle = () => {
-      this._updateLiveGraph();
-      if (this._isPlaying) {
-        this.pause();
-        this.play();
-      }
-    };
+    // Reconfigure downstream routing without restarting the source at its cue.
+    const onLiveToggle = () => this._refreshLiveRouting();
     this._analyzeSettingsService.addEventListener(
       EventType.AS_UPDATE_SHOW_LEVEL_METER,
       onLiveToggle,
@@ -254,17 +248,16 @@ export default class PlayerService extends Service implements ITransport {
 
     this._analyzeSettingsService.addEventListener(
       EventType.AS_UPDATE_LIVE_MONITORING_MODE,
-      () => this._applyMonitoringGains(),
+      onLiveToggle,
     );
 
-    const rebuildLiveGraphBands = () => this._onMonitorBandsChanged();
     this._analyzeSettingsService.addEventListener(
       EventType.AS_UPDATE_MONITOR_BAND_EDGES,
-      rebuildLiveGraphBands,
+      onLiveToggle,
     );
     this._analyzeSettingsService.addEventListener(
       EventType.AS_UPDATE_MONITOR_BAND_SOLO_MASK,
-      rebuildLiveGraphBands,
+      onLiveToggle,
     );
   }
 
@@ -381,7 +374,9 @@ export default class PlayerService extends Service implements ITransport {
     return (
       this._analyzeSettingsService.showLevelMeter ||
       this._analyzeSettingsService.showLiveAnalysis ||
-      this._analyzeSettingsService.hearingProtectionEnabled
+      this._analyzeSettingsService.hearingProtectionEnabled ||
+      this._analyzeSettingsService.liveMonitoringMode !== "lr" ||
+      !this._analyzeSettingsService.monitorBandBypassActive()
     );
   }
 
@@ -423,10 +418,16 @@ export default class PlayerService extends Service implements ITransport {
     this._merger = ctx.createChannelMerger(2);
 
     this._analyserL = ctx.createAnalyser();
+    // Each splitter output is mono. Fix the layout before connecting so the
+    // first render quantum cannot transiently use a stereo analyser limb.
+    this._analyserL.channelCount = 1;
+    this._analyserL.channelCountMode = "explicit";
     this._analyserL.fftSize = fftSize;
     this._analyserL.smoothingTimeConstant = 0;
 
     this._analyserR = ctx.createAnalyser();
+    this._analyserR.channelCount = 1;
+    this._analyserR.channelCountMode = "explicit";
     this._analyserR.fftSize = fftSize;
     this._analyserR.smoothingTimeConstant = 0;
 
@@ -457,14 +458,13 @@ export default class PlayerService extends Service implements ITransport {
     this._applyMonitoringGains();
   }
 
-  private _onMonitorBandsChanged(): void {
-    if (!this._liveGraphActive) {
-      return;
-    }
+  private _refreshLiveRouting(): void {
     if (this._isPlaying) {
-      this._gainConnectGeneration++;
       this._connectGainOutput();
+    } else {
+      this._updateLiveGraph();
     }
+    this._applyMonitoringGains();
   }
 
   private _teardownMonitorBandChain(): void {

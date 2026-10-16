@@ -11,8 +11,12 @@ import {
 
 /** Insight-style azimuth: M at π/2, in-phase L/R at 3π/4 and π/4, anti-phase at π and 0. */
 export function stereoFieldAngleRad(l: number, r: number): number {
-  const theta = Math.PI / 2 + Math.atan2(l - r, l + r + 1e-12);
-  return Math.max(0, Math.min(Math.PI, theta));
+  const mid = l + r;
+  // Fold the negative-mid half-plane onto the upper semicircle. Common
+  // polarity inversion must not change the stereo direction. At mid=0,
+  // retain the side sign so anti-phase signals occupy both baseline wings.
+  const side = mid < 0 ? r - l : l - r;
+  return Math.PI / 2 + Math.atan2(side, Math.abs(mid));
 }
 
 /** Sample energy magnitude (linear). */
@@ -42,7 +46,7 @@ export function polarFieldCanvasXY(
 
 /** Map bin index to ray angle (radians) spanning [0, π] (anti-phase wings at 0 and π). */
 export function polarBinToAngleRad(binIndex: number, numBins: number): number {
-  return Math.PI * (1 - (binIndex + 0.5) / numBins);
+  return (Math.PI * (binIndex + 0.5)) / numBins;
 }
 
 /** Linear interp of smoothed RMS bins at semicircle angle θ ∈ [0, π]. */
@@ -55,7 +59,9 @@ export function interpolatePolarRmsAtAngle(
     return n === 1 ? bins[0] : 0;
   }
   const t = Math.max(0, Math.min(Math.PI, theta));
-  const f = (1 - t / Math.PI) * n - 0.5;
+  // Angles outside the first/last bin center use the nearest endpoint;
+  // extrapolation could otherwise turn nonnegative RMS into a negative value.
+  const f = Math.max(0, Math.min(n - 1, (t / Math.PI) * n - 0.5));
   const i0 = Math.max(0, Math.min(n - 2, Math.floor(f)));
   const frac = f - i0;
   return bins[i0] * (1 - frac) + bins[i0 + 1] * frac;
@@ -114,13 +120,16 @@ export function computeInstantPolarBins(
   for (let i = 0; i < n; i += stride) {
     const left = lBuf[i];
     const right = rBuf[i];
-    const mag = stereoFieldMagnitude(left, right);
-    if (mag < 1e-9) {
+    // The inputs are Float32 samples: their squares fit in a JS double,
+    // including subnormals. RMS needs squared magnitude, so avoid hypot's
+    // scaling and square root only to square the result again.
+    const energy = left * left + right * right;
+    if (energy < 1e-18) {
       continue;
     }
     const theta = stereoFieldAngleRad(left, right);
     const idx = binIndexForAngle(theta, numBins);
-    sumSq[idx] += mag * mag;
+    sumSq[idx] += energy;
     counts[idx]++;
   }
   for (let i = 0; i < numBins; i++) {

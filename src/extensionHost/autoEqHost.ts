@@ -60,32 +60,31 @@ async function readFetchBodyCapped(
   label: string,
 ): Promise<string> {
   if (!res.body) {
-    const text = await res.text();
-    if (text.length > MAX_RESPONSE_BYTES) {
-      throw new Error(
-        `AutoEq ${label} response exceeded ${MAX_RESPONSE_BYTES} bytes`,
-      );
-    }
-    return text;
+    return "";
   }
   const reader = res.body.getReader();
   const chunks: Uint8Array[] = [];
   let received = 0;
-  for (;;) {
-    const { done, value } = await reader.read();
-    if (done) {
-      break;
-    }
-    if (value) {
-      received += value.byteLength;
-      if (received > MAX_RESPONSE_BYTES) {
-        await reader.cancel().catch(() => undefined);
-        throw new Error(
-          `AutoEq ${label} response exceeded ${MAX_RESPONSE_BYTES} bytes`,
-        );
+  try {
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) {
+        break;
       }
-      chunks.push(value);
+      if (value) {
+        received += value.byteLength;
+        if (received > MAX_RESPONSE_BYTES) {
+          // A remote stream's cancellation must not delay the size rejection.
+          void reader.cancel().catch(() => undefined);
+          throw new Error(
+            `AutoEq ${label} response exceeded ${MAX_RESPONSE_BYTES} bytes`,
+          );
+        }
+        chunks.push(value);
+      }
     }
+  } finally {
+    reader.releaseLock();
   }
   const merged = new Uint8Array(received);
   let offset = 0;
@@ -103,9 +102,8 @@ async function requestAutoEqJsonViaFetch(
 ): Promise<unknown> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
-  let res: Response;
   try {
-    res = await fetch(url, {
+    const res = await fetch(url, {
       method: options.method ?? "GET",
       headers: {
         Accept: "application/json",
@@ -116,6 +114,16 @@ async function requestAutoEqJsonViaFetch(
       body: options.body,
       signal: controller.signal,
     });
+    // The same byte cap and deadline cover every status, including errors.
+    const text = await readFetchBodyCapped(res, label);
+    if (!res.ok) {
+      throw new Error(
+        `AutoEq ${label} failed: ${res.status}${
+          text ? ` — ${text.slice(0, MAX_ERROR_BODY_CHARS)}` : ""
+        }`,
+      );
+    }
+    return parseJsonBody(text, label);
   } catch (err) {
     if (controller.signal.aborted) {
       throw new Error(
@@ -132,16 +140,6 @@ async function requestAutoEqJsonViaFetch(
   } finally {
     clearTimeout(timer);
   }
-  if (!res.ok) {
-    const detail = await res.text().catch(() => "");
-    throw new Error(
-      `AutoEq ${label} failed: ${res.status}${
-        detail ? ` — ${detail.slice(0, MAX_ERROR_BODY_CHARS)}` : ""
-      }`,
-    );
-  }
-  const text = await readFetchBodyCapped(res, label);
-  return parseJsonBody(text, label);
 }
 
 function requestAutoEqJsonViaHttps(
@@ -161,6 +159,23 @@ function requestAutoEqJsonViaHttps(
       );
       return;
     }
+    let settled = false;
+    const fail = (error: unknown) => {
+      if (settled) {
+        return;
+      }
+      settled = true;
+      clearTimeout(timer);
+      reject(error);
+    };
+    const succeed = (value: unknown) => {
+      if (settled) {
+        return;
+      }
+      settled = true;
+      clearTimeout(timer);
+      resolve(value);
+    };
     const req = httpsRequest(
       url,
       {
@@ -176,15 +191,36 @@ function requestAutoEqJsonViaHttps(
         },
       },
       (res) => {
+        res.on("error", (error) => {
+          fail(error);
+          req.destroy();
+        });
+        const closed = () => {
+          if (!settled) {
+            fail(
+              new Error(`AutoEq ${label} response closed before completion`),
+            );
+            req.destroy();
+          }
+        };
+        res.on("aborted", closed);
+        res.on("close", closed);
         const status = res.statusCode ?? 0;
-        if (
-          status >= 300 &&
-          status < 400 &&
-          res.headers.location &&
-          redirectsLeft > 0
-        ) {
-          res.resume();
-          const nextUrl = new URL(res.headers.location, url).toString();
+        if (status >= 300 && status < 400 && res.headers.location) {
+          let nextUrl: URL;
+          try {
+            if (redirectsLeft <= 0) {
+              throw new Error(`AutoEq ${label} exceeded redirect limit`);
+            }
+            nextUrl = new URL(res.headers.location, url);
+            if (nextUrl.protocol !== "https:") {
+              throw new Error(`AutoEq ${label} redirect must use HTTPS`);
+            }
+          } catch (error) {
+            fail(error);
+            res.destroy();
+            return;
+          }
           /* Only 307/308 preserve method and body across a redirect; for
              301/302/303 a POST is downgraded to GET (fetch convention) so we
              never re-send the payload where it would be unexpected. */
@@ -192,43 +228,45 @@ function requestAutoEqJsonViaHttps(
             options.body !== undefined && status !== 307 && status !== 308
               ? { method: "GET", body: undefined }
               : options;
-          resolve(
+          succeed(
             requestAutoEqJsonViaHttps(
-              nextUrl,
+              nextUrl.toString(),
               label,
               nextOptions,
               redirectsLeft - 1,
               deadline,
             ),
           );
+          // Do not drain an arbitrary redirect body after following Location.
+          res.destroy();
           return;
         }
         const chunks: Uint8Array[] = [];
         let received = 0;
-        let aborted = false;
         res.on("data", (chunk: Uint8Array) => {
-          if (aborted) {
+          if (settled) {
             return;
           }
           received += chunk.byteLength;
           if (received > MAX_RESPONSE_BYTES) {
-            aborted = true;
-            req.destroy(
+            fail(
               new Error(
                 `AutoEq ${label} response exceeded ${MAX_RESPONSE_BYTES} bytes`,
               ),
             );
+            res.destroy();
+            req.destroy();
             return;
           }
           chunks.push(chunk);
         });
         res.on("end", () => {
-          if (aborted) {
+          if (settled) {
             return;
           }
           const text = Buffer.concat(chunks).toString("utf8");
           if (status < 200 || status >= 300) {
-            reject(
+            fail(
               new Error(
                 `AutoEq ${label} failed: ${status}${
                   text ? ` — ${text.slice(0, MAX_ERROR_BODY_CHARS)}` : ""
@@ -238,22 +276,15 @@ function requestAutoEqJsonViaHttps(
             return;
           }
           try {
-            resolve(parseJsonBody(text, label));
+            succeed(parseJsonBody(text, label));
           } catch (parseError) {
-            reject(parseError);
+            fail(parseError);
           }
         });
-        res.on("error", reject);
       },
     );
-    /* Idle timer bounded by the remaining total deadline: a slow-drip server
-       can no longer hold the request open indefinitely by staying just under
-       the idle threshold. */
-    req.setTimeout(Math.min(remaining, REQUEST_TIMEOUT_MS), () => {
-      req.destroy(new Error(`timed out after ${REQUEST_TIMEOUT_MS}ms`));
-    });
     req.on("error", (err: NodeJS.ErrnoException) => {
-      reject(
+      fail(
         new Error(
           `AutoEq ${label} request failed: ${
             err.code ? `${err.code} — ` : ""
@@ -261,10 +292,24 @@ function requestAutoEqJsonViaHttps(
         ),
       );
     });
-    if (options.body !== undefined) {
-      req.write(options.body);
+    // Socket inactivity timers reset on traffic. Use an independent deadline
+    // covering DNS, headers and the full body, shared by all redirect hops.
+    const timer = setTimeout(() => {
+      const error = new Error(
+        `AutoEq ${label} request failed: timed out after ${REQUEST_TIMEOUT_MS}ms`,
+      );
+      fail(error);
+      req.destroy();
+    }, remaining);
+    try {
+      if (options.body !== undefined) {
+        req.write(options.body);
+      }
+      req.end();
+    } catch (error) {
+      fail(error);
+      req.destroy();
     }
-    req.end();
   });
 }
 

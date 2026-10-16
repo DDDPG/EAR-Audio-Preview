@@ -29,6 +29,7 @@ export async function renderMix(
   sampleRate: number,
   filters: OfflineFilterOptions,
   monoPan = false,
+  trackGains?: readonly number[],
 ): Promise<AudioBuffer> {
   if (
     !buffers.length ||
@@ -43,6 +44,13 @@ export async function renderMix(
     throw new Error(
       "Choose a nonempty region, source audio, and a supported sample rate",
     );
+  }
+  if (
+    trackGains &&
+    (trackGains.length !== buffers.length ||
+      trackGains.some((g) => !Number.isFinite(g) || g < 0 || g > 1))
+  ) {
+    throw new Error("Invalid mix gains");
   }
   const channels =
     monoPan || buffers.some((b) => b.numberOfChannels === 2)
@@ -70,7 +78,7 @@ export async function renderMix(
   }
   tail.connect(context.destination);
   const sources: AudioBufferSourceNode[] = [];
-  for (const buffer of buffers) {
+  for (const [index, buffer] of buffers.entries()) {
     if (start >= buffer.duration) {
       continue;
     }
@@ -78,7 +86,8 @@ export async function renderMix(
     source.buffer = buffer;
     const gain = context.createGain();
     gain.gain.value =
-      monoPan && buffer.numberOfChannels === 1 ? Math.SQRT1_2 : 1;
+      (trackGains?.[index] ?? 1) *
+      (monoPan && buffer.numberOfChannels === 1 ? Math.SQRT1_2 : 1);
     source.connect(gain).connect(bus);
     source.start(0, start, Math.min(end, buffer.duration) - start);
     sources.push(source);

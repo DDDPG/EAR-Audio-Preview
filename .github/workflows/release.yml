@@ -2,45 +2,46 @@ name: Release
 
 on:
   push:
-    tags: ['v*']
+    tags: ["v*"]
   workflow_dispatch:
     inputs:
       version:
-        description: 'Version to release (e.g., 2.7.0)'
+        description: "Existing tagged version, without v (e.g. 0.6.0)"
         required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.event_name == 'workflow_dispatch' && format('v{0}', inputs.version) || github.ref_name }}
+  cancel-in-progress: false
 
 jobs:
-  build-and-package:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-      - run: npm ci
-      - run: npm run lint-check
-      - run: npm run format-check
-      - run: npm test
-      - run: npm run webpack
-      - name: Package VSIX
-        run: npx vsce package --out ./dist/
-      - uses: actions/upload-artifact@v4
-        with:
-          name: vsix
-          path: ./dist/*.vsix
+  verify:
+    uses: ./.github/workflows/verify.yml
+    with:
+      checkout_ref: ${{ github.event_name == 'workflow_dispatch' && format('refs/tags/v{0}', inputs.version) || github.ref }}
+      release_version: ${{ inputs.version || github.ref_name }}
 
   github-release:
-    needs: build-and-package
+    needs: verify
     runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
       - uses: actions/download-artifact@v4
         with:
-          name: vsix
-          path: ./dist/
-      - name: Create GitHub Release
+          name: ear-audio-preview-package
+          path: artifacts/
+      - name: Create release with this version's bilingual highlights
         uses: softprops/action-gh-release@v2
         with:
-          files: ./dist/*.vsix
+          tag_name: ${{ needs.verify.outputs.tag }}
+          target_commitish: ${{ needs.verify.outputs.commit }}
+          name: EAR Audio Preview ${{ needs.verify.outputs.tag }}
+          body_path: artifacts/release-notes.md
+          files: artifacts/*.vsix
+          fail_on_unmatched_files: true
           generate_release_notes: true
+          prerelease: ${{ contains(needs.verify.outputs.tag, '-') }}

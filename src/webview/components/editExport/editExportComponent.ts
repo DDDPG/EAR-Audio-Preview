@@ -1,3 +1,5 @@
+import type HeadphoneEqSettingsService from "../../services/headphoneEqSettingsService";
+import { snapshotExportEq } from "../../services/headphoneEqService";
 import "../figureInteraction/figureInteractionComponent.css";
 import "./editExportComponent.css";
 import { PostMessage, WebviewMessageType } from "../../../message";
@@ -101,6 +103,7 @@ export default class EditExportComponent extends Component {
     playerService: PlayerService,
     postMessage: PostMessage,
     private readonly _sourceBitDepth: number | null = null,
+    private readonly _headphoneEq?: HeadphoneEqSettingsService,
   ) {
     super();
     this._audioBuffer = audioBuffer;
@@ -183,7 +186,7 @@ export default class EditExportComponent extends Component {
             <div class="panelGroup__items">
               <div class="panelRow panelRow--stacked">
                 <div class="editExport__segmentSlot js-editExport-listenModes"></div>
-                <p class="panelRow__hint">Dry loops the original selection; Processed loops the export chain. Use Transport FAB play/pause.</p>
+                <p class="panelRow__hint">Dry loops the original selection; Processed loops the channel/filter chain. The headphone EQ export option applies to the saved WAV. Use Transport FAB play/pause.</p>
               </div>
             </div>
           </div>
@@ -674,6 +677,9 @@ export default class EditExportComponent extends Component {
         this._sourceBitDepth,
         this._format.value,
         chooseOverload,
+        this._format.applyHeadphoneEq
+          ? snapshotExportEq(this._headphoneEq)
+          : undefined,
       );
       if (!samples) {
         this._setBusy(false, "Export cancelled");

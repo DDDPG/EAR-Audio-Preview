@@ -1095,6 +1095,7 @@ export default class WebView extends Component {
         playerService,
         this._postMessage,
         sourceBitDepth,
+        headphoneEqSettings,
       );
       this._disposables.push(editExportComponent);
     };

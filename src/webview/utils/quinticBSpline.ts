@@ -51,7 +51,26 @@ export function quinticBSplineSmoothInto(
   out: Float32Array,
 ): void {
   const n = data.length;
-  for (let i = 0; i < n; i++) {
+  // Only the first/last two outputs need clamping. Keep the interior loop
+  // branch-free and preserve the original multiplication/addition order.
+  const edge = Math.min(2, n);
+  for (let i = 0; i < edge; i++) {
+    out[i] =
+      w2 * data[Math.max(0, i - 2)] +
+      w1 * data[Math.max(0, i - 1)] +
+      w0 * data[i] +
+      w1 * data[Math.min(n - 1, i + 1)] +
+      w2 * data[Math.min(n - 1, i + 2)];
+  }
+  for (let i = 2; i < n - 2; i++) {
+    out[i] =
+      w2 * data[i - 2] +
+      w1 * data[i - 1] +
+      w0 * data[i] +
+      w1 * data[i + 1] +
+      w2 * data[i + 2];
+  }
+  for (let i = Math.max(edge, n - 2); i < n; i++) {
     // Clamp indices to [0, n-1] for boundary handling.
     const i0 = Math.max(0, i - 2);
     const i1 = Math.max(0, i - 1);

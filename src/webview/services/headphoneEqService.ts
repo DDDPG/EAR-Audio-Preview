@@ -13,8 +13,8 @@ export interface EqChainNodes {
  * Caller owns disconnecting prior nodes via disposeEqNodes().
  */
 export function createEqChain(
-  ctx: AudioContext,
-  settings: HeadphoneEqSettingsService,
+  ctx: BaseAudioContext,
+  settings: Pick<HeadphoneEqSettingsService, "profile" | "shouldApplyEq">,
 ): { nodes: AudioNode[]; chain: EqChainNodes | null } {
   const nodes: AudioNode[] = [];
   if (!settings.shouldApplyEq() || !settings.profile) {
@@ -49,6 +49,57 @@ export function createEqChain(
   nodes.push(listenMatch);
 
   return { nodes, chain: { input: preamp, output: last } };
+}
+
+export type ExportEqSnapshot = Pick<
+  HeadphoneEqSettingsService,
+  "profile" | "shouldApplyEq"
+>;
+
+/** Snapshot before asynchronous rendering; later UI edits cannot change the export. */
+export function snapshotExportEq(
+  settings?: HeadphoneEqSettingsService,
+): ExportEqSnapshot {
+  if (!settings?.shouldApplyEq() || !settings.profile) {
+    throw new Error(
+      "Enable a headphone EQ profile before applying it to an export",
+    );
+  }
+  const profile = settings.profile;
+  return {
+    profile: {
+      ...profile,
+      filters: profile.filters.map((band) => ({ ...band })),
+    },
+    shouldApplyEq: () => true,
+  };
+}
+
+/** Uses the same preamp, PEQ and listen-match gain as monitoring, excluding master volume. */
+export async function applyExportEq(
+  buffer: AudioBuffer,
+  settings?: ExportEqSnapshot,
+): Promise<AudioBuffer> {
+  if (!settings) {
+    return buffer;
+  }
+  const context = new OfflineAudioContext(
+    buffer.numberOfChannels,
+    buffer.length,
+    buffer.sampleRate,
+  );
+  const source = context.createBufferSource();
+  source.buffer = buffer;
+  const { nodes, chain } = createEqChain(context, settings);
+  source.connect(chain?.input ?? context.destination);
+  chain?.output.connect(context.destination);
+  source.start();
+  try {
+    return await context.startRendering();
+  } finally {
+    source.disconnect();
+    disposeEqNodes(nodes);
+  }
 }
 
 export function disposeEqNodes(nodes: AudioNode[]): void {

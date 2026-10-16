@@ -48,15 +48,17 @@ test("longest loaded file controls extent, while removal clamps view and selecti
 });
 test("capacity, duplicates, stable colors and supported channels", () => {
   const s = new ComparisonSession();
-  ["a", "b", "c", "d"].forEach((id) => s.add(file(id), true));
+  ["a", "b", "c", "d", "e", "f", "g", "h"].forEach((id) =>
+    s.add(file(id), true),
+  );
   const colors = s.tracks.map((t) => t.color);
-  expect(new Set(colors).size).toBe(4);
+  expect(new Set(colors).size).toBe(8);
   expect(() => s.add(file("a"))).toThrow(/already/);
-  expect(() => s.add(file("e"))).toThrow(/four/);
+  expect(() => s.add(file("i"))).toThrow(/eight/);
   s.remove("a");
   expect(s.tracks.map((t) => t.color)).toEqual(colors.slice(1));
   expect(() => s.add(file("surround", 1, 48000, 6))).toThrow(/mono or stereo/);
-  expect(s.add(file("e")).muted).toBe(true);
+  expect(s.add(file("i")).muted).toBe(true);
 });
 test("viewport and selection do not mutate one another", () => {
   const s = new ComparisonSession();
@@ -65,4 +67,32 @@ test("viewport and selection do not mutate one another", () => {
   s.setView({ start: 3, end: 5 });
   expect(s.selection).toEqual({ start: 2, end: 7 });
   expect(s.view.start).toBe(3);
+});
+
+test("gain updates are atomic, reset on replacement, and do not change decoded samples", () => {
+  const s = new ComparisonSession();
+  const a = s.add(file("a"), true);
+  s.add(file("b"), true);
+  s.setPlaybackGains(new Map([["a", 0.5]]));
+  expect(() =>
+    s.setPlaybackGains(
+      new Map([
+        ["a", 0.2],
+        ["missing", 0.3],
+      ]),
+    ),
+  ).toThrow();
+  expect(s.playbackGain("a")).toBe(0.5);
+  expect(() => s.setPlaybackGains(new Map([["a", Infinity]]))).toThrow();
+  expect(s.playbackGain("a")).toBe(0.5);
+  s.replace("a", {
+    buffer: a.buffer,
+    revision: 2,
+    sourceSampleRate: 48000,
+    bitDepth: 24,
+  });
+  expect(s.playbackGain("a")).toBe(1);
+  s.setPlaybackGains(new Map([["b", 0.1]]));
+  s.remove("b");
+  expect(s.playbackGain("b")).toBe(1);
 });

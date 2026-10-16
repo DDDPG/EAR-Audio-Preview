@@ -1,3 +1,4 @@
+import { applyExportEq, type ExportEqSnapshot } from "./headphoneEqService";
 import { encodeToWav } from "../encoder";
 import {
   EditExportSettingsProps,
@@ -190,8 +191,10 @@ export async function renderExportWav(
   sourceBitDepth: number | null = null,
   format?: WavExportFormat,
   onOverload?: OverloadHandler,
+  headphoneEq?: ExportEqSnapshot,
 ): Promise<Uint8Array> {
   let rendered = await renderExportBuffer(buffer, settings);
+  rendered = await applyExportEq(rendered, headphoneEq);
   if (format) {
     if (format.sampleRate && format.sampleRate !== rendered.sampleRate) {
       rendered = await renderMix(

@@ -135,6 +135,30 @@ test("paused CQT and LF changes rebuild every native source and use ascending kn
     10,
   );
 });
+test("CQT smoothing survives the one-sample window jitter of native slicing", () => {
+  mount();
+  view.settings.liveSpectrumMode = "cqt";
+  const spectrum = view["_component"]["_spectrum"];
+  const buffers = [4096, 4097].map((length) =>
+    Float32Array.from(
+      { length },
+      (_, i) => Math.sin((2 * Math.PI * 100 * i) / 44100) * 0.4,
+    ),
+  );
+  for (let i = 0; i < 60; i++) {
+    const left = buffers[i % 2];
+    view.publish(
+      1,
+      options,
+      new Map([["a", { ...frame, timeL: left, timeR: left }]]),
+      1,
+    );
+  }
+  const state = spectrum["_comparisonTraces"].get("a").state;
+  // The same sustained signal should accumulate, rather than restart from
+  // the display floor every time a slice differs by one sample.
+  expect(Math.max(...state._emaRms)).toBeGreaterThan(-55);
+});
 test("CQT applies A weighting at native band frequencies and preserves user tilt", () => {
   mount();
   view.settings.liveSpectrumMode = "cqt";

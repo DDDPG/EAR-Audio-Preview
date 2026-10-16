@@ -5,6 +5,7 @@ import { MockAudioBuffer } from "../../__mocks__/helper";
 import { canvasContext } from "./waveformStrip";
 import { analyzeNativeLoudness } from "./loudnessAnalysis";
 import type { LoudnessProfile } from "../services/loudnessService";
+import * as sequenceService from "../services/sequenceFeatureService";
 
 jest.mock("./comparisonTransport", () => ({
   ComparisonTransport: class extends EventTarget {
@@ -101,6 +102,51 @@ test("mute toggles refresh Edit export availability immediately", () => {
   expect(button.disabled).toBe(false);
   app.session.setActive("a", false);
   expect(document.querySelector(".comparisonEmpty")).not.toBeNull();
+});
+
+test("aligned audio revisions invalidate profiles but keep the real host file revision in sequence IPC", async () => {
+  const track = add("aligned");
+  track.revision = -7;
+  app["_files"].set(track.id, {
+    id: track.id,
+    uri: track.uri,
+    name: track.name,
+    ext: "wav",
+    revision: 3,
+  });
+  jest.spyOn(sequenceService, "default").mockImplementation(
+    (_buffer, post) =>
+      ({
+        analyzeProfile: async () => {
+          post({
+            type: "ANALYZE_SEQUENCE_FEATURES",
+            data: {
+              requestId: "aligned-sequence",
+              samples: new ArrayBuffer(16),
+              sampleRate: 48000,
+              hopSec: 0.1,
+            },
+          });
+          return {
+            timeSec: new Float32Array(0),
+            f0Hz: new Float32Array(0),
+            onsetFlux: new Float32Array(0),
+          };
+        },
+        dispose: () => undefined,
+      }) as unknown as sequenceService.default,
+  );
+  jest.mocked(analyzeNativeLoudness).mockResolvedValue({} as LoudnessProfile);
+  app.session.pane = "loudness";
+  await app["loadProfiles"]();
+  expect(app["_post"]).toHaveBeenCalledWith(
+    expect.objectContaining({
+      type: "compare.sequence",
+      trackId: "aligned",
+      revision: 3,
+    }),
+  );
+  expect(app["_profiles"].get("aligned")?.revision).toBe(-7);
 });
 test("STFT uses logical canvas dimensions on Retina", () => {
   const oldRatio = window.devicePixelRatio;

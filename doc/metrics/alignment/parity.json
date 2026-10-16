@@ -1,0 +1,10 @@
+{
+  "passed": true,
+  "cases": 318,
+  "exactAlignmentAndResidual": true,
+  "comparedWithSavedAblation": true,
+  "outputSha256": "098fb75ee98e319e20a92d86a1e116952d3e4d47b5ab453647b9144b54dc2078",
+  "researchOperatorSha256": "64589229f83f940cdd8ede655ae81c4372891140cce7077775f321e3b2b7c0ed",
+  "typescriptOperatorSha256": "8a0d1b37f52243ca0925a62b4a40aaa64baaf2e70a19b969b808165846ac368b",
+  "timestamp": "2026-10-16T16:23:43.497Z"
+}

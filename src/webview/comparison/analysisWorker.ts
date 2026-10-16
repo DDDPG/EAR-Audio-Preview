@@ -2,10 +2,20 @@ import { essentiaSpectrum } from "./essentiaSpectrum";
 import { type EssentiaInstance } from "../../shared/essentiaTypes";
 import { NativeSpectrum } from "./comparisonDsp";
 import type { AnalysisJob, AnalysisReply } from "./analysisProtocol";
+import type { AlignmentJob, AlignmentReply } from "./alignmentProtocol";
+import {
+  estimateAlignment,
+  compareResidual,
+} from "../../shared/audioAlignment";
 
 const scope = self as unknown as {
-  onmessage: (e: MessageEvent<AnalysisJob | { cancel: number }>) => void;
-  postMessage: (data: AnalysisReply, transfer: ArrayBuffer[]) => void;
+  onmessage: (
+    e: MessageEvent<AnalysisJob | AlignmentJob | { cancel: number }>,
+  ) => void;
+  postMessage: (
+    data: AnalysisReply | AlignmentReply,
+    transfer: ArrayBuffer[],
+  ) => void;
 };
 const cancelled = new Set<number>();
 const running = new Set<number>();
@@ -40,6 +50,20 @@ scope.onmessage = async (event) => {
   if ("cancel" in job) {
     if (running.has(job.cancel)) {
       cancelled.add(job.cancel);
+    }
+    return;
+  }
+  // Alignment runs in a dedicated instance of this existing CSP-safe bundle.
+  // Terminating that instance cancels the CPU-bound operation without STFT IPC changes.
+  if (job.kind === "alignment") {
+    try {
+      const estimate = estimateAlignment(job.a, job.b, job.sampleRate);
+      const residual = estimate.accepted
+        ? compareResidual(job.a, job.b, job.sampleRate, estimate.offsetSamples)
+        : undefined;
+      scope.postMessage({ kind: "alignment", estimate, residual }, []);
+    } catch (error) {
+      scope.postMessage({ kind: "alignment", error: String(error) }, []);
     }
     return;
   }

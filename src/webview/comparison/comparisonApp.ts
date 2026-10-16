@@ -56,6 +56,7 @@ import SequenceFeatureService, {
 import { WebviewMessageType } from "../../message";
 import { setLoudnessWorkletModuleUrl } from "../utils/loudnessWorkletLoader";
 import { colorStftColumns } from "./stftColor";
+import { ComparisonAlignment } from "./comparisonAlignment";
 
 interface PendingRead {
   file: ComparisonFile;
@@ -73,6 +74,7 @@ interface Profile {
 }
 
 export class ComparisonApp {
+  private readonly _alignment: ComparisonAlignment;
   public readonly session = new ComparisonSession();
   public readonly transport: ComparisonTransport;
   private readonly _waveforms = new ComparisonWaveforms(this.session);
@@ -191,6 +193,23 @@ export class ComparisonApp {
       .join(
         "",
       )}</div><button data-add class="workspaceChrome__settingsBtn" title="Add audio">+</button><button class="workspaceChrome__settingsBtn js-openSettings" aria-label="Pane settings" aria-haspopup="dialog" aria-expanded="false" title="Settings">⚙</button></nav><div class="comparisonSettings"><label>Window <input data-window type="number" min="10" max="320" step="10" value="80">ms</label><label>Hop <input data-hop type="number" min="5" max="200" step="5" value="20">ms</label><label>Spectrum weighting <select data-weight><option value="none">None</option><option value="a">A-weighted</option></select></label><label>Tilt <input data-tilt type="number" min="-12" max="12" step="0.5" value="0">dB/oct</label><button data-reset>Reset view</button></div></header><div class="comparisonStatus" role="status" aria-live="polite" data-status>Loading audio…</div><section class="comparisonWave" data-waves></section><main class="comparisonDeck" data-deck></main><div class="comparisonTransport"><button data-play aria-label="Play comparison">Play</button><input data-seek aria-label="Global playback position" type="range" min="0" max="0" step="0.001" value="0"><label class="comparisonTime"><input data-time-input type="number" min="0" max="0" step="0.01" value="0.00" aria-label="Playback time in seconds"><span data-time>/ 0.00 s</span></label><label><input type="checkbox" data-loop>Loop</label><label class="comparisonVolume">Volume <input data-volume title="Double-click to reset to 100%" aria-label="Master volume" type="range" min="0" max="120" value="100"></label><button class="workspaceChrome__settingsBtn" data-open-monitor aria-label="Open monitor" aria-haspopup="dialog" aria-expanded="false" title="Monitor">Monitor</button><span class="comparisonMeter"><span class="comparisonMeter__bars" aria-hidden="true"><i data-meter-left></i><i data-meter-right></i></span><span data-meter>−∞ dBFS</span></span></div><div id="comparisonSettingsOverlayMount"></div>`;
+    this._alignment = new ComparisonAlignment(
+      this._root,
+      this.session,
+      this.transport,
+      async (track) => {
+        this._analysis?.cancel(track.id);
+        this._profiles.delete(track.id);
+        this._stftCache.clear();
+        await this._waveforms.prepare(track);
+        if (!this._disposed) {
+          this.session.notify("loaded");
+          this.status(
+            `Alignment updated · ${track.name} · session audio; source files unchanged`,
+          );
+        }
+      },
+    );
     const settingsContent = this.element<HTMLElement>(".comparisonSettings");
     this._settingsOverlay = new SettingsOverlayComponent(
       "#comparisonSettingsOverlayMount",
@@ -402,6 +421,7 @@ export class ComparisonApp {
     this._monitor.receive(message);
     switch (message.type) {
       case "compare.files": {
+        this._alignment.client.workerUri = message.workerUri;
         if (!this._headphoneEqLoaded && message.headphoneEq) {
           this._headphoneEqLoaded = true;
           this._headphoneEq.loadPersisted(message.headphoneEq);
@@ -1700,7 +1720,10 @@ export class ComparisonApp {
                 this._post({
                   type: "compare.sequence",
                   trackId: track.id,
-                  revision: track.revision,
+                  // Host cancellation follows the source file; caches use the
+                  // local audio revision so session alignment can invalidate them.
+                  revision:
+                    this._files.get(track.id)?.revision ?? track.revision,
                   ...message.data,
                 });
               }
@@ -2188,6 +2211,7 @@ export class ComparisonApp {
       return;
     }
     this._disposed = true;
+    this._alignment.dispose();
     cancelAnimationFrame(this._raf);
     this._analysis?.dispose();
     this.transport.removeEventListener("change", this._onTransportChange);

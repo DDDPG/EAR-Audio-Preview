@@ -1,0 +1,24 @@
+{
+  "passed": true,
+  "scope": "Production webview, actual CSP Blob worker, Web Audio, STFT/Live/Edit panes and WAV export. Host file/save dialogs mocked.",
+  "checks": [
+    "Side-only stereo: exact +523-sample inverted match; no polarity change without opt-in",
+    "Aligned playback and native Live analysis run on the updated session buffer",
+    "Exported float32 stereo WAV matches polarity-corrected, shifted PCM to <1e-6",
+    "Reset restores original delayed/inverted PCM, verified by a second actual export",
+    "Periodic multi-solution signal rejected; Apply disabled",
+    "Source-change notification invalidates a previously accepted preview",
+    "Mixed native sample rates rejected without implicit resampling",
+    "No browser exceptions; original fixture bytes unchanged"
+  ],
+  "screenshots": [
+    "alignment-preview.png",
+    "alignment-rejected-narrow.png"
+  ],
+  "errors": [],
+  "alignedExportMaxError": 0,
+  "restoredExportMaxError": 0,
+  "timestamp": "2026-10-16T16:26:19.561Z",
+  "productionBundleSha256": "67a4dbe4526b4b050f45af27f091a5c5e9e2ac7cdb3a4334c515107a17fb988d",
+  "workerBundleSha256": "001f8bde6ef0c5e59aad1171fb0c228d55cdfeb8009e026e122a21fb39ce8c10"
+}

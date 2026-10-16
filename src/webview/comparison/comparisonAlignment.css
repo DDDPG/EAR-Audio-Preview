@@ -1,0 +1,44 @@
+.comparisonAlignment {
+  box-sizing: border-box;
+  width: min(600px, calc(100vw - 32px));
+  max-height: calc(100vh - 32px);
+  overflow: auto;
+  color: var(--vscode-foreground);
+  background: var(--vscode-editor-background);
+  border: 1px solid var(--vscode-widget-border, #666);
+  border-radius: 8px;
+  padding: 20px;
+}
+.comparisonAlignment::backdrop {
+  background: rgba(0, 0, 0, 0.45);
+}
+.comparisonAlignment h2 {
+  margin: 0 0 12px;
+  font-size: 18px;
+}
+.comparisonAlignment p {
+  line-height: 1.5;
+  opacity: 0.8;
+}
+.comparisonAlignment label {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin: 12px 0;
+}
+.comparisonAlignment select {
+  flex: 1;
+  min-width: 0;
+}
+.comparisonAlignment output {
+  display: block;
+  min-height: 4em;
+  padding: 12px 0;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+.comparisonAlignment__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}

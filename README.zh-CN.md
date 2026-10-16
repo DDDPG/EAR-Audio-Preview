@@ -109,7 +109,16 @@ code --install-extension Eps-Acoustic-Revolution-Lab.ear-audio-preview
 <!-- release:zh:start -->
 ## v0.6.0 更新
 
-* **📝 新增技术博客：音频对齐为什么会失败。** 从声道相消、极性与周期多解，到性能优化和消融实验，介绍对齐算子的设计与验证。[中文](https://github.com/Eps-Acoustic-Revolution-Lab/EAR-Audio-Preview/blob/main/doc/blog/audio-alignment-dsp.md) · [English](https://github.com/Eps-Acoustic-Revolution-Lab/EAR-Audio-Preview/blob/main/doc/blog/audio-alignment-dsp.en.md)。
+- **先对齐，再比较。** 估计两份同采样率音频的整数固定延迟，确认后应用到播放、分析和导出的会话副本，也可重置；极性补偿可选，原文件不变。
+
+- **八文件同步比较。** 共用播放时钟，联动缩放波形与 STFT；每轨可独立聚焦、静音或停用。
+- **实时频谱叠加。** 比较 FFT/CQT 频谱、立体声场与相位相关度，并查看 LUFS、基频和起音曲线。
+- **电平匹配与差异测量。** 按共用选区匹配 RMS，只衰减、不放大；以聚焦文件为参考，测量同采样率音频的残差 RMS 与峰值。
+- **选区混音导出。** 选择片段、采样率、声道及 PCM 或 float32 WAV 编码，导出多轨混音，也可写入已启用的耳机 EQ。
+- **界面与体积优化。** 统一控件与监听入口，提供悬浮 Monitor、耳机校正和交互式比较引导，安装包缩小 48%。
+- **诊断更可靠。** 修正声场图的方向、信号极性与边界插值；损坏的耳机 EQ 配置会安全回退，不再中断音频预览。
+
+技术博客：[音频对齐为什么会失败](https://github.com/Eps-Acoustic-Revolution-Lab/EAR-Audio-Preview/blob/main/doc/blog/audio-alignment-dsp.md)（[English](https://github.com/Eps-Acoustic-Revolution-Lab/EAR-Audio-Preview/blob/main/doc/blog/audio-alignment-dsp.en.md)）。
 <!-- release:zh:end -->
 
 📜 [查看完整版本历史 (CHANGELOG)](CHANGELOG.md)

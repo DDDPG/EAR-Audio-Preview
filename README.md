@@ -110,7 +110,17 @@ Seamlessly transition from casual playback to rigorous broadcast-grade diagnosti
 <!-- release:en:start -->
 ## What's new in v0.6.0
 
-* **📝 New technical article: why audio alignment fails.** Channel cancellation, polarity, ambiguous peaks, speed improvements, and what the ablation tests actually showed. [English](https://github.com/Eps-Acoustic-Revolution-Lab/EAR-Audio-Preview/blob/main/doc/blog/audio-alignment-dsp.en.md) · [中文](https://github.com/Eps-Acoustic-Revolution-Lab/EAR-Audio-Preview/blob/main/doc/blog/audio-alignment-dsp.md).
+- **Align before comparing.** Estimate a constant integer-sample delay between two same-rate files, review it, then apply or reset the session copy across playback, analysis and export. Polarity compensation is optional; source files stay unchanged.
+
+- **Eight files, one workspace.** Parallel playback, linked waveform/STFT zoom and independent track focus, mute and analysis controls.
+- **Live comparison at a glance.** Overlay FFT/CQT spectra, stereo fields and phase correlation; compare LUFS, F0 and onset timelines.
+- **Match levels and inspect differences.** Match shared-region RMS without boosting peaks; measure same-rate residual RMS and peak against a reference.
+- **Export the mix you choose.** Save a selected region with configurable sample rate, channels and PCM or float32 WAV encoding, with optional headphone EQ.
+- **A smoother daily workflow.** Unified controls, a floating Monitor with headphone correction, an interactive comparison guide and a 48% smaller package.
+
+- **More reliable diagnostics.** Correct sound-field direction and polarity handling, bound polar interpolation, and recover safely from malformed saved headphone EQ.
+
+Read the technical blog: [Why Audio Alignment Fails](https://github.com/Eps-Acoustic-Revolution-Lab/EAR-Audio-Preview/blob/main/doc/blog/audio-alignment-dsp.en.md) ([中文](https://github.com/Eps-Acoustic-Revolution-Lab/EAR-Audio-Preview/blob/main/doc/blog/audio-alignment-dsp.md)).
 <!-- release:en:end -->
 
 📜 [Explore Full Release History (CHANGELOG)](CHANGELOG.md)

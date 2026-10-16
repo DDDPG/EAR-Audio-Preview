@@ -2,6 +2,7 @@
 import * as fs from "fs";
 import * as path from "path";
 import * as vm from "vm";
+import { extractLoudnessWorkletSource } from "../../../scripts/loudness-worklet-source.cjs";
 
 const folder = __dirname;
 function run(chunks: number, channels: number, input?: Float32Array) {
@@ -12,12 +13,20 @@ function run(chunks: number, channels: number, input?: Float32Array) {
     ),
     "utf8",
   );
-  const start = library.indexOf("const i = `") + "const i = `".length;
-  const end = library.indexOf('`, t = "loudness-processor"', start);
+  const manifest = JSON.parse(
+    fs.readFileSync(
+      path.resolve(
+        folder,
+        "../../../node_modules/loudness-worklet/package.json",
+      ),
+      "utf8",
+    ),
+  );
+  const processor = extractLoudnessWorkletSource(library, manifest.version);
   const source =
     fs.readFileSync(path.join(folder, "loudnessWorkerPrelude.js"), "utf8") +
     "\n" +
-    library.slice(start, end) +
+    processor +
     "\n" +
     fs.readFileSync(path.join(folder, "loudnessWorkerAdapter.js"), "utf8");
   const messages: Array<{ snapshots?: unknown[]; error?: string }> = [];

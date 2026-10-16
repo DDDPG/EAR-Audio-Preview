@@ -1,41 +1,18 @@
 "use strict";
-const fs = require("fs");
 const path = require("path");
 const webpack = require("webpack");
 const essentiaAlias = {
   "essentia.js$": path.resolve(__dirname, "scripts/essentia-runtime.cjs"),
 };
 
-/** Extract loudness-worklet processor source to dist/loudness.worklet.js (CSP-safe). */
+const { writeLoudnessWorkletAssets } = require("./scripts/loudness-worklet-source.cjs");
+
+/** Emit both DSP entry points before normal and watch builds; extraction errors fail the build. */
 class ExtractLoudnessWorkletPlugin {
   apply(compiler) {
-    compiler.hooks.beforeRun.tap("ExtractLoudnessWorkletPlugin", () => {
-      const srcPath = path.join(
-        __dirname,
-        "node_modules/loudness-worklet/packages/lib/dist/index.js",
-      );
-      if (!fs.existsSync(srcPath)) {
-        return;
-      }
-      const src = fs.readFileSync(srcPath, "utf8");
-      const startMarker = "const i = `";
-      const endMarker = '`, t = "loudness-processor"';
-      const start = src.indexOf(startMarker);
-      const end = src.indexOf(endMarker, start);
-      if (start < 0 || end < 0) {
-        console.warn(
-          "[ExtractLoudnessWorkletPlugin] Could not parse loudness-worklet bundle",
-        );
-        return;
-      }
-      const body = src.slice(start + startMarker.length, end);
-      const outPath = path.join(__dirname, "dist/loudness.worklet.js");
-      fs.mkdirSync(path.dirname(outPath), { recursive: true });
-      fs.writeFileSync(outPath, body, "utf8");
-      const prelude = fs.readFileSync(path.join(__dirname, "src/webview/comparison/loudnessWorkerPrelude.js"), "utf8");
-      const adapter = fs.readFileSync(path.join(__dirname, "src/webview/comparison/loudnessWorkerAdapter.js"), "utf8");
-      fs.writeFileSync(path.join(__dirname, "dist/comparisonLoudnessWorker.js"), prelude + "\n" + body + "\n" + adapter, "utf8");
-    });
+    const emit = () => writeLoudnessWorkletAssets(__dirname);
+    compiler.hooks.beforeRun.tap("ExtractLoudnessWorkletPlugin", emit);
+    compiler.hooks.watchRun.tap("ExtractLoudnessWorkletPlugin", emit);
   }
 }
 

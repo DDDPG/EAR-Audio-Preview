@@ -1,214 +1,208 @@
-# Building an Audio Alignment Operator: Design, Failures, and Ablation
-
-> **v0.6.0 integration update:** The integer-delay operator is now integrated into the comparison toolbar as **Align**. Playback, analysis and export use a reversible session copy after explicit application. The article below preserves the research-stage experiments and timings; they are not measurements of the complete extension. See the [current usage and limits](../audio-alignment.md) and [research source access](audio-alignment-research.md).
+# Why Audio Alignment Fails: Designing, Testing, and Breaking Down a DSP Algorithm
 
 > 中文版：[音频对齐为什么会失败：一个 DSP 算子的设计、测试与消融](audio-alignment-dsp.md)
 >
-> October 17, 2026 · EAR Audio Preview research notes. The experiments below concern the integer, constant-delay prototype on the isolated research branch, before product integration. The v0.6.0 integration is described above. All reported timings use an Apple M5 Pro, Node.js v24.9.0, and the fixed inputs described below.
+> October 17, 2026 · EAR Audio Preview development notes. This article examines a constant integer-delay alignment prototype on a separate research branch. Test environment: Apple M5 Pro / Node.js v24.9.0.
 
-When comparing two audio files, we often want a precise answer to a small question: is one merely delayed by a few samples, louder, or inverted in polarity? After compensating for those differences, how much genuinely different audio remains?
+When comparing two audio files, we often want to answer a specific question: are they just a few samples apart, different in overall gain, or opposite in polarity? Once we account for those differences, how much different audio remains?
 
-Cross-correlation is a useful starting point, but finding its largest peak is not the whole problem. Averaging stereo channels can cancel the signal. The correct peak can be negative. A periodic waveform can support several equally plausible offsets. On long recordings, filtering, input preparation, and validation can cost more than the correlation step we initially focused on.
+Cross-correlation gives us a starting point. But simply looking for the largest positive peak can fail in several ways. Mixing stereo channels can cancel the signal. The correct peak for an inverted signal is negative. A periodic signal can produce several peaks that look equally good. With long files, filtering, data preparation, and input checks can also take more time than the correlation itself.
 
-This project started with a pinned audioscope v1.1.8 implementation. We established a reproducible comparison, built our own operator, ran five rounds of independent adversarial review, and then used ablation to revisit our explanation of the results.
+We used `audioscope v1.1.8` as a baseline and built our own alignment algorithm. After five rounds of independent code review and a full ablation study—turning parts off to measure their effects—we could explain what each design choice actually contributed:
 
-The final attribution is specific: channel handling and polarity support explain the positive-case advantage on our fixed corpus; multiple candidates help reject periodic ambiguity; a short window reduces long-input work. Partial whitening did not improve the number of successful cases, but affected runtime through early termination on some recordings. That is a narrower conclusion than our initial design rationale.
+- **All gains in positive-case accuracy came from handling edge cases.** On the fixed test set, channel selection handled Side-only cancellation, and searching both polarities handled inverted signals. These two changes explained every positive case where we beat the baseline.
+- **Multiple candidates mainly helped reject false matches.** Refining several candidates and checking for ambiguity caught periodic signals with more than one plausible delay.
+- **A short analysis window drove the speed gain on long audio.** Reducing the coarse-search window to 4.5 seconds cut processing time for 30-second inputs by about 71% in that ablation comparison.
+- **Partial spectral whitening did not improve accuracy, but could trigger an early exit.** It did not increase the number of positive cases passed. On some recordings, it reduced secondary peaks enough to meet the early-exit rule and avoid further refinement.
 
-## 1. Define what alignment means
+---
 
-The inputs are decoded PCM at the same sample rate. A is the reference and B is the comparison signal. Our offset convention is:
+## 1. Define the problem and the interface
 
-$$
-A[n] \approx p\,B[n+d],\qquad p\in\{-1,+1\}.
-$$
+**The algorithm estimates a constant integer delay and polarity between signals at the same sample rate. It then uses a least-squares gain fit to measure the residual over their overlap.** It does not handle different sample rates, fractional-sample delays, clock drift, or dynamic time warping (DTW).
 
-A positive d means the corresponding content occurs later in B. The sign p describes overall polarity; amplitude differences are handled by a subsequent gain fit. Estimating an offset does not move or modify either input.
+Let $A$ be the reference and $B$ the signal to compare, both at the same sample rate. The alignment model is:
 
-The prototype exposes two functions:
+$$A[n] \approx p\,B[n+d],\qquad p\in\{-1,+1\}$$
+
+Here, $d > 0$ means that $B$ is delayed relative to $A$. The sign $p$ gives the overall polarity. A later gain fit accounts for differences in amplitude. The prototype exposes two main functions:
 
 ```js
 estimateAlignment(aChannels, bChannels, sampleRate, options)
-// { accepted, offsetSamples, polarity, confidence, reason }
+// Returns: { accepted, offsetSamples, polarity, confidence, reason }
 
 compareResidual(aChannels, bChannels, sampleRate, offsetSamples)
-// Linked gain, residual RMS, peak, null depth, and valid overlap
+// Returns shared gain, residual RMS, peak, null depth,
+// and other measurements over the valid overlap.
 ```
 
-The first asks whether an integer offset is sufficiently credible to use. The second measures the remaining difference at a supplied offset. The `confidence` field is the absolute correlation coefficient, not a calibrated probability of correctness.
+`estimateAlignment` decides whether an integer offset is reliable enough to accept. Its `confidence` field is the absolute normalized correlation coefficient. `compareResidual` performs a null test at a given offset: subtracting the gain-adjusted signal from the reference to measure what remains.
 
-This work does not implement sample-rate conversion, fractional-sample delay, clock drift correction, dynamic time warping, or structural matching between different performances. A single constant integer delay must be an appropriate model of the relationship.
+---
 
-## 2. Pin the baseline before comparing it
+## 2. The baseline: audioscope v1.1.8
 
-The baseline is audioscope **v1.1.8**, commit `0cf177499eb3d80a06e37be6efa13ed4ac10c25e`. Its math implementation, original tests, and MIT license are stored in [vendor](audio-alignment-research.md) (`dsp-lab/vendor/`). [source.json](audio-alignment-research.md) (`dsp-lab/vendor/source.json`) records provenance and SHA-256 hashes. Our comparison concerns that code, not an assumption about other releases.
+**The baseline uses a coarse-to-fine search: mix to mono, search at about 4 kHz, then refine at the original sample rate using up to 65,536 samples. Both stages look only for positive correlation peaks.**
 
-The baseline averages channels to mono, decimates up to the first 60 seconds to approximately 4 kHz, and selects one coarse peak using ordinary cross-correlation. It then searches a neighborhood at the original sample rate, using up to 65,536 samples for refinement. Both stages maximize positive correlation.
+For a repeatable comparison, we pinned `audioscope v1.1.8` at commit `0cf17749` under `dsp-lab/vendor/`. See [research source access](audio-alignment-research.md) for the frozen files. Its process is:
 
-Our operator retains the coarse-to-fine structure but changes channel preparation, spectral weighting, candidate count, and analysis duration. Both implementations account for DC bias; mean removal is not an advantage unique to ours.
+1. Average the channels into mono and remove the DC offset.
+2. Take up to the first 60 seconds and downsample to about 4 kHz by averaging blocks.
+3. Compute ordinary cross-correlation and use its largest positive peak as the coarse offset.
+4. Return to the original sample rate and search around that peak, using up to 65,536 samples. Again, choose the largest positive value.
 
-The operator lives in [operator.mjs](audio-alignment-research.md) (`dsp-lab/operator.mjs`), with its FFT in [fft.mjs](audio-alignment-research.md) (`dsp-lab/fft.mjs`). They run in the isolated `dsp-lab` directory. These research results alone do not validate the complete extension; current integration has separate acceptance records linked above.
+Our algorithm keeps mean removal and the coarse-to-fine structure. We changed channel preparation, window length, downsampling filters, spectral weighting, and peak selection. The research implementation is in `dsp-lab/operator.mjs` and `dsp-lab/fft.mjs`, available through the same [source guide](audio-alignment-research.md).
 
-## 3. Do not discard information before searching
+---
 
-### 3.1 Stereo averaging can erase valid audio
+## 3. Channel selection and polarity: keep the signal before searching
 
-A simple stereo construction is enough to expose the problem:
+**Selecting one matching channel pair by energy, then ranking peaks by absolute correlation, handles both stereo cancellation and overall polarity inversion.** These two changes explain all the positive-case accuracy gains over the baseline in the later ablation study.
 
-$$
-L=x,\quad R=-x,\quad (L+R)/2=0.
-$$
+### 3.1 Select a channel pair
 
-Each channel contains useful information, but their average contains none. Such Side-only material also undermines a gain fit based on the mono average.
+Averaging left and right fails completely for Side-only stereo:
 
-Our delay estimator selects a corresponding channel pair instead. For each channel, it measures mean-centered energy in A and B, takes the smaller energy as the pair's score, and chooses the pair with the largest score. This favors a pair with information on both sides rather than a loud channel in only one input.
+$$L=x,\quad R=-x \implies (L+R)/2=0$$
 
-It remains an energy heuristic. It is neither a joint multichannel estimator nor selection by correlation quality. A channel with strong interference can still win. The estimated delay is shared across all channels; left and right are never shifted independently.
+Once the mix is zero, neither delay estimation nor gain fitting has a useful signal. Instead of mixing the channels, we select one corresponding pair for delay estimation:
 
-### 3.2 A negative peak can be the correct match
+1. For each channel $c$, compute the mean-centered energy of $A_c$ and $B_c$.
+2. Score the pair using $\min(\text{Energy}(A_c), \text{Energy}(B_c))$.
+3. Choose the highest-scoring pair, favoring a channel with enough signal in both inputs.
 
-If B is a delayed, inverted copy of A, correlation at the correct offset approaches −1. A positive-only search can discard that match and select a positive sidelobe instead.
+The estimated integer delay applies equally to every channel. This is a low-cost energy rule, rather than a joint correlation calculation across all channels.
 
-We rank candidates by absolute correlation and report polarity separately. A large negative peak can therefore be a strong match. The estimator does not automatically invert a file; that would be a separate product decision.
+### 3.2 Search both polarities
 
-These two edge cases eventually explained every positive-case difference from the pinned baseline on our ablation corpus. They do not establish uniformly better precision on ordinary, same-polarity material.
+If $B$ is a delayed, inverted copy of $A$, the correlation at the correct offset approaches $-1$. A positive-only search misses that match and may choose a positive sidelobe instead.
 
-## 4. Generate coarse candidates from a short window
+We therefore rank and filter candidates by absolute correlation, $\vert{}\rho\vert{}$, in both coarse search and refinement. The sign of the best match gives the polarity $p \in \{-1,+1\}$.
 
-The current pipeline is:
+---
+
+## 4. Coarse search: a short window, filtered downsampling, and partial whitening
+
+**A shorter window reduces filtering and FFT work. A Blackman-windowed sinc low-pass filter limits aliasing during downsampling, while partial whitening adjusts the weight of different frequency regions.**
+
+The full process is:
 
 ```text
-Validate PCM → select corresponding channel → find active audio
-             → extract a window → low-pass and decimate
-             → weighted correlation → up to three coarse peaks
-             → native-rate refinement → accept or reject
+Validate PCM → select a channel pair → find a high-energy region → take a window
+→ FIR low-pass and downsample → weighted cross-correlation → keep up to 3 peaks
+→ refine at the original sample rate → check score and ambiguity
 ```
 
-### 4.1 Search radius and analysis duration are different choices
+### 4.1 Separate the search range from the window length
 
-A default search radius of ±2 seconds does not require processing the entire 30-second recording in the coarse stage.
+A default delay range of $\pm 2$ seconds, $T_{\text{lag}}$, does not require sending an entire 30- or 60-second recording through the FFT. Within the common input length, capped at the first 60 seconds, we find a high-energy region and take a short window:
 
-Within the common available input length, capped at the first 60 seconds, we locate an energetic region and choose an analysis duration of:
+$$T_{\text{window}}=\max(4,\;2T_{\text{lag}}+0.5)\ \text{seconds}$$
 
-$$
-T_{\text{window}}=\max(4,\;2T_{\text{lag}}+0.5)\ \text{seconds},
-$$
+The default window is 4.5 seconds. We then downsample by a factor of $\lfloor f_s / 2000 \rfloor$, giving a rate near 2 kHz.
 
-capped by the available audio. The default is 4.5 seconds. The decimation factor is `floor(sampleRate / 2000)`, yielding an analysis rate near 2 kHz.
+For a 30-second, 48 kHz input, the baseline processes about 120,000 coarse samples per input with a 262,144-point FFT. Our 4.5-second window has only about 9,000 samples per input and needs a 32,768-point FFT. This cuts the preparation and FFT work for long recordings.
 
-For a 30-second, 48 kHz input, audioscope's coarse signal has approximately 120,000 samples per input and uses a 262,144-point FFT. Our default window produces about 9,000 samples per input and uses a 32,768-point FFT. That is an eightfold difference in transform length, not a claim of eightfold end-to-end acceleration.
+### 4.2 Filter before downsampling
 
-### 4.2 Keep a low-pass filter before decimation
+The baseline downsamples by averaging blocks, which is a rectangular-window filter. We use a Blackman-windowed sinc FIR low-pass filter instead. Its radius is four times the downsampling factor, its cutoff is 80% of the target Nyquist frequency, and its coefficients are normalized.
 
-The baseline's delay-analysis decimator averages blocks. Ours uses a Blackman-windowed sinc FIR with a radius of four times the decimation factor and a cutoff at 80% of the output Nyquist frequency, followed by kernel normalization.
+The longer FIR costs more per output sample. Keeping the analysis window to 4.5 seconds limits its total cost.
 
-The longer FIR is more expensive per output sample and provides more explicit anti-alias filtering. We did not independently ablate filter choice, so no measured accuracy gain can be assigned to it. Limiting the processed window keeps that cost manageable.
+### 4.3 Partial spectral whitening
 
-### 4.3 The initial case for partial whitening
+Let $X$ and $Y$ be the spectra of $A$ and $B$, with cross-spectrum $S_k = \overline{X_k}Y_k$. Ordinary cross-correlation takes the inverse FFT of $S_k$ directly, so strong low-frequency content can dominate the result. Full GCC-PHAT weighting keeps only phase, but can give too much weight to noise in quiet frequency regions.
 
-Let X and Y be the input spectra, with cross-spectrum:
+Our coarse search uses partial whitening between these two choices:
 
-$$
-S_k=\overline{X_k}Y_k.
-$$
+$$C=\operatorname{IFFT}\!\left( \frac{S_k}{\sqrt{\max(\epsilon,\vert{}S_k\vert{})}} \right),\qquad \epsilon=\max\left(10^{-20},\;10^{-5}\max_k \vert{}X_k\vert{}\vert{}Y_k\vert{}\right)$$
 
-Ordinary cross-correlation applies an inverse FFT directly to S. Our coarse stage instead uses:
+The aim was to reduce the influence of strong bands so that more frequencies could help locate the delay. As the later ablation shows, its measured benefit on this test set was in runtime, rather than accuracy.
 
-$$
-C=\operatorname{IFFT}\!\left(
-\frac{S_k}{\sqrt{\max(\epsilon,|S_k|)}}
-\right),
-$$
+---
 
-with the implementation floor:
+## 5. Refinement and rejection: handle periodic signals with several possible delays
 
-$$
-\epsilon=\max\left(10^{-20},\;10^{-5}\max_k |X_k||Y_k|\right).
-$$
+**A high correlation does not mean the delay is unique. Keeping several coarse peaks, refining them in one-pass calculations, and checking for similar scores lets the algorithm reject ambiguous periodic matches.**
 
-This reduces the dominance of strong frequency components without indefinitely amplifying weak bins. The weighting lies between ordinary correlation and full PHAT weighting.
+### 5.1 Refine with one pass over the samples
 
-The design hypothesis was that contributions from more frequency regions could make coarse peaks more discriminative. **It was a hypothesis to test. The ablation below did not demonstrate an accuracy gain on our corpus.**
+The coarse search keeps up to three local peaks by absolute value. Each candidate is refined at the original sample rate, searching sample by sample within two downsampling factors on either side.
 
-## 5. A high correlation score does not establish a unique delay
+Refinement uses at most 16,384 samples. It returns zero if the valid overlap contains fewer than 128 samples or the signal variance is too low. To reduce memory passes, we avoid first computing the means and then making a second pass for centered products. Instead, one pass accumulates $\sum A$, $\sum B$, $\sum A^2$, $\sum B^2$, and $\sum AB$. These raw sums give the mean-centered normalized correlation:
 
-The coarse stage retains up to three local peaks by absolute value. Each is refined sample by sample at the original rate, within two decimation factors on either side and within the permitted delay range.
+$$\rho(d)= \frac{\sum ab-\frac{\sum a\sum b}{N}} {\sqrt{\left(\sum a^2-\frac{(\sum a)^2}{N}\right) \left(\sum b^2-\frac{(\sum b)^2}{N}\right)}}$$
 
-Refinement uses up to 16,384 samples. A single pass over valid overlap accumulates `sum(A)`, `sum(B)`, `sum(A²)`, `sum(B²)`, and `sum(AB)`, producing a mean-centered normalized coefficient:
+### 5.2 Accept, reject, or stop early
 
-$$
-\rho(d)=
-\frac{\sum ab-\frac{\sum a\sum b}{N}}
-{\sqrt{\left(\sum a^2-\frac{(\sum a)^2}{N}\right)
-             \left(\sum b^2-\frac{(\sum b)^2}{N}\right)}}.
-$$
+A refined result must pass two checks:
 
-The baseline uses separate passes for means and centered products. Our raw-moment formulation removes one traversal. They express the same kind of coefficient mathematically, but follow different floating-point paths; this is not a byte-identical substitution for arbitrary inputs. Extreme DC offsets and very low variance still require numerical care.
+1. **Score threshold:** the best candidate must satisfy $\vert{}\rho_{\text{best}}\vert{} \ge 0.75$.
+2. **Ambiguity check:** if a candidate at another offset scores $\vert{}\rho_{\text{other}}\vert{} > 0.985 \times \vert{}\rho_{\text{best}}\vert{}$, reject the result as `ambiguous-peaks`.
 
-The current refinement function returns zero correlation when valid overlap contains fewer than 128 samples or variance is too low, rather than treating an uninformative region as reliable evidence.
+This targets periodic signals such as sine waves. A pure tone produces a near-perfect peak every period, so choosing one delay from those peaks would be arbitrary.
 
-The current acceptance threshold is `abs(rho) >= 0.75`. If a distinct alternative scores above 98.5% of the best score, the result is rejected as `ambiguous-peaks`. This checks the candidates actually searched, not every possible global ambiguity.
+We also use an early-exit rule to avoid extra refinement. If the first candidate refines to $\vert{}\rho\vert{} > 0.999$, and the second coarse peak is less than half the first, we accept the first candidate without refining the rest.
 
-A pure tone explains why rejection matters. Shifts separated by a period can all correlate almost perfectly. Reporting a coefficient near 1 does not resolve which offset should be used.
+---
 
-There is also an early-exit rule: when the first refined candidate scores above 0.999 and the second coarse peak is less than half the first, remaining refinement can stop. This candidate-based heuristic later proved important to the runtime effect of whitening.
+## 6. Build the test set and check the baseline
 
-## 6. Test more than delayed copies
+**The tests cover synthetic edge cases, unrelated signals with shared tonal structure, and transformed real audio. Development tests led to a correlation threshold of 0.75, after which the prototype passed every case in the held-out set.**
 
-The generator is in [corpus.mjs](audio-alignment-research.md) (`dsp-lab/corpus.mjs`). Its deterministic base signal combines enveloped filtered noise, a changing-frequency sinusoid, and a fixed-frequency component. Positive families cover:
+The generator is `dsp-lab/corpus.mjs`; see [research sources](audio-alignment-research.md). Its base signal mixes enveloped filtered noise, a swept sine, and a fixed-frequency sine.
 
-- Positive and negative integer delays, including search boundaries.
-- Gain, DC offset, and added noise.
-- Overall polarity inversion, Side-only stereo, and unequal channel energies.
-- First-order low-pass filtering and leading silence.
+- **Positive cases:** positive and negative integer delays, search boundaries, gain changes, DC offsets, added noise, polarity inversion, Side-only stereo, unequal channel energy, leading silence, and first-order low-pass filtering. Because low-pass filtering changes group delay and waveform shape, those cases allow a two-sample error; the other positive cases require an error of at most one sample.
+- **Negative cases:** silence, constant signals, periodic pure tones, and synthetic signals with different random noise but shared tonal structure or envelopes.
 
-Low-pass filtering changes waveform shape, so that family permits a two-sample error; the other original families generally permit one. Per-family success and the final gate requiring at least 95% of positives within one sample are separate checks.
+In an early development run, **5 of 24 negative cases with shared tonal structure were accepted**, with correlations around `0.49–0.52` (`dsp-lab/results/dev-round-1.json`). Independent audio with similar spectral envelopes could still produce a moderate correlation. We raised the final acceptance threshold to `0.75`.
 
-Negative cases include signals with different noise components but shared tonal structure, silence, constants, and periodic ambiguity. A retained early development result still accepted **5 of 24 negative cases**, at correlations around 0.49–0.52. Shared tonal structure was not sufficient evidence for automatic alignment. After development-set adjustment, the final correlation threshold was 0.75. The [pre-adjustment results](audio-alignment-research.md) (`dsp-lab/results/dev-round-1.json`) were retained.
+After fixing the threshold, we tested 104 validation cases—72 positives and 32 negatives—and 16 real-audio variants. The latter came from four 48 kHz stereo recordings with added delay, gain changes, noise, or polarity inversion:
 
-The initial held-out evaluation subsequently passed 72/72 positives and rejected all 32 negatives; the baseline passed 56/72 positives. “Held out” describes that original stage. Later optimization and ablation reused these inputs, making them a fixed regression corpus rather than another fresh blind evaluation.
+| Test set | Prototype | audioscope v1.1.8 | Reason for the difference |
+| --- | --- | --- | --- |
+| Synthetic positives (72) | **72 / 72** | 56 / 72 | The baseline failed on inverted and Side-only cases |
+| Synthetic negatives (32) | **32 / 32 rejected** | No rejection mechanism | The prototype rejected silence, unrelated signals, and ambiguous periodic matches |
+| Real-audio variants (16) | **16 / 16** | 12 / 16 | The baseline failed on four inverted variants |
 
-Four local MP3 recordings were decoded by macOS `afconvert` to 48 kHz stereo Float32 PCM, retaining the first 30 seconds. Known delay, gain, polarity, and noise transformations produced 16 real-content variants: ours passed 16/16, versus 12/16 for the baseline. The four differing cases were polarity inversions.
+---
 
-The content is real audio, but the labels come from imposed transformations, not independently captured recordings with human alignment annotations. Additional confirmation included 52 cases from new seeds and six pairings of different recordings, for 58 cases, plus six separate gain/residual checks. These do not substitute for evaluation of real acquisition errors.
+## 7. Fit gain and measure the residual
 
-## 7. Fit gain and measure residuals only where audio overlaps
+**Residual measurement fits one least-squares gain across all channels, using only the valid overlap. Negative gain is allowed so that inverted signals can cancel correctly.**
 
-After alignment, one linked gain is fitted over all channels and valid overlap:
+After selecting offset $d$, `compareResidual` fits one shared scalar gain $g^*$ across all channels in the valid overlap $\Omega$:
 
-$$
-g^*=\frac{\sum_{c,n\in\Omega} A_{c,n}B_{c,n+d}}
-           {\sum_{c,n\in\Omega} B_{c,n+d}^{2}},
-\qquad e_{c,n}=A_{c,n}-g^*B_{c,n+d}.
-$$
+$$g^*=\frac{\sum_{c,n\in\Omega} A_{c,n}B_{c,n+d}} {\sum_{c,n\in\Omega} B_{c,n+d}^{2}}, \qquad e_{c,n}=A_{c,n}-g^*B_{c,n+d}$$
 
-A shared gain preserves channel ratios. The fit allows negative values and excludes zero-padded tails without corresponding content. Residual RMS, peak, and null depth use the same overlap.
+Null depth is the ratio of reference energy to residual energy, expressed in decibels:
 
-For a nonzero reference, null depth is `10*log10` of reference energy divided by residual energy. A zero residual yields positive infinity; a zero-energy reference makes the ratio undefined, represented by a null value.
+$$\text{Null Depth (dB)} = 10\log_{10}\!\left(\frac{\sum A_{c,n}^2}{\sum e_{c,n}^2}\right)$$
 
-The baseline's `fitGain` accepts mono inputs and restricts the result to positive gain. Our definition is better suited to this stereo subtraction task, but does not guarantee a smaller residual for every signal. It does not fit a DC offset, frequency response, or nonlinear distortion. This is null-test gain matching, not LUFS-based listening-level matching.
+The baseline's `fitGain` works on mono and requires positive gain. A shared gain across all channels preserves stereo balance. Measuring only the overlap also keeps zero padding at unaligned edges out of the result, matching the purpose of an audio null test more closely.
 
-## 8. The first implementation was slower
+---
 
-We retained raw timing samples from intermediate stages instead of keeping only the best final run. The speed ratio below means `baseline time / prototype time`; values above 1 favor the prototype.
+## 8. How performance changed
 
-1. **First implementation:** approximately 0.63–0.64 for 30-second inputs and 0.57–0.59 for 3-second inputs. Positive-case behavior improved, but runtime regressed.
-2. **Second implementation:** after improving full-PCM checks and adding candidate early exit, approximately 1.02–1.04 for long inputs—close to parity—while short inputs remained slower.
-3. **After shortening the window and simplifying FIR boundary loops:** two long-input timing passes produced approximately 1.71–1.88; short-input gains were not stable.
-4. **After five review rounds:** two final timing passes against the pinned baseline produced approximately 2.80–2.87 for long inputs and 1.33–1.38 for short inputs.
+**The first version was about 40% slower than the baseline because of its longer FIR filter and full input checks. A short window, early exit, and loop unrolling eventually made it more than 2.8 times as fast on 30-second inputs.**
 
-See the [first timing stage](audio-alignment-research.md) (`dsp-lab/.cross-gan/baseline/timing-round-1.json`), [second stage](audio-alignment-research.md) (`dsp-lab/.cross-gan/baseline/timing-round-2.json`), and [final verification](audio-alignment-research.md) (`dsp-lab/results/final-verification.json`). These stages change multiple things. Their sequence does not assign an independent share of the improvement to each edit.
+We define speedup as `baseline time / prototype time`; values above 1 mean the prototype is faster. The four stages were as follows. Historical and final measurements are retained in the [research snapshot](audio-alignment-research.md).
 
-Timing includes complete PCM finite-value checks, channel preparation, and delay estimation. It excludes decoding, resampling, residual computation, IPC, and UI work. These are not application-wide speedups or promises for other hardware and input lengths.
+1. **First version (30 s: ~0.63×; 3 s: ~0.58×):** fixed channel and polarity failures, but applying the longer Blackman-sinc FIR to the full signal made it slower overall.
+2. **Second version (30 s: ~1.03×; 3 s: ~0.75×):** improved PCM validation and added early exit during refinement. Long-input performance caught up with the baseline.
+3. **Third version (30 s: ~1.80×; 3 s: ~0.95×):** shortened coarse analysis to 4.5 seconds and simplified FIR boundary handling. Long-input performance moved ahead.
+4. **Final version (30 s: 2.80–2.87×; 3 s: 1.33–1.38×):** after five review rounds and loop unrolling, both input lengths were faster than the baseline in these runs.
 
-## 9. What survived five rounds of review
+---
 
-Independent finders proposed candidates and independent discriminators challenged them. A candidate needed a reproducible trigger; efficiency changes additionally needed output equivalence on the existing corpus and gains in the actual benchmark. Findings, refutations, commits, and checks are recorded in the [.cross-gan checkpoint](audio-alignment-research.md) (`dsp-lab/.cross-gan/checkpoint.json`).
+## 9. Five review rounds: edge cases and expensive loops
 
-### Round 1: sparse samples were misclassified as silence
+**Five rounds of independently built counterexamples and fix checks found four edge-case bugs: missed sparse signals, gaps in window coverage, and failures caused by very quiet background noise. Loop unrolling also cut total runtime for long inputs by about 25%.** Full records are in `dsp-lab/.cross-gan/`; see [research source access](audio-alignment-research.md).
 
-The cheap energy probe visited every 32nd sample. If nonzero samples occurred only at indices congruent to 1 modulo 32, the probe saw zeros everywhere. Two identical nonconstant inputs were rejected as silent.
+### Round 1: a spaced sampling probe missed sparse signals
 
-A minimal construction, run from the repository root:
+To detect silence quickly, the first version checked every 32nd sample. If a signal had nonzero values only at `i % 32 === 1`, the probe saw only zeros. Two identical, valid signals were rejected as silence:
 
 ```js
 import { estimateAlignment } from './dsp-lab/operator.mjs';
@@ -219,143 +213,127 @@ for (let i = 1; i < x.length; i += 32) {
   state = (Math.imul(state, 1664525) + 1013904223) >>> 0;
   x[i] = state / 4294967296 - 0.5;
 }
-console.log(estimateAlignment([x], [x.slice()], 48000));
+console.log(estimateAlignment([x], [x.slice()], 48000)); // The first version reported silence.
 ```
 
-The repair retains the cheap probe, but checks every sample before concluding that energy is insufficient. Regression cases vary the sampling phase and signed delay, while ensuring actual silence and constants remain rejected.
+**Fix:** keep the fast probe, but scan every sample before rejecting an input whose probe energy is too low.
 
-### Round 2: valid audio existed, but refinement examined silence
+### Round 2: the window selector placed analysis inside silence
 
-Moving sparse activity to the second half of a one-second recording passed the new channel-energy fallback. However, the window selector's stride-16 energy probe could still miss the activity and select the silent beginning.
+After the channel-level fix, moving those sparse pulses into the second half of a one-second clip exposed another failure. The channel check passed, but the window selector used its own energy probe with a step of 16. It missed the later pulses and chose the silent first half for refinement.
 
-This round added full-resolution fallback to window selection. Fixing “is there a signal?” had not fixed “where should we analyze it?” Independent reproduction exposed the distinction.
+**Fix:** add a full-sample fallback to the window selector when the probe reports low energy.
 
-### Round 3: the final part of the recording was never visited
+### Round 3: half-window steps missed the tail
 
-Half-window stepping can leave a tail shorter than one step. For 48,000 samples and a 16,384-sample refinement window, the old starts were 0, 8,192, 16,384, and 24,576. Coverage ended at 40,960. If the useful audio began at 46,000, rescanning those same windows more carefully could not find it.
+The selector moves by half a window: `hop = windowSize / 2`. For 48,000 samples and a 16,384-sample window, the starts are `0, 8192, 16384, 24576`. The last window ends at `40960`. A useful transient after sample `46000` falls outside every candidate window.
 
-The low-energy fallback now also compares an end-aligned window. Regression constructions cover 8, 44.1, 48, and 192 kHz with signed delays. These boundary checks are not comprehensive validation of every sample rate in the accepted range.
+**Fix:** when the normal windows have too little energy, also check a window ending exactly at the input boundary: `[length - windowSize, length]`.
 
-### Round 4: validate faster without checking fewer values
+### Round 4: unroll the full PCM validity check
 
-The full PCM scan was unrolled to check eight samples sequentially per iteration, with the remaining tail handled by the scalar loop. No sample or NaN/infinity check was removed.
+Every call checks all samples for `NaN` and `±Infinity`. For long audio, even this simple loop takes a noticeable share of runtime.
 
-Added tests cover every position in lengths 1–25, three invalid values, both inputs, mono/stereo, and both public functions. Paired comparisons of the pre-review and final operators reduced 30-second runtime by about 25–27% and 3-second runtime by about 6–7%.
+**Fix:** check eight samples per loop iteration, with a scalar loop for the remainder. No samples are skipped. This reduced total algorithm runtime by **25–27%** for 30-second inputs and **6–7%** for 3-second inputs.
 
-This is a measured loop optimization, not a new alignment principle or a general recommendation to unroll every JavaScript loop.
+### Round 5: very quiet noise bypassed an exact-zero fallback
 
-### Round 5: tiny noise bypassed an exact-zero fallback
+The fallbacks from rounds 2 and 3 originally ran only when the probe energy was exactly `0`. If the opening contained tiny background noise, such as amplitude `1e-9`, its energy was nonzero. The selector could choose that quiet opening and miss useful audio at the end.
 
-A tiny nonzero background could prevent a fallback guarded by energy equal to zero, while the selected region still lacked enough information for reliable refinement. Informative audio at the tail remained unexamined.
+**Fix:** change the fallback condition from `=== 0` to `< 1e-12`, matching the channel silence threshold. Very quiet noise can then trigger the full scan and tail check.
 
-The final fallback condition uses energy below `1e-12`, matching the existing channel silence threshold. Full-resolution and tail checks remain. Regressions vary background amplitude, signed delay, and polarity.
+---
 
-Each round also compared JSON-serialized alignment and residual return objects on 250 fixed cases, requiring byte-identical results. That guarantee applies to those tested inputs and that serialized representation, not all possible inputs: fixing a boundary bug deliberately changes behavior on its new reproducer.
+## 10. Two changes we reverted
 
-## 10. Two plausible optimizations we reverted
+**Less arithmetic or a faster small benchmark does not guarantee a faster complete algorithm under V8's JIT compiler.** We reverted two changes that initially looked useful:
 
-**Fuse the two forward FFTs.** Sharing bit-reversal indices and twiddle recurrence reduced some local work, and isolated tests showed gains. In the full operator, however, the median speed ratio across eight groups was only about 1.006, with regressions in some groups. The benefit was not distinguishable from noise, so we reverted it.
+1. **Combine both forward FFTs.** Since $A$ and $B$ have equal lengths, their bit-reversal and butterfly operations can share a loop and twiddle-factor updates. Small tests showed slight gains, but the median speedup across eight full-algorithm tests was only `1.006×`, with some cases slower. We reverted it.
+2. **Combine both FIR downsampling loops.** We tried applying the same FIR coefficients to $A$ and $B$ in one loop. A separate in-memory benchmark looked good, but the actual implementation ran slower: speed fell to `0.84–0.88×` for short inputs and `0.95–0.96×` for long inputs.
 
-**Fuse the two FIR traversals.** The independent finder's in-memory experiment looked promising, but the actual file-based implementation regressed in two whole-operator timing passes. Even though 405 internal Float64 buffer comparisons were byte-identical, first-pass speed ratios were only about 0.84–0.88 for short inputs and 0.95–0.96 for long inputs. We reverted it as well.
+Combining loops can change how the engine handles vector operations or registers, though these timings alone do not show which compiler behavior caused the slowdown. The practical lesson is to check every optimization in the complete running algorithm.
 
-We do not have enough evidence to explain the JIT behavior behind the discrepancy. The supported conclusion is simpler: fewer arithmetic or loop operations, or a faster in-memory experiment, does not establish that the shipped experimental implementation is faster. Both rejected implementations and their timing evidence remain in the record.
+---
 
-## 11. Ablation: identify which components explain the result
+## 11. Ablation: measure what each part contributes
 
-We froze the complete version, toggled channel selection, partial whitening, multiple candidates, and the short window, and evaluated all 16 combinations. Adding a polarity-disabled control and the pinned baseline yielded 18 versions.
+**Channel selection and polarity support explain the positive-case accuracy gains. Multiple candidates catch ambiguous periodic matches. The short analysis window explains most of the runtime reduction.**
 
-The corpus contains 250 historical fixed cases, 52 cases from two additional seeds, and 16 predefined diagnostic cases: **318 total, with 230 positives and 88 negatives**. The complete snapshot matches the operator source, and all 318 full return objects match direct calls to the operator.
+We froze the algorithm and tested every on/off combination of four parts: **channel selection, partial whitening, multiple-candidate refinement, and the short window**. That gives $2^4 = 16$ configurations. Adding a version without polarity support and the audioscope baseline brought the total to 18. The test set contained **318 cases: 230 positives and 88 negatives**.
 
-### 11.1 Accuracy attribution was narrower than expected
+### 11.1 Accuracy
 
-- **Complete version: 230/230 positives; all 88 negatives rejected.**
-- **Channel selection disabled: 204/230.** All 26 losses are stereo cancellation cases.
-- **Partial whitening disabled: 230/230.** Negative rejection is unchanged. No accuracy gain is demonstrated here.
-- **Multiple candidates disabled: 230/230.** Positive success is unchanged, but 22 periodic-ambiguity cases switch from rejection to acceptance.
-- **Short window disabled: 230/230.** No accuracy penalty from windowing is observed on this corpus.
-- **Polarity support disabled: 204/230.** The 26 losses are 22 synthetic inversions and four inverted real-content variants.
-- **audioscope: 178/230 positives.** Its 52 failures exactly match the union of the channel-policy and polarity-control failure sets; those sets do not overlap.
+| Configuration | Positives passed (230) | Negatives rejected (88) | What failed |
+| --- | --- | --- | --- |
+| **Full algorithm** | **230 / 230** | **88 / 88** | None |
+| No channel selection | 204 / 230 | 88 / 88 | All 26 Side-only cancellation cases |
+| No polarity support | 204 / 230 | 88 / 88 | 22 synthetic inverted cases and four inverted real-audio variants |
+| No multiple-candidate refinement | 230 / 230 | **66 / 88** | 22 periodic pure-tone cases were accepted without an ambiguity check |
+| No partial whitening | 230 / 230 | 88 / 88 | No change in pass rate on this set |
+| No short window (full-length analysis) | 230 / 230 | 88 / 88 | No change in pass rate on this set |
+| **audioscope baseline** | **178 / 230** | N/A | Exactly 26 channel-cancellation cases plus 26 inverted cases, with no overlap |
 
-Thus the entire positive-case gap on this corpus corresponds to those two edge conditions. Both implementations pass the other 178 positives. The 16 combinations show no interaction in success counts, which is not a statistical proof that interactions do not exist elsewhere.
+Both implementations passed the other 178 ordinary positive cases. The role of multiple candidates is also clear: together with the cross-candidate ambiguity check, they reject periodic signals without a unique delay.
 
-The 22 periodic cases also require care: they use 11 seed labels and two sample rates, but their pure-tone formula ignores the seed. There are only two distinct rate-specific waveforms. They are 22 test executions, not 22 independent pieces of evidence.
+### 11.2 Runtime
 
-The single-candidate ablation also removes cross-candidate ambiguity rejection. It measures the combined “multiple-candidate refinement plus ambiguity check” policy, not refinement alone. Likewise, audioscope has no rejection state; the evaluation wrapper's `accepted: true` does not establish 88 false acceptances by the original API.
+We used 3- and 30-second excerpts from four real recordings, rotating test order across **3,024 measured calls**. The ratio is `time with the part disabled / full-algorithm time`. A higher ratio means that enabling the part saves more time.
 
-### 11.2 Runtime contributions are conditional
+- **Short window:** `0.998×` for 3-second inputs, since the default 4.5-second window does not shorten them. For **30-second inputs, the ratio was 3.472×**: about 37.0 ms fell to 10.6 ms, a reduction of roughly 71%.
+- **Channel selection:** `1.332×` for 3-second inputs and `1.447×` for 30-second inputs. Enabling it reduced runtime by 25–31%, largely by avoiding full-length stereo mixing, array allocation, and sample passes.
+- **Multiple-candidate refinement:** `1.005×` for 3-second inputs and `0.997×` for 30-second inputs, within about $\pm 2\%$.
+- **Partial whitening:** results depended on the recording. Disabling it made 3-second A/C/D inputs about 35% slower, but B about 8% faster. For 30-second inputs, A became about 12% slower, while B/C/D became about 9% faster.
 
-Main timing uses four recordings at 3 and 30 seconds, four warmups, 21 measured calls per group, and three passes. Variant order rotates and reverses by block. GC runs before the whole block, outside every timed call. This produces 504 blocks and 3,024 measured invocations.
+---
 
-For each component, define the ratio as “disabled time / complete time,” then take the median of the 12 recording-by-pass ratios:
+## 12. Why can removing whitening make the algorithm slower?
 
-- **Channel selection:** 1.332 at 3 seconds and 1.447 at 30 seconds. Enabling it reduces runtime by about 25% and 31%. The disabled version includes downmix allocation and full-length accumulation, so this is not merely a comparison of channel-scoring loops.
-- **Partial whitening:** direction depends on content. Disabling it makes 3-second A/C/D about 35% slower but B about 8% faster. At 30 seconds, disabling it makes A about 12% slower and B/C/D about 9% faster.
-- **Multiple candidates:** 1.005 at 3 seconds and 0.997 at 30 seconds. Changes are around ±2%, with no stable speed benefit.
-- **Short window:** about 0.998 at 3 seconds, essentially unchanged, and 3.472 at 30 seconds. Long-input time falls from roughly 37 ms to 10.6 ms, a reduction of about 71%.
+**Partial whitening adds frequency-domain work, but it can lower secondary peaks enough to trigger an early exit after the first candidate. That saves refinement of the other two candidates.**
 
-These are conditional differences with the other components enabled, not additive shares of a total speedup. They cannot be multiplied into the reported baseline ratio either. The long-window control retains our longer FIR and can be slower than the baseline; the saving from shortening that window can therefore exceed our total advantage over the baseline.
+Removing whitening avoids square roots and division, so it seems as though it should always be faster. To explain the opposite results, we counted internal operations separately from the timing runs. The counters are in `dsp-lab/ablation/work-counts.mjs`; see [research sources](audio-alignment-research.md).
 
-## 12. Why can adding whitening make an input faster?
+1. **Work saved by the short window:** on 30-second inputs, the 4.5-second window uses a 32,768-point FFT and about 3.47 million FIR multiply-adds across both inputs. Full-length analysis raises those figures to a 131,072-point FFT and about 23.16 million multiply-adds.
+2. **Whitening and refinement counts:** with the full configuration, all eight recording/length combinations met the early-exit conditions after the first candidate: $\vert{}\rho_1\vert{} > 0.999$, with the second coarse peak below half the first. Each estimate needed only **97** time-domain correlation evaluations. Without whitening, 3-second A/C/D and 30-second A did not stop early. Searching all three candidates raised the count to **291**. These were exactly the combinations that became slower.
 
-Removing normalization should remove work. Why did it slow down some inputs? After the main experiment, we added explanatory work counters. All 40 instrumented return objects matched the uninstrumented variants; instrumented code was not used for timing.
+We then fixed the candidate count at one to remove the difference in early-exit behavior. **Without whitening, all eight combinations were faster, with runtime reductions of about 6–13%.** Whitening pays for itself only when the refinement work it saves exceeds its own frequency-domain cost.
 
-The complete configuration exited after the first candidate on all eight recording-duration combinations, making 97 refinement-correlation calls. Without whitening, 3-second A/C/D and 30-second A lost that exit and made 291 calls. Those were exactly the combinations that became slower.
+---
 
-Window costs were visible as well. With the short window, each transform for a 30-second input had length 32,768 and the two FIR passes performed about 3.47 million multiply-accumulates. Using the full input increased those numbers to 131,072 and about 23.16 million. Refinement remained at 97 calls, locating the added work in filtering and FFTs.
+## 13. Reproduce the experiments and find the code
 
-We then ran a 2×2 timing experiment for whitening and multiple candidates while retaining channel selection and the short window. This was explicitly a post-hoc follow-up, with no algorithm threshold tuning. Once forced to a single candidate, disabling whitening was faster on all eight recording-duration combinations: about 6–13% less time for 3-second inputs and 8–10% less for 30-second inputs.
+The research project has no external npm dependencies and requires Node.js 24 or later. The `dsp-lab/` files live in the fixed research snapshot; follow the [source access guide](audio-alignment-research.md) before running the commands below.
 
-The evidence supports a precise account: **whitening costs computation, but for some recordings its changed coarse peaks trigger earlier termination of later search.** It does not support a positive-case accuracy claim for whitening on this corpus. Ordinary exact-copy timing also does not measure the full three-candidate cost on difficult inputs.
+### Reproduction steps
 
-## 13. Reproduce the experiment, not just its headline
-
-The operator and tests need Node.js 24+ and no additional npm dependencies. Real-content timing additionally requires the four local recordings, which are not committed. Cloning the repository alone cannot reproduce those measurements.
-
-From the repository root, prepare your own `A.mp3` through `D.mp3`:
+Synthetic tests can run without local recordings. Real-audio timing needs four local files, `A.mp3` through `D.mp3`, converted by the preparation script into the test PCM format. The frozen ablation checks also require the original input hashes; replacement audio does not reproduce those recorded results.
 
 ```sh
 cd dsp-lab
+
+# 1. Prepare local audio, then run the basic tests and evaluation.
 node prepare-audio.mjs /path/to/audio-directory
 npm test
 npm run evaluate
 
-# Final verification requires two timing files matching the current operator hash.
+# 2. Run two timing passes and verify them.
 node --expose-gc timing.mjs
 cp results/timing.json results/timing-pass-1.json
 node --expose-gc timing.mjs
 npm run verify
-```
 
-These commands update result files. Preserve the committed evidence first, or use a separate checkout. Different source recordings need not produce the timings in this article.
-
-The ablation snapshots and original PCM hashes are frozen. Passing the original manifest checks requires the original experimental PCM:
-
-```sh
+# 3. Run the ablation experiments and count internal work.
 node ablation/run.mjs accuracy > ablation/accuracy.log
 node --expose-gc ablation/run.mjs bench > ablation/timing.log
 node ablation/work-counts.mjs
 node --expose-gc ablation/interaction.mjs > ablation/interaction.log
 node ablation/run.mjs report > ablation/report.log
-node ablation/run.mjs verify
 ```
 
-The runner does not silently rebuild its snapshots. Initial `prepare` freezes the protocol and variants, refusing to overwrite an existing manifest. Changes to the original tests, corpus, baseline, operator, or PCM trigger verification failure. This prevents old results from validating new code and makes input mismatches explicit.
+### Code and experiment records
 
-## 14. What we can claim, and what remains open
+All paths below refer to the [frozen research snapshot](audio-alignment-research.md):
 
-The experiments establish that stereo cancellation and overall polarity inversion need explicit handling; short windows can remove substantial long-input work; rejecting periodic ambiguity is useful behavior; local optimization must be measured in the actual operator; and ablation can change the explanation of an improvement.
-
-They do not establish reliability for independent recordings, long-term clock drift, fractional-sample precision, strong nonlinear distortion, complex response changes, or unrepresentative local windows. Energy-based channel selection and early termination remain heuristics. Accepting 8–192 kHz inputs does not mean the entire range has been comprehensively evaluated.
-
-The next useful step is independent, difficult material with annotated ground truth, testing the boundaries of whitening, candidate search, and window selection before simplifying the configuration. The default experimental operator remains unchanged after ablation.
-
-## Source and evidence index
-
-- [Delay and residual operator](audio-alignment-research.md) (`dsp-lab/operator.mjs`), [FFT implementation](audio-alignment-research.md) (`dsp-lab/fft.mjs`): the current calculation path.
-- [Original unit tests](audio-alignment-research.md) (`dsp-lab/operator.test.mjs`), [added regressions](audio-alignment-research.md) (`dsp-lab/review-regressions.test.mjs`), [corpus generator](audio-alignment-research.md) (`dsp-lab/corpus.mjs`): constructions, tolerances, and assertions.
-- [Original protocol](audio-alignment-research.md) (`dsp-lab/protocol.json`), [early development results](audio-alignment-research.md) (`dsp-lab/results/dev-round-1.json`), [historical timings](audio-alignment-research.md) (`dsp-lab/.cross-gan/baseline/`): including slower and unsuccessful stages.
-- [Five-round checkpoint](audio-alignment-research.md) (`dsp-lab/.cross-gan/checkpoint.json`), [round artifacts](audio-alignment-research.md) (`dsp-lab/.cross-gan/run-20261016/`): proposals, refutations, repairs, reversions, and commits.
-- [Complete-version verification](audio-alignment-research.md) (`dsp-lab/results/final-verification.json`), [additional confirmation and gain checks](audio-alignment-research.md) (`dsp-lab/results/confirmation.json`): final gates and measurement definitions.
-- [Ablation documentation](audio-alignment-research.md) (`dsp-lab/ablation/README.md`), [case-level data](audio-alignment-research.md) (`dsp-lab/ablation/accuracy.json`), [three-pass timings](audio-alignment-research.md) (`dsp-lab/ablation/timing.json`), [summary](audio-alignment-research.md) (`dsp-lab/ablation/summary.json`), [verification](audio-alignment-research.md) (`dsp-lab/ablation/verification.json`): the evidence behind the attribution.
-
-This article covers the work through ablation commit `dcc14d8` on `research/alignment-dsp-lab-20261016`. The research experiments preceded product integration; the current v0.6.0 integration is described at the top of this article. Article dates use Shanghai time; raw JSON timestamps use UTC.
+- **Core implementation:** `dsp-lab/operator.mjs` and `dsp-lab/fft.mjs`.
+- **Tests:** `dsp-lab/operator.test.mjs`, `dsp-lab/review-regressions.test.mjs`, and `dsp-lab/corpus.mjs`.
+- **Development records:** `dsp-lab/results/dev-round-1.json`, `dsp-lab/results/final-verification.json`, and `dsp-lab/.cross-gan/`.
+- **Ablation data:** `dsp-lab/ablation/README.md`, `accuracy.json`, `timing.json`, and `summary.json` in that directory.

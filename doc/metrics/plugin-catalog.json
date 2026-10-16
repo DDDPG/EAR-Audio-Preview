@@ -1,0 +1,87 @@
+{
+  "checkedOn": "2026-10-16",
+  "retrievedAt": "2026-10-16T12:46:46.869Z",
+  "source": "https://marketplace.visualstudio.com/_apis/public/gallery/extensionquery",
+  "scope": "VS Code audio extensions; universal packages. No installation or Cursor runtime certification.",
+  "packageSizeBoundary": "Server-declared compressed VSIX transfer bytes. EAR local uncommitted VSIX is a different release state. Excludes editor, installed size, lazy model downloads, and session memory.",
+  "entries": [
+    {
+      "id": "sukumo28.wav-preview",
+      "displayName": "audio-preview",
+      "version": "2.6.0",
+      "targetPlatform": "universal",
+      "versionUpdated": "2024-07-15T08:48:11.363Z",
+      "marketplaceUrl": "https://marketplace.visualstudio.com/items?itemName=sukumo28.wav-preview",
+      "readmeUrl": "https://sukumo28.gallerycdn.vsassets.io/extensions/sukumo28/wav-preview/2.6.0/1721033040785/Microsoft.VisualStudio.Services.Content.Details",
+      "readmeSha256": "14c79d66cfa99bf192cdfa741892401fae12f8416c079aba1a885511fe0ec6fc",
+      "packageUrl": "https://sukumo28.gallerycdn.vsassets.io/extensions/sukumo28/wav-preview/2.6.0/1721033040785/Microsoft.VisualStudio.Services.VSIXPackage",
+      "packageContentLength": 791245,
+      "packageSizeMethod": "Final HTTP HEAD Content-Length (identity encoding); package not downloaded"
+    },
+    {
+      "id": "huachao.audio-player",
+      "displayName": "Audio Player",
+      "version": "0.1.4",
+      "targetPlatform": "universal",
+      "versionUpdated": "2026-09-14T09:17:37.95Z",
+      "marketplaceUrl": "https://marketplace.visualstudio.com/items?itemName=huachao.audio-player",
+      "readmeUrl": "https://huachao.gallerycdn.vsassets.io/extensions/huachao/audio-player/0.1.4/1789377018464/Microsoft.VisualStudio.Services.Content.Details",
+      "readmeSha256": "9a61c763e2dcb12ed360290029b9de99455f9ecad3dbb06b337e9f1de06be4c6",
+      "packageUrl": "https://huachao.gallerycdn.vsassets.io/extensions/huachao/audio-player/0.1.4/1789377018464/Microsoft.VisualStudio.Services.VSIXPackage",
+      "packageContentLength": 844547,
+      "packageSizeMethod": "Final HTTP HEAD Content-Length (identity encoding); package not downloaded"
+    },
+    {
+      "id": "jojonki.wave-explorer",
+      "displayName": "WaveExplorer",
+      "version": "0.1.4",
+      "targetPlatform": "universal",
+      "versionUpdated": "2026-04-21T13:58:01.183Z",
+      "marketplaceUrl": "https://marketplace.visualstudio.com/items?itemName=jojonki.wave-explorer",
+      "readmeUrl": "https://jojonki.gallerycdn.vsassets.io/extensions/jojonki/wave-explorer/0.1.4/1776779651848/Microsoft.VisualStudio.Services.Content.Details",
+      "readmeSha256": "26250e31d8b5d8f5343c63e2dca7eee78a08fb9e7df4f26aed901be06dbdce48",
+      "packageUrl": "https://jojonki.gallerycdn.vsassets.io/extensions/jojonki/wave-explorer/0.1.4/1776779651848/Microsoft.VisualStudio.Services.VSIXPackage",
+      "packageContentLength": 3364683,
+      "packageSizeMethod": "Final HTTP HEAD Content-Length (identity encoding); package not downloaded"
+    },
+    {
+      "id": "sunxingwei.specview",
+      "displayName": "SpecView - Audio Spectrogram Viewer",
+      "version": "0.2.2",
+      "targetPlatform": "universal",
+      "versionUpdated": "2026-10-15T03:22:05.94Z",
+      "marketplaceUrl": "https://marketplace.visualstudio.com/items?itemName=sunxingwei.specview",
+      "readmeUrl": "https://sunxingwei.gallerycdn.vsassets.io/extensions/sunxingwei/specview/0.2.2/1792034311316/Microsoft.VisualStudio.Services.Content.Details",
+      "readmeSha256": "c9cde91bd64be8d6f8897035c6143956de34003b17c86aec7000a07bb3d029e2",
+      "packageUrl": "https://sunxingwei.gallerycdn.vsassets.io/extensions/sunxingwei/specview/0.2.2/1792034311316/Microsoft.VisualStudio.Services.VSIXPackage",
+      "packageContentLength": 119905,
+      "packageSizeMethod": "Final HTTP HEAD Content-Length (identity encoding); package not downloaded"
+    },
+    {
+      "id": "YongsooIm.audioscope",
+      "displayName": "audioscope",
+      "version": "1.1.7",
+      "targetPlatform": "universal",
+      "versionUpdated": "2026-10-01T00:31:27.207Z",
+      "marketplaceUrl": "https://marketplace.visualstudio.com/items?itemName=YongsooIm.audioscope",
+      "readmeUrl": "https://YongsooIm.gallerycdn.vsassets.io/extensions/yongsooim/audioscope/1.1.7/1790814307880/Microsoft.VisualStudio.Services.Content.Details",
+      "readmeSha256": "4a233425c815572a708645c7bd0eb19081fa649d45a92eae29e60ff332fa3571",
+      "packageUrl": "https://YongsooIm.gallerycdn.vsassets.io/extensions/yongsooim/audioscope/1.1.7/1790814307880/Microsoft.VisualStudio.Services.VSIXPackage",
+      "packageContentLength": 4779191,
+      "packageSizeMethod": "Final HTTP HEAD Content-Length (identity encoding); package not downloaded"
+    },
+    {
+      "id": "simzhou.audiolens",
+      "displayName": "AudioLens — Audio inspection for VS Code",
+      "version": "1.10.0",
+      "targetPlatform": "universal",
+      "versionUpdated": "2026-09-15T13:49:42.85Z",
+      "marketplaceUrl": "https://marketplace.visualstudio.com/items?itemName=simzhou.audiolens",
+      "readmeUrl": "https://simzhou.gallerycdn.vsassets.io/extensions/simzhou/audiolens/1.10.0/1789479740219/Microsoft.VisualStudio.Services.Content.Details",
+      "readmeSha256": "6c388c46ca75210bf365183783afe84f40ec8bad11b8a1e7c456989e0be6e922",
+      "packageUrl": "https://simzhou.gallerycdn.vsassets.io/extensions/simzhou/audiolens/1.10.0/1789479740219/Microsoft.VisualStudio.Services.VSIXPackage",
+      "packageContentLength": 253475,
+      "packageSizeMethod": "Final HTTP HEAD Content-Length (identity encoding); package not downloaded"
+    }
+  ]
+}

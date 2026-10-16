@@ -1,0 +1,258 @@
+{
+  "date": "2026-10-16",
+  "version": "0.6.0",
+  "sourceState": "local working tree; uncommitted",
+  "before": {
+    "archiveBytes": 6981996,
+    "installedBytes": 14667914
+  },
+  "after": {
+    "package": "ear-audio-preview.vsix",
+    "archiveBytes": 3605292,
+    "installedBytes": 10338391,
+    "fileCount": 21,
+    "files": [
+      {
+        "path": "extension/dist/comparisonWorker.js",
+        "compressedBytes": 820047,
+        "installedBytes": 2632596
+      },
+      {
+        "path": "extension/dist/web/extension.js",
+        "compressedBytes": 807185,
+        "installedBytes": 2595720
+      },
+      {
+        "path": "extension/dist/extension.js",
+        "compressedBytes": 805033,
+        "installedBytes": 2590025
+      },
+      {
+        "path": "extension/dist/audioPreview.js",
+        "compressedBytes": 393580,
+        "installedBytes": 1093717
+      },
+      {
+        "path": "extension/dist/comparison.js",
+        "compressedBytes": 353088,
+        "installedBytes": 903823
+      },
+      {
+        "path": "extension/ear_audio.png",
+        "compressedBytes": 347058,
+        "installedBytes": 346982
+      },
+      {
+        "path": "extension/dist/4062d505493786e728bb.module.wasm",
+        "compressedBytes": 44299,
+        "installedBytes": 87519
+      },
+      {
+        "path": "extension/changelog.md",
+        "compressedBytes": 7476,
+        "installedBytes": 16969
+      },
+      {
+        "path": "extension/README.zh-CN.md",
+        "compressedBytes": 4725,
+        "installedBytes": 10311
+      },
+      {
+        "path": "extension/dist/comparisonLoudnessWorker.js",
+        "compressedBytes": 4585,
+        "installedBytes": 17022
+      },
+      {
+        "path": "extension/readme.md",
+        "compressedBytes": 4473,
+        "installedBytes": 12334
+      },
+      {
+        "path": "extension/dist/loudness.worklet.js",
+        "compressedBytes": 3866,
+        "installedBytes": 14689
+      },
+      {
+        "path": "extension/package.json",
+        "compressedBytes": 2090,
+        "installedBytes": 6254
+      },
+      {
+        "path": "extension/dist/comparisonWorker.js.LICENSE.txt",
+        "compressedBytes": 893,
+        "installedBytes": 1888
+      },
+      {
+        "path": "extension.vsixmanifest",
+        "compressedBytes": 876,
+        "installedBytes": 3014
+      },
+      {
+        "path": "extension/dist/extension.js.LICENSE.txt",
+        "compressedBytes": 811,
+        "installedBytes": 1734
+      },
+      {
+        "path": "extension/dist/web/extension.js.LICENSE.txt",
+        "compressedBytes": 811,
+        "installedBytes": 1734
+      },
+      {
+        "path": "extension/LICENSE.txt",
+        "compressedBytes": 628,
+        "installedBytes": 1065
+      },
+      {
+        "path": "extension/dist/audioPreview.js.LICENSE.txt",
+        "compressedBytes": 227,
+        "installedBytes": 321
+      },
+      {
+        "path": "[Content_Types].xml",
+        "compressedBytes": 218,
+        "installedBytes": 521
+      },
+      {
+        "path": "extension/dist/comparison.js.LICENSE.txt",
+        "compressedBytes": 121,
+        "installedBytes": 153
+      }
+    ]
+  },
+  "archiveReductionPercent": 48.36301825437883,
+  "removed": [
+    "Optional opus-ml.js enhancement model (standard Opus retained)",
+    "Unused Essentia model/extractor/plot entry imports",
+    "Lossless icon recompression: 403450 to 346982 bytes, decoded pixels unchanged"
+  ],
+  "notShipped": [
+    "assets/demos",
+    "scripts",
+    "bench",
+    "source",
+    "source maps",
+    "review artifacts"
+  ],
+  "remaining": "Essentia WASM is used in isolated Node host, web host and comparison worker bundles. Deduplicating it across contexts needs loader/CSP changes; it is not dead code.",
+  "runtimeSmoke": {
+    "status": "1 / 4 audio files · analysis uses original decoded signals",
+    "trackTitle": "standard.opus\n48 kHz · mono · 0.99 s",
+    "fallbackConfirmations": 0,
+    "browserErrors": [],
+    "opusMLRequests": [],
+    "essentiaWorker": "rendered STFT successfully"
+  },
+  "beforeDocumentationRefresh": {
+    "package": "ear-audio-preview.vsix",
+    "archiveBytes": 3604934,
+    "installedBytes": 10335144,
+    "fileCount": 21,
+    "files": [
+      {
+        "path": "extension/dist/comparisonWorker.js",
+        "compressedBytes": 820047,
+        "installedBytes": 2632596
+      },
+      {
+        "path": "extension/dist/web/extension.js",
+        "compressedBytes": 806894,
+        "installedBytes": 2594871
+      },
+      {
+        "path": "extension/dist/extension.js",
+        "compressedBytes": 804733,
+        "installedBytes": 2589176
+      },
+      {
+        "path": "extension/dist/audioPreview.js",
+        "compressedBytes": 393269,
+        "installedBytes": 1092503
+      },
+      {
+        "path": "extension/dist/comparison.js",
+        "compressedBytes": 352520,
+        "installedBytes": 902609
+      },
+      {
+        "path": "extension/ear_audio.png",
+        "compressedBytes": 347058,
+        "installedBytes": 346982
+      },
+      {
+        "path": "extension/dist/4062d505493786e728bb.module.wasm",
+        "compressedBytes": 44299,
+        "installedBytes": 87519
+      },
+      {
+        "path": "extension/changelog.md",
+        "compressedBytes": 7150,
+        "installedBytes": 16226
+      },
+      {
+        "path": "extension/README.zh-CN.md",
+        "compressedBytes": 5543,
+        "installedBytes": 11130
+      },
+      {
+        "path": "extension/readme.md",
+        "compressedBytes": 5093,
+        "installedBytes": 13137
+      },
+      {
+        "path": "extension/dist/comparisonLoudnessWorker.js",
+        "compressedBytes": 4585,
+        "installedBytes": 17022
+      },
+      {
+        "path": "extension/dist/loudness.worklet.js",
+        "compressedBytes": 3866,
+        "installedBytes": 14689
+      },
+      {
+        "path": "extension/package.json",
+        "compressedBytes": 2090,
+        "installedBytes": 6254
+      },
+      {
+        "path": "extension/dist/comparisonWorker.js.LICENSE.txt",
+        "compressedBytes": 893,
+        "installedBytes": 1888
+      },
+      {
+        "path": "extension.vsixmanifest",
+        "compressedBytes": 876,
+        "installedBytes": 3014
+      },
+      {
+        "path": "extension/dist/extension.js.LICENSE.txt",
+        "compressedBytes": 811,
+        "installedBytes": 1734
+      },
+      {
+        "path": "extension/dist/web/extension.js.LICENSE.txt",
+        "compressedBytes": 811,
+        "installedBytes": 1734
+      },
+      {
+        "path": "extension/LICENSE.txt",
+        "compressedBytes": 628,
+        "installedBytes": 1065
+      },
+      {
+        "path": "extension/dist/audioPreview.js.LICENSE.txt",
+        "compressedBytes": 227,
+        "installedBytes": 321
+      },
+      {
+        "path": "[Content_Types].xml",
+        "compressedBytes": 218,
+        "installedBytes": 521
+      },
+      {
+        "path": "extension/dist/comparison.js.LICENSE.txt",
+        "compressedBytes": 121,
+        "installedBytes": 153
+      }
+    ]
+  }
+}

@@ -1,0 +1,549 @@
+{
+  "checkedOn": "2026-10-16",
+  "scope": "Public user-facing capabilities in the pinned VS Code extension packages; not a claim about every release or unreleased repository change.",
+  "columns": [
+    "ear",
+    "sukumo28.wav-preview",
+    "huachao.audio-player",
+    "YongsooIm.audioscope"
+  ],
+  "plugins": [
+    {
+      "id": "ear",
+      "version": "0.6.0",
+      "source": "local v0.6.0 release candidate"
+    },
+    {
+      "id": "sukumo28.wav-preview",
+      "version": "2.6.0",
+      "archiveSha256": "e037d579a7bff65dc5abc0f2996ed13f51d655a10f85877529d261acef0a280b",
+      "publisherReadme": "https://sukumo28.gallerycdn.vsassets.io/extensions/sukumo28/wav-preview/2.6.0/1721033040785/Microsoft.VisualStudio.Services.Content.Details",
+      "publisherRepository": {
+        "type": "git",
+        "url": "https://github.com/sukumo28/vscode-audio-preview.git"
+      },
+      "shippedFiles": [
+        {
+          "path": "dist/audioPreview.js",
+          "sha256": "a076f54c37dfe2a7f54fe6fe3dd53958f1683fe4998806e433461d450b68ff33"
+        },
+        {
+          "path": "dist/extension.js",
+          "sha256": "fcbb96084d99abe8e831edec37030223a9e97aebd6bbe2e20d193cee9c311ec9"
+        },
+        {
+          "path": "README.md",
+          "sha256": "14c79d66cfa99bf192cdfa741892401fae12f8416c079aba1a885511fe0ec6fc"
+        }
+      ]
+    },
+    {
+      "id": "huachao.audio-player",
+      "version": "0.1.4",
+      "archiveSha256": "49ceaa1f4a52fad1c2567d873e1d5a71a6c43e67892e84ce22da94a48d0c3d11",
+      "publisherReadme": "https://huachao.gallerycdn.vsassets.io/extensions/huachao/audio-player/0.1.4/1789377018464/Microsoft.VisualStudio.Services.Content.Details",
+      "publisherRepository": {
+        "type": "git",
+        "url": "https://github.com/huachao1001/VSAudioPlayer"
+      },
+      "shippedFiles": [
+        {
+          "path": "dist/webview.js",
+          "sha256": "b64333f24ff33d62b602b7b915c66acd137661093115b6b32dcd06f186e0d3ab"
+        },
+        {
+          "path": "dist/extension.js",
+          "sha256": "41262af56ba2f9c40d0b908a01e6343dca638249bfb5f3f1ef98f8652042e273"
+        },
+        {
+          "path": "README.md",
+          "sha256": "9a61c763e2dcb12ed360290029b9de99455f9ecad3dbb06b337e9f1de06be4c6"
+        }
+      ]
+    },
+    {
+      "id": "YongsooIm.audioscope",
+      "version": "1.1.7",
+      "archiveSha256": "33c2554428564025401aaf6b3ea22d95359fbe7f99e13725cbb4995ede7f9684",
+      "publisherReadme": "https://YongsooIm.gallerycdn.vsassets.io/extensions/yongsooim/audioscope/1.1.7/1790814307880/Microsoft.VisualStudio.Services.Content.Details",
+      "publisherRepository": {
+        "type": "git",
+        "url": "https://github.com/yongsooim/audioscope-vsix.git"
+      },
+      "shippedFiles": [
+        {
+          "path": "dist/webview/audioscope.js",
+          "sha256": "309fa755ec950bce2a0926310dbad713922ba6199d0e7429f0ccdfd64b78a1be"
+        },
+        {
+          "path": "dist/webview/audioEngineWorker.js",
+          "sha256": "8534847ffb69d3c3bffc28a69d4512984e609163aee3076a14171b24fb77feea"
+        },
+        {
+          "path": "dist/webview/audioAnalysisWorker.js",
+          "sha256": "d601d43ae05e6f3b542047e74c6130b9f7606983899d0ebc20cc1af24ccbceb8"
+        },
+        {
+          "path": "out/extension.js",
+          "sha256": "0e9554a9bd5b8d394473bad7a19b7adf848af6def99fd293f6b83e780eaf57ce"
+        },
+        {
+          "path": "readme.md",
+          "sha256": "4a233425c815572a708645c7bd0eb19081fa649d45a92eae29e60ff332fa3571"
+        }
+      ]
+    }
+  ],
+  "rows": [
+    {
+      "id": "wave_stft",
+      "en": "Waveform + STFT spectrogram",
+      "zh": "波形与 STFT 频谱图",
+      "enCells": [
+        "✓",
+        "✓",
+        "Waveform only",
+        "✓"
+      ],
+      "zhCells": [
+        "✓",
+        "✓",
+        "仅波形",
+        "✓"
+      ]
+    },
+    {
+      "id": "files",
+      "en": "Files in one comparison",
+      "zh": "同屏文件比较",
+      "enCells": [
+        "**8 · parallel**",
+        "Single file",
+        "Multiple",
+        "2-file A/B"
+      ],
+      "zhCells": [
+        "**8 份并行**",
+        "单文件",
+        "多文件",
+        "双文件 A/B"
+      ]
+    },
+    {
+      "id": "linked_stft",
+      "en": "Linked STFT zoom across files",
+      "zh": "跨文件 STFT 联动缩放",
+      "enCells": [
+        "✓",
+        "—",
+        "—",
+        "✓"
+      ],
+      "zhCells": [
+        "✓",
+        "—",
+        "—",
+        "✓"
+      ]
+    },
+    {
+      "id": "live_overlays",
+      "en": "Multi-source live spectrum overlays",
+      "zh": "多轨实时频谱叠加",
+      "enCells": [
+        "✓",
+        "—",
+        "—",
+        "—"
+      ],
+      "zhCells": [
+        "✓",
+        "—",
+        "—",
+        "—"
+      ]
+    },
+    {
+      "id": "cqt",
+      "en": "Live FFT / CQT + peak hold",
+      "zh": "实时 FFT / CQT 与峰值保持",
+      "enCells": [
+        "✓",
+        "—",
+        "—",
+        "—"
+      ],
+      "zhCells": [
+        "✓",
+        "—",
+        "—",
+        "—"
+      ]
+    },
+    {
+      "id": "field",
+      "en": "Stereo goniometer",
+      "zh": "立体声场图",
+      "enCells": [
+        "✓ · 3 modes",
+        "—",
+        "—",
+        "—"
+      ],
+      "zhCells": [
+        "✓ · 3 种模式",
+        "—",
+        "—",
+        "—"
+      ]
+    },
+    {
+      "id": "phase",
+      "en": "Stereo correlation by frequency",
+      "zh": "逐频段立体声相关度",
+      "enCells": [
+        "✓",
+        "—",
+        "—",
+        "—"
+      ],
+      "zhCells": [
+        "✓",
+        "—",
+        "—",
+        "—"
+      ]
+    },
+    {
+      "id": "loudness",
+      "en": "LUFS / LRA / true peak",
+      "zh": "LUFS / LRA / 真峰值",
+      "enCells": [
+        "✓",
+        "—",
+        "—",
+        "✓"
+      ],
+      "zhCells": [
+        "✓",
+        "—",
+        "—",
+        "✓"
+      ]
+    },
+    {
+      "id": "features",
+      "en": "F0 + onset timelines",
+      "zh": "基频与起音时间线",
+      "enCells": [
+        "✓",
+        "—",
+        "—",
+        "—"
+      ],
+      "zhCells": [
+        "✓",
+        "—",
+        "—",
+        "—"
+      ]
+    },
+    {
+      "id": "meters",
+      "en": "Live L/R & M/S RMS / peak meters",
+      "zh": "L/R 与 M/S 实时 RMS／峰值电平表",
+      "enCells": [
+        "✓",
+        "—",
+        "—",
+        "—"
+      ],
+      "zhCells": [
+        "✓",
+        "—",
+        "—",
+        "—"
+      ]
+    },
+    {
+      "id": "matrix",
+      "en": "L/R/M/S monitoring",
+      "zh": "L/R/M/S 声道监听",
+      "enCells": [
+        "✓",
+        "—",
+        "—",
+        "—"
+      ],
+      "zhCells": [
+        "✓",
+        "—",
+        "—",
+        "—"
+      ]
+    },
+    {
+      "id": "bands",
+      "en": "Five-band monitoring solo",
+      "zh": "五频段独听",
+      "enCells": [
+        "✓",
+        "—",
+        "—",
+        "—"
+      ],
+      "zhCells": [
+        "✓",
+        "—",
+        "—",
+        "—"
+      ]
+    },
+    {
+      "id": "eq",
+      "en": "AutoEq headphone correction",
+      "zh": "AutoEq 耳机频响校正",
+      "enCells": [
+        "✓",
+        "—",
+        "—",
+        "—"
+      ],
+      "zhCells": [
+        "✓",
+        "—",
+        "—",
+        "—"
+      ]
+    },
+    {
+      "id": "export",
+      "en": "Selection → WAV export",
+      "zh": "选区 WAV 导出",
+      "enCells": [
+        "✓",
+        "✓",
+        "—",
+        "✓"
+      ],
+      "zhCells": [
+        "✓",
+        "✓",
+        "—",
+        "✓"
+      ]
+    },
+    {
+      "id": "gain_match",
+      "en": "Shared-region RMS level matching",
+      "zh": "共用选区 RMS 电平匹配",
+      "enCells": [
+        "✓",
+        "—",
+        "—",
+        "✓"
+      ],
+      "zhCells": [
+        "✓",
+        "—",
+        "—",
+        "✓"
+      ]
+    },
+    {
+      "id": "residual",
+      "en": "Same-rate residual RMS / peak",
+      "zh": "同采样率残差 RMS／峰值",
+      "enCells": [
+        "✓",
+        "—",
+        "—",
+        "✓"
+      ],
+      "zhCells": [
+        "✓",
+        "—",
+        "—",
+        "✓"
+      ]
+    },
+    {
+      "id": "eq_export",
+      "en": "Headphone EQ in WAV exports",
+      "zh": "耳机 EQ 写入 WAV 导出",
+      "enCells": [
+        "✓",
+        "—",
+        "—",
+        "—"
+      ],
+      "zhCells": [
+        "✓",
+        "—",
+        "—",
+        "—"
+      ]
+    },
+    {
+      "id": "alignment",
+      "en": "Automatic time alignment",
+      "zh": "自动时间对齐",
+      "enCells": [
+        "✓",
+        "—",
+        "—",
+        "✓"
+      ],
+      "zhCells": [
+        "✓",
+        "—",
+        "—",
+        "✓"
+      ]
+    }
+  ],
+  "negativeCellMethod": "Inspect shipped application entry points, UI control/analysis-mode dispatch and audio routing in addition to bundled README and earlier actual installed-package sessions. A missing README keyword alone is not treated as proof. No new runtime performance measurements were made for this documentation change.",
+  "surfaceAudit": {
+    "sukumo28.wav-preview": {
+      "application": "dist/audioPreview.js",
+      "observed": [
+        "Single AudioBuffer PlayerService; one gain and HPF/LPF route",
+        "Waveform and offline Ooura STFT graph controls",
+        "EasyCut sends WRITE_WAV after selection export"
+      ],
+      "absentSurface": [
+        "No multi-file session",
+        "No live spectrum, stereo-field, stereo-correlation or LUFS/F0/onset views",
+        "No L/R/M/S monitoring matrix, five-band solo or headphone-EQ route"
+      ],
+      "notes": "Existing HPF/LPF is not labelled five-band monitoring solo."
+    },
+    "huachao.audio-player": {
+      "application": "dist/webview.js",
+      "observed": [
+        "One WaveSurfer renderer/media player per track",
+        "Track add/remove/reload, waveform height/normalization, source metadata and PCM controls",
+        "Per-track play buttons; no spectral or loudness measurement UI"
+      ],
+      "absentSurface": [
+        "No STFT, live FFT/CQT, stereo-field/correlation, LUFS/F0/onset or export surface",
+        "No monitoring matrix, five-band solo or headphone-EQ surface"
+      ],
+      "notes": "The publisher describes synced playback. The shipped ut sync guard is initialized false with no exposed enabling control in the inspected entry; the matrix intentionally says Multiple files without asserting a shared clock."
+    },
+    "YongsooIm.audioscope": {
+      "application": "dist/webview/audioscope.js",
+      "observed": [
+        "Analysis mode dispatch: spectrogram/mel/mfcc/scalogram/chroma/loudness",
+        "Compare session uses monoA/monoB/monoDiff and shared spectrogramConfig; L.compare playbackSource selects a, b or diff",
+        "Loudness summary includes integrated LUFS, LRA and truePeakDbtp",
+        "Selection spectrum uses Hann FFT4096 windows after selection; not a live spectrum panel",
+        "Playback output uses selected channel maps and volume gain to destination",
+        "Alignment, gain matching and residual/level difference controls; WAV/MP3/M4A/FLAC export"
+      ],
+      "absentSurface": [
+        "No live FFT/CQT peak-hold view, stereo goniometer or frequency-resolved L/R correlation view",
+        "No F0/onset timeline mode",
+        "No L/R/M/S monitoring matrix, five-band solo or headphone-EQ output chain"
+      ],
+      "notes": "A/B sample alignment r is not the same feature as stereo L/R phase correlation."
+    }
+  },
+  "earSourceFiles": [
+    {
+      "path": "src/webview/comparison/comparisonApp.ts",
+      "sha256": "a6e0b516de3fd5a8d7e7d077a48f5d88b462f4cdf74805104991a13ecbe77ad7"
+    },
+    {
+      "path": "src/webview/comparison/comparisonSession.ts",
+      "sha256": "0245c3bbb9b5d3e5da83f1ea167d681c6db085ca8860650feed585bc981a75c1"
+    },
+    {
+      "path": "src/webview/comparison/comparisonLiveView.ts",
+      "sha256": "f60bc29ae7b790314cb2bc858f0bc1f9ae6642c74cea88d10caba42cae906bbc"
+    },
+    {
+      "path": "src/webview/comparison/comparisonTransport.ts",
+      "sha256": "1c349ff2f16f23e86ee6ed34a6976654b5c2e2e78c9b91125ad1f93b8234ecd8"
+    },
+    {
+      "path": "src/webview/comparison/comparisonMonitor.ts",
+      "sha256": "08cf06b97f3335001eccd36d3fbfb8545e9e65761d64d0cc4973b8cd100622eb"
+    },
+    {
+      "path": "src/webview/components/liveMeters/spectralAnalyzerComponent.ts",
+      "sha256": "97f7d1336860685d6da5dc66d6b0259d182bdc0efadb992fb85600ef81806d70"
+    },
+    {
+      "path": "src/webview/components/liveMeters/goniometerComponent.ts",
+      "sha256": "0ca73d4957e9953765aa24f49162bc2304740db665a9bfc1294ef4f3e8acfc98"
+    },
+    {
+      "path": "src/webview/components/liveMeters/phaseCorrelationSpectrumComponent.ts",
+      "sha256": "0d554d6a72cf6ea3247d42c886abc5e55ffcc7ce0a64a248a219629a67eb2711"
+    },
+    {
+      "path": "src/shared/sequenceFeatureCompute.ts",
+      "sha256": "8c46a60b37028e4febc3469757182fc33111458339dfc7d283184fd1f654a30d"
+    },
+    {
+      "path": "src/webview/services/audioExportService.ts",
+      "sha256": "b006e44c61437a470eb37bdfe23925809f9647aa4bb084df3c75d19856b05784"
+    },
+    {
+      "path": "src/webview/components/liveMeters/levelMeterComponent.ts",
+      "sha256": "9929922564a40a357e34e677db1ec3fe57772e0f8a5f741091eb316db9e0ec11"
+    },
+    {
+      "path": "src/comparison/limits.ts",
+      "sha256": "280b7d116ca9593956434cfe72d7c33fec7432c8ac5c5abfa7d5d806136b13c3"
+    },
+    {
+      "path": "src/webview/comparison/comparisonMeasurements.ts",
+      "sha256": "6485eb0c10c2b497f0e3eaa5c6e99253451ac3518439feacafec845cf911217e"
+    },
+    {
+      "path": "src/webview/comparison/comparison.css",
+      "sha256": "c15876de07b7d4134782aa900af49ab3dab48f85c05620e96127502cd6db4e38"
+    },
+    {
+      "path": "src/webview/services/headphoneEqService.ts",
+      "sha256": "1377c3633beadfdce9d24d717f99db175349db11027404c58c8b58a85b2de603"
+    },
+    {
+      "path": "src/webview/services/wavExportFormat.ts",
+      "sha256": "34284ed9e574092b1aa55d7808a9b72cd017fd835183e837d30e99b1d9738d1c"
+    }
+  ],
+  "rowRationale": {
+    "wave_stft": "EAR/upstream/audioscope expose STFT; Audio Player exposes only waveform in its application UI.",
+    "files": "EAR limit eight, verified in four/eight production-bundle stress; upstream single buffer; Audio Player multiple cards; audioscope exactly A/B.",
+    "linked_stft": "EAR session shared zoom; audioscope shared A/B/diff analysis/session configuration.",
+    "live_overlays": "EAR publishes one source-colored live snapshot per active track. Competitor application surfaces are offline spectrogram or waveform/selection analysis.",
+    "cqt": "EAR live settings expose FFT/CQT, tilt/release/peak hold; audioscope chroma/scalogram are distinct offline representations.",
+    "field": "EAR polarSample/polarLevel/lissajous; no matching competitor UI mode.",
+    "phase": "EAR phaseRho is L/R per-frequency. audioscope correlation is cross-file alignment, not this measurement.",
+    "loudness": "EAR and audioscope expose LUFS/LRA/true peak; no such analyzer in the other two applications.",
+    "features": "EAR requests PitchYinFFT and onset flux profiles; not in competitor analysis modes.",
+    "matrix": "EAR monitoringGainsForMode and monitor UI expose L/R/M/S. audioscope separate-channel display and selected A/B/diff maps are different.",
+    "bands": "EAR setBandMask creates five crossover branches. Upstream HPF/LPF filters are retained but not equivalent.",
+    "eq": "EAR shared monitor bridges AutoEq and profile import into playback biquads, also optionally baked into WAV export; no comparable correction path in the other applications.",
+    "export": "EAR exportMix and upstream WRITE_WAV; audioscope export dialog; no export action in Audio Player.",
+    "alignment": "Same-rate integer constant-delay estimate, explicit apply/reset, optional polarity compensation; playback/analysis/export share the aligned session copy. See doc/audio-alignment.md and doc/metrics/alignment/native.json.",
+    "meters": "EAR exposes a stereo levelMeterComponent with L/R and M/S RMS/peak modes, while the other inspected applications expose waveform/selection readouts rather than a live L/R-M/S meter.",
+    "gain_match": "EAR uses shared non-padded interval, stereo energy with equal-power mono pan; attenuation to quietest active source. audioscope has level/gain matching in pair comparison.",
+    "residual": "EAR measures same-rate current session buffers with matching gains; apply Align separately first when needed. No residual audition/export mode.",
+    "eq_export": "EAR opt-in uses enabled monitoring EQ snapshot incl preamp, biquads and listen-match gain, excluding master volume."
+  },
+  "relatedEvidence": [
+    "plugin-catalog.json",
+    "downloaded-packages-postfix.json",
+    "editor-plugins.json",
+    "v060-capacity-and-tools.json"
+  ],
+  "roadmapSource": {
+    "ref": "v0.5.0:README.md",
+    "policy": "Integer-delay alignment is completed in v0.6. Remaining planned items retain their original scope, including Worker offload for long single-file F0/onset."
+  },
+  "earAlignmentUpdatedOn": "2026-10-17"
+}

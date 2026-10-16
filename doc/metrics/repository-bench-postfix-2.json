@@ -1,0 +1,176 @@
+{
+  "meta": {
+    "node": "v24.9.0",
+    "date": "2026-10-16T13:22:46.036Z",
+    "gcExposed": true
+  },
+  "dsp": {
+    "goertzelCqt.pazFrame4096": {
+      "opsPerSec": 10806,
+      "meanMs": 0.0925,
+      "p95Ms": 0.0952,
+      "frameBudgetPct": 0.56,
+      "allocKbPerOp": 0.6
+    },
+    "quinticBSplineSmooth.300": {
+      "opsPerSec": 796533,
+      "meanMs": 0.0013,
+      "p95Ms": 0.0025,
+      "frameBudgetPct": 0.01,
+      "allocKbPerOp": 0.8
+    },
+    "akimaResample.128to300": {
+      "opsPerSec": 167943,
+      "meanMs": 0.006,
+      "p95Ms": 0.0078,
+      "frameBudgetPct": 0.04,
+      "allocKbPerOp": 10.9
+    },
+    "liveBallistics.emaFrame300": {
+      "opsPerSec": 1822257,
+      "meanMs": 0.0005,
+      "p95Ms": 0.0006,
+      "frameBudgetPct": 0,
+      "allocKbPerOp": 0.7
+    },
+    "spectralPeakDisplay.frame300": {
+      "opsPerSec": 378128,
+      "meanMs": 0.0026,
+      "p95Ms": 0.0032,
+      "frameBudgetPct": 0.02,
+      "allocKbPerOp": 10
+    },
+    "stereoPolarField.instant4096x64": {
+      "opsPerSec": 46414,
+      "meanMs": 0.0215,
+      "p95Ms": 0.0363,
+      "frameBudgetPct": 0.13,
+      "allocKbPerOp": 46.2
+    },
+    "eqCanvasMath.curve300plus10band": {
+      "opsPerSec": 13019,
+      "meanMs": 0.0768,
+      "p95Ms": 0.0828,
+      "frameBudgetPct": 0.46,
+      "allocKbPerOp": 69.9
+    },
+    "phaseCorrelation.fft2048": {
+      "opsPerSec": 16013,
+      "meanMs": 0.0624,
+      "p95Ms": 0.0984,
+      "frameBudgetPct": 0.37,
+      "allocKbPerOp": 69
+    },
+    "anim.fftFramePrep.1024to300": {
+      "opsPerSec": 15924,
+      "meanMs": 0.0628,
+      "p95Ms": 0.0981,
+      "frameBudgetPct": 0.38,
+      "allocKbPerOp": 1.3
+    },
+    "pipeline.stftFrames.3s.w4096h1024": {
+      "opsPerSec": 313,
+      "meanMs": 3.1938,
+      "p95Ms": 5.787,
+      "frameBudgetPct": 19.16,
+      "allocKbPerOp": 74.1
+    },
+    "pipeline.sequenceFeatures.3s.hop20ms": {
+      "opsPerSec": 1214,
+      "meanMs": 0.8239,
+      "p95Ms": 1.7069,
+      "frameBudgetPct": 4.94,
+      "allocKbPerOp": 96.3
+    },
+    "io.wavEncode.stereo5s48k": {
+      "opsPerSec": 378,
+      "meanMs": 2.6462,
+      "p95Ms": 2.9569,
+      "frameBudgetPct": 15.88,
+      "allocKbPerOp": 88.1
+    },
+    "io.stftWireToSpectrogram.500x1024": {
+      "opsPerSec": 1668,
+      "meanMs": 0.5994,
+      "p95Ms": 1.274,
+      "frameBudgetPct": 3.6,
+      "allocKbPerOp": 843.6
+    },
+    "render.oouraSpectrogram.3s.w1024h80": {
+      "opsPerSec": 41,
+      "meanMs": 24.5753,
+      "p95Ms": 25.7648,
+      "frameBudgetPct": 147.45,
+      "allocKbPerOp": 4799.6
+    },
+    "render.spectrogramTexFlatten.1755x2048": {
+      "opsPerSec": 398,
+      "meanMs": 2.5114,
+      "p95Ms": 3.419,
+      "frameBudgetPct": 15.07,
+      "allocKbPerOp": 19.1
+    }
+  },
+  "bundle": {
+    "files": {
+      "4062d505493786e728bb.module.wasm": {
+        "raw": 87519,
+        "gzip": 44282
+      },
+      "audioPreview.js": {
+        "raw": 1092629,
+        "gzip": 392487
+      },
+      "audioPreview.js.LICENSE.txt": {
+        "raw": 321,
+        "gzip": 245
+      },
+      "comparison.js": {
+        "raw": 902735,
+        "gzip": 351807
+      },
+      "comparison.js.LICENSE.txt": {
+        "raw": 153,
+        "gzip": 139
+      },
+      "comparisonLoudnessWorker.js": {
+        "raw": 17022,
+        "gzip": 4587
+      },
+      "comparisonWorker.js": {
+        "raw": 2632596,
+        "gzip": 817244
+      },
+      "comparisonWorker.js.LICENSE.txt": {
+        "raw": 1888,
+        "gzip": 911
+      },
+      "extension.js": {
+        "raw": 2590025,
+        "gzip": 801894
+      },
+      "extension.js.LICENSE.txt": {
+        "raw": 1734,
+        "gzip": 829
+      },
+      "loudness.worklet.js": {
+        "raw": 14689,
+        "gzip": 3869
+      },
+      "web/extension.js": {
+        "raw": 2595720,
+        "gzip": 804045
+      },
+      "web/extension.js.LICENSE.txt": {
+        "raw": 1734,
+        "gzip": 829
+      }
+    },
+    "distTotalRaw": 9938765,
+    "distTotalGzip": 3223168,
+    "vsix": {
+      "name": "ear-audio-preview-0.6.0.vsix",
+      "size": 3605776
+    }
+  }
+}

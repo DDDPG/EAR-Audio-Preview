@@ -1,0 +1,193 @@
+{
+  "checkedOn": "2026-10-16",
+  "scope": "VS Code / Cursor audio extensions only; no standalone apps",
+  "sourcePolicy": "Features from versioned publisher README; measured results from complete downloaded archives and installed VS Code 1.111.0 profiles. Unlisted features are unverified. Cursor not separately benchmarked.",
+  "ear": {
+    "name": "EAR Audio Preview",
+    "version": "0.6.0",
+    "releaseState": "local uncommitted build",
+    "archiveBytes": 3608351,
+    "archiveSha256": "3d1149dc526b4afb433be79854d441561b51803841c08cefedf6d93f0c3e128f",
+    "en": [
+      "Up to eight files; parallel playback; linked time/frequency STFT zoom",
+      "Live FFT/CQT overlays, stereo field and phase correlation; LUFS/F0/onset; AutoEq monitoring",
+      "Compare renders and investigate stereo / frequency / loudness differences"
+    ],
+    "zh": [
+      "最多八文件并行播放；STFT 时间 / 频率联动缩放",
+      "Live FFT/CQT 叠加、立体声场与相位相关度；LUFS/F0/起音；AutoEq 监听",
+      "比较渲染结果，定位频谱、声像与响度差异"
+    ],
+    "featureUpdateEvidence": "v060-capacity-and-tools.json"
+  },
+  "competitors": [
+    {
+      "id": "sukumo28.wav-preview",
+      "displayName": "audio-preview",
+      "version": "2.6.0",
+      "targetPlatform": "universal",
+      "versionUpdated": "2024-07-15T08:48:11.363Z",
+      "marketplaceUrl": "https://marketplace.visualstudio.com/items?itemName=sukumo28.wav-preview",
+      "readmeUrl": "https://sukumo28.gallerycdn.vsassets.io/extensions/sukumo28/wav-preview/2.6.0/1721033040785/Microsoft.VisualStudio.Services.Content.Details",
+      "readmeSha256": "14c79d66cfa99bf192cdfa741892401fae12f8416c079aba1a885511fe0ec6fc",
+      "packageUrl": "https://sukumo28.gallerycdn.vsassets.io/extensions/sukumo28/wav-preview/2.6.0/1721033040785/Microsoft.VisualStudio.Services.VSIXPackage",
+      "packageContentLength": 791245,
+      "packageSizeMethod": "Final HTTP HEAD Content-Length (identity encoding); package not downloaded",
+      "name": "audio-preview",
+      "en": [
+        "Single-file waveform / spectrogram; drag zoom",
+        "In-editor playback and file information",
+        "Basic audio preview"
+      ],
+      "zh": [
+        "单文件波形、频谱与拖选缩放",
+        "编辑器内播放、文件信息",
+        "基础试听与查看"
+      ],
+      "measuredArchiveBytes": 791245,
+      "measuredArchiveSha256": "e037d579a7bff65dc5abc0f2996ed13f51d655a10f85877529d261acef0a280b"
+    },
+    {
+      "id": "huachao.audio-player",
+      "displayName": "Audio Player",
+      "version": "0.1.4",
+      "targetPlatform": "universal",
+      "versionUpdated": "2026-09-14T09:17:37.95Z",
+      "marketplaceUrl": "https://marketplace.visualstudio.com/items?itemName=huachao.audio-player",
+      "readmeUrl": "https://huachao.gallerycdn.vsassets.io/extensions/huachao/audio-player/0.1.4/1789377018464/Microsoft.VisualStudio.Services.Content.Details",
+      "readmeSha256": "9a61c763e2dcb12ed360290029b9de99455f9ecad3dbb06b337e9f1de06be4c6",
+      "packageUrl": "https://huachao.gallerycdn.vsassets.io/extensions/huachao/audio-player/0.1.4/1789377018464/Microsoft.VisualStudio.Services.VSIXPackage",
+      "packageContentLength": 844547,
+      "packageSizeMethod": "Final HTTP HEAD Content-Length (identity encoding); package not downloaded",
+      "name": "Audio Player",
+      "en": [
+        "Multiple waveforms with synchronized playback",
+        "Raw PCM settings; Chinese/English UI",
+        "Lightweight listening and waveform comparison"
+      ],
+      "zh": [
+        "多文件波形，共用播放时钟",
+        "Raw PCM 参数；中英文界面",
+        "试听与波形比较"
+      ],
+      "measuredArchiveBytes": 844547,
+      "measuredArchiveSha256": "49ceaa1f4a52fad1c2567d873e1d5a71a6c43e67892e84ce22da94a48d0c3d11"
+    },
+    {
+      "id": "jojonki.wave-explorer",
+      "displayName": "WaveExplorer",
+      "version": "0.1.4",
+      "targetPlatform": "universal",
+      "versionUpdated": "2026-04-21T13:58:01.183Z",
+      "marketplaceUrl": "https://marketplace.visualstudio.com/items?itemName=jojonki.wave-explorer",
+      "readmeUrl": "https://jojonki.gallerycdn.vsassets.io/extensions/jojonki/wave-explorer/0.1.4/1776779651848/Microsoft.VisualStudio.Services.Content.Details",
+      "readmeSha256": "26250e31d8b5d8f5343c63e2dca7eee78a08fb9e7df4f26aed901be06dbdce48",
+      "packageUrl": "https://jojonki.gallerycdn.vsassets.io/extensions/jojonki/wave-explorer/0.1.4/1776779651848/Microsoft.VisualStudio.Services.VSIXPackage",
+      "packageContentLength": 3364683,
+      "packageSizeMethod": "Final HTTP HEAD Content-Length (identity encoding); package not downloaded",
+      "name": "WaveExplorer",
+      "en": [
+        "Linked waveform / spectrogram within a file",
+        "Linear / mel STFT in a Worker; region looping",
+        "Waveform and mel inspection"
+      ],
+      "zh": [
+        "单文件内波形与频谱联动",
+        "Worker 计算线性 / Mel STFT；选区循环",
+        "波形与 Mel 频谱检查"
+      ],
+      "measuredArchiveBytes": 3364683,
+      "measuredArchiveSha256": "ca983ea50d0b819c1aa5877b176492feaabceafc7c913737ad67f2186773b284"
+    },
+    {
+      "id": "sunxingwei.specview",
+      "displayName": "SpecView - Audio Spectrogram Viewer",
+      "version": "0.2.2",
+      "targetPlatform": "universal",
+      "versionUpdated": "2026-10-15T03:22:05.94Z",
+      "marketplaceUrl": "https://marketplace.visualstudio.com/items?itemName=sunxingwei.specview",
+      "readmeUrl": "https://sunxingwei.gallerycdn.vsassets.io/extensions/sunxingwei/specview/0.2.2/1792034311316/Microsoft.VisualStudio.Services.Content.Details",
+      "readmeSha256": "c9cde91bd64be8d6f8897035c6143956de34003b17c86aec7000a07bb3d029e2",
+      "packageUrl": "https://sunxingwei.gallerycdn.vsassets.io/extensions/sunxingwei/specview/0.2.2/1792034311316/Microsoft.VisualStudio.Services.VSIXPackage",
+      "packageContentLength": 119905,
+      "packageSizeMethod": "Final HTTP HEAD Content-Length (identity encoding); package not downloaded",
+      "name": "SpecView",
+      "en": [
+        "Automatic file grouping; A/B lane switching; linked group zoom",
+        "Tar archives; JSON metadata; optional 527-class audio model",
+        "Batch review of model outputs"
+      ],
+      "zh": [
+        "自动分组、A/B 切轨、组内联动缩放",
+        "Tar 音频、JSON 元数据；可选 527 类音频分类",
+        "模型输出的批量检查"
+      ],
+      "measuredArchiveBytes": 119905,
+      "measuredArchiveSha256": "bcb795864237c164803f9129b4b768c03fd1ed6faafee3c1a123deb16523f874"
+    },
+    {
+      "id": "YongsooIm.audioscope",
+      "displayName": "audioscope",
+      "version": "1.1.7",
+      "targetPlatform": "universal",
+      "versionUpdated": "2026-10-01T00:31:27.207Z",
+      "marketplaceUrl": "https://marketplace.visualstudio.com/items?itemName=YongsooIm.audioscope",
+      "readmeUrl": "https://YongsooIm.gallerycdn.vsassets.io/extensions/yongsooim/audioscope/1.1.7/1790814307880/Microsoft.VisualStudio.Services.Content.Details",
+      "readmeSha256": "4a233425c815572a708645c7bd0eb19081fa649d45a92eae29e60ff332fa3571",
+      "packageUrl": "https://YongsooIm.gallerycdn.vsassets.io/extensions/yongsooim/audioscope/1.1.7/1790814307880/Microsoft.VisualStudio.Services.VSIXPackage",
+      "packageContentLength": 4779191,
+      "packageSizeMethod": "Final HTTP HEAD Content-Length (identity encoding); package not downloaded",
+      "name": "audioscope",
+      "en": [
+        "Two-file A/B alignment, gain matching, residual and spectral difference",
+        "LUFS/LRA/true peak; MFCC/scalogram/chroma; four export formats",
+        "Detailed pairwise difference analysis"
+      ],
+      "zh": [
+        "双文件 A/B 对齐、增益匹配、残差与频谱差值",
+        "LUFS/LRA/真峰值；MFCC/尺度图/色度图；四种格式导出",
+        "精细的成对差异分析"
+      ],
+      "measuredArchiveBytes": 4779191,
+      "measuredArchiveSha256": "33c2554428564025401aaf6b3ea22d95359fbe7f99e13725cbb4995ede7f9684"
+    },
+    {
+      "id": "simzhou.audiolens",
+      "displayName": "AudioLens — Audio inspection for VS Code",
+      "version": "1.10.0",
+      "targetPlatform": "universal",
+      "versionUpdated": "2026-09-15T13:49:42.85Z",
+      "marketplaceUrl": "https://marketplace.visualstudio.com/items?itemName=simzhou.audiolens",
+      "readmeUrl": "https://simzhou.gallerycdn.vsassets.io/extensions/simzhou/audiolens/1.10.0/1789479740219/Microsoft.VisualStudio.Services.Content.Details",
+      "readmeSha256": "6c388c46ca75210bf365183783afe84f40ec8bad11b8a1e7c456989e0be6e922",
+      "packageUrl": "https://simzhou.gallerycdn.vsassets.io/extensions/simzhou/audiolens/1.10.0/1789479740219/Microsoft.VisualStudio.Services.VSIXPackage",
+      "packageContentLength": 253475,
+      "packageSizeMethod": "Final HTTP HEAD Content-Length (identity encoding); package not downloaded",
+      "name": "AudioLens",
+      "en": [
+        "Per-file multi-channel tracks with mute / solo and gain / pan",
+        "Raw PCM, Kaldi Ark, headers, selection metrics and Remote SSH",
+        "Speech datasets and raw-signal debugging"
+      ],
+      "zh": [
+        "单文件多声道分轨，静音 / 独奏与增益 / 声像",
+        "Raw PCM、Kaldi Ark、文件头、选区指标与 Remote SSH",
+        "语音数据集与原始信号排查"
+      ],
+      "measuredArchiveBytes": 253475,
+      "measuredArchiveSha256": "3edff51d1948f9d1157b843f149bc89a5c9ce469427cfabc4893a1ce0d185513"
+    }
+  ],
+  "benchmarks": {
+    "repository": "repository-bench-postfix-2.json",
+    "repositoryContext": "repository-bench-context.json",
+    "originalCase": "repository-upstream-stft.json",
+    "actualInstalledPlugins": "editor-plugins.json",
+    "actualDownloadedArchives": "downloaded-packages-postfix.json",
+    "supplementaryInteriorCase": "upstream-stft.json",
+    "postfixGates": "benchmark-fixes.json",
+    "liveNumerics": "live-kernel-validation.json",
+    "lifecycleFix": "editor-lifecycle-fix.json"
+  },
+  "capabilityMatrix": "capability-matrix.json"
+}

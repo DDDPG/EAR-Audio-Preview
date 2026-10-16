@@ -1,5 +1,7 @@
 # Audio alignment in file comparison
 
+[Design article](blog/audio-alignment-dsp.en.md) · [中文技术文章](blog/audio-alignment-dsp.md) · [User guide](usage.md)
+
 Open **EAR Audio: Compare Files**, load at least two files, then choose **Align** in the comparison toolbar.
 
 1. Choose a reference and the file to move. The focused file is the initial reference.
@@ -43,7 +45,7 @@ node bench/alignmentParity.mjs /path/to/research/dsp-lab /tmp/alignment-parity.j
 EAR_PLAYWRIGHT_MODULE=/path/to/playwright node bench/alignmentBrowserAcceptance.mjs /tmp/alignment-acceptance
 ```
 
-Only runtime code and focused acceptance tools are integrated. The full experimental history, ablation variants, and bilingual development article remain on `research/alignment-dsp-lab-20261016`; they are not bundled into the extension.
+Runtime code and focused acceptance tools are integrated. The bilingual development articles are indexed in [doc/blog](blog/README.md). Full experimental history and ablation variants remain in the fixed research snapshot; see [research source access](blog/audio-alignment-research.md). Research tools and blog files are not bundled into the extension.
 
 ## 中文使用说明
 

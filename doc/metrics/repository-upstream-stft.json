@@ -1,0 +1,79 @@
+{
+  "date": "2026-10-16",
+  "benchmark": {
+    "path": "bench/benchmark.ts",
+    "sha256": "2b49b3b00dadb55ef5cc2d38b7f5075364a3eeb1e60e4de890f909c10e2ed7a4",
+    "case": "render.oouraSpectrogram.3s.w1024h80",
+    "warmup": 2,
+    "samples": 10,
+    "sourceUnmodified": true,
+    "adapter": "Expose existing buildCases/runCase; remove only automatic main dispatch; inject original upstream AnalyzeService for this one existing case"
+  },
+  "environment": {
+    "node": "v24.9.0",
+    "gcExposed": true
+  },
+  "upstream": {
+    "version": "2.6.0",
+    "commit": "3edd1bc0761d026a2f24d96055ee7430365ba2aa",
+    "sourceSha256": "b1fbe49de3892488a888c6b8803fb4640082aaa5491e238f0b89053aa2771009"
+  },
+  "ear": {
+    "head": "06705d4807e121e60737a080daa0a2d6bd2827dd",
+    "sourceSha256": "01c78cde3f1fd88f7b5f15b85e3f79660f77e0a9c12f38e683aa03f0579c1398"
+  },
+  "equivalence": {
+    "frames": 1800,
+    "bins": 512,
+    "cells": 921600,
+    "finitePairs": 918528,
+    "identicalFinitePairs": 918528,
+    "upstreamNonfinite": 3072,
+    "earNonfinite": 0,
+    "upstreamBadFrames": [
+      1794,
+      1795,
+      1796,
+      1797,
+      1798,
+      1799
+    ],
+    "boundary": "Original full 3s fixture and centered windows, including both endpoints; no exclusion of tail frames. The upstream uses an inclusive final sample bound and produces nonfinite tail columns. Outputs are not globally byte-identical."
+  },
+  "rounds": [
+    {
+      "upstream": {
+        "opsPerSec": 32,
+        "meanMs": 31.4894,
+        "p95Ms": 46.2563,
+        "frameBudgetPct": 188.94,
+        "allocKbPerOp": 12889
+      },
+      "ear": {
+        "opsPerSec": 41,
+        "meanMs": 24.5546,
+        "p95Ms": 27.5192,
+        "frameBudgetPct": 147.33,
+        "allocKbPerOp": 4967.2
+      },
+      "speedup": 1.2824236599252279
+    },
+    {
+      "ear": {
+        "opsPerSec": 40,
+        "meanMs": 24.9162,
+        "p95Ms": 29.653,
+        "frameBudgetPct": 149.5,
+        "allocKbPerOp": 5547
+      },
+      "upstream": {
+        "opsPerSec": 33,
+        "meanMs": 30.05,
+        "p95Ms": 36.4327,
+        "frameBudgetPct": 180.3,
+        "allocKbPerOp": 12787.9
+      },
+      "speedup": 1.2060426549794914
+    }
+  ]
+}

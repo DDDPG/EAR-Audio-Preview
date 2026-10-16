@@ -1,0 +1,30 @@
+{
+  "date": "2026-10-16",
+  "benchmarkSha256": "2b49b3b00dadb55ef5cc2d38b7f5075364a3eeb1e60e4de890f909c10e2ed7a4",
+  "baselineFileSha256": "d12d5ce5f7482e4e47d9995823431eab11925befbffd0c968d11cb7ea62e3bb8",
+  "baselineUnmodified": true,
+  "testAndThresholdChanges": false,
+  "currentCases": 15,
+  "sourceBaselineCommit": "06705d4807e121e60737a080daa0a2d6bd2827dd",
+  "sourceBaselineEnvironment": {
+    "node": "v24.9.0",
+    "date": "2026-10-16T12:58:12.456Z",
+    "gcExposed": true
+  },
+  "currentEnvironment": {
+    "node": "v24.9.0",
+    "date": "2026-10-16T12:54:51.833Z",
+    "gcExposed": true
+  },
+  "historicalEnvironment": {
+    "node": "v26.0.0",
+    "date": "2026-07-20T07:07:57.658Z",
+    "gcExposed": true
+  },
+  "gateResults": {
+    "historicalFirst": "\n> ear-audio-preview@0.6.0 bench:compare\n> node bench/compare.mjs bench/baseline.json doc/metrics/repository-bench.json\n\n[ ok ] goertzelCqt.pazFrame4096             0.1022 → 0.0942 ms (92.2%)\n[FAIL] quinticBSplineSmooth.300             0.0013 → 0.0038 ms (292.3%)\n[ ok ] akimaResample.128to300               0.0067 → 0.0061 ms (91.0%)\n[ ok ] liveBallistics.emaFrame300           0.0006 → 0.0005 ms (83.3%)\n[ ok ] spectralPeakDisplay.frame300         0.0026 → 0.0027 ms (103.8%)\n[FAIL] stereoPolarField.instant4096x64      0.0231 → 0.0292 ms (126.4%)\n[ ok ] eqCanvasMath.curve300plus10band      0.0913 → 0.0777 ms (85.1%)\n[FAIL] phaseCorrelation.fft2048             0.0639 → 0.0728 ms (113.9%)\n[FAIL] anim.fftFramePrep.1024to300          0.0587 → 0.0701 ms (119.4%)\n[ ok ] pipeline.stftFrames.3s.w4096h1024    8.4681 → 4.6187 ms (54.5%)\n[ ok ] pipeline.sequenceFeatures.3s.hop20ms 2.9681 → 1.1940 ms (40.2%)\n[ ok ] io.wavEncode.stereo5s48k             5.4049 → 3.5495 ms (65.7%)\n[ ok ] io.stftWireToSpectrogram.500x1024    1.6758 → 0.8172 ms (48.8%)\n[ ok ] dist gzip total                      5736.2 → 3146.8 KiB (54.9%)\n[ ok ] dist raw total                       12212.3 → 9703.9 KiB (79.5%)\n[ ok ] vsix size                            15587.2 → 3518.8 KiB (22.6%)\n[info] dist file removed: 52.audioPreview.js\n[info] dist file removed: essentia-wasm.web.wasm\n[info] dist file added: comparison.js\n[info] dist file added: comparison.js.LICENSE.txt\n[info] dist file added: comparisonLoudnessWorker.js\n[info] dist file added: comparisonWorker.js\n[info] dist file added: comparisonWorker.js.LICENSE.txt\n\ncompare: 4 gate violation(s)\n",
+    "historicalRepeat": "[ ok ] goertzelCqt.pazFrame4096             0.1022 → 0.0956 ms (93.5%)\n[FAIL] quinticBSplineSmooth.300             0.0013 → 0.0038 ms (292.3%)\n[ ok ] akimaResample.128to300               0.0067 → 0.0060 ms (89.6%)\n[ ok ] liveBallistics.emaFrame300           0.0006 → 0.0005 ms (83.3%)\n[ ok ] spectralPeakDisplay.frame300         0.0026 → 0.0028 ms (107.7%)\n[FAIL] stereoPolarField.instant4096x64      0.0231 → 0.0295 ms (127.7%)\n[ ok ] eqCanvasMath.curve300plus10band      0.0913 → 0.0772 ms (84.6%)\n[ ok ] phaseCorrelation.fft2048             0.0639 → 0.0528 ms (82.6%)\n[ ok ] anim.fftFramePrep.1024to300          0.0587 → 0.0499 ms (85.0%)\n[ ok ] pipeline.stftFrames.3s.w4096h1024    8.4681 → 3.4714 ms (41.0%)\n[ ok ] pipeline.sequenceFeatures.3s.hop20ms 2.9681 → 0.8209 ms (27.7%)\n[ ok ] io.wavEncode.stereo5s48k             5.4049 → 2.5728 ms (47.6%)\n[ ok ] io.stftWireToSpectrogram.500x1024    1.6758 → 0.5648 ms (33.7%)\n\ncompare: 2 gate violation(s)\n",
+    "sameEnvironment": "[ ok ] goertzelCqt.pazFrame4096             0.0945 → 0.0956 ms (101.2%)\n[ ok ] quinticBSplineSmooth.300             0.0041 → 0.0038 ms (92.7%)\n[ ok ] akimaResample.128to300               0.0058 → 0.0060 ms (103.4%)\n[ ok ] liveBallistics.emaFrame300           0.0006 → 0.0005 ms (83.3%)\n[ ok ] spectralPeakDisplay.frame300         0.0026 → 0.0028 ms (107.7%)\n[ ok ] stereoPolarField.instant4096x64      0.0297 → 0.0295 ms (99.3%)\n[ ok ] eqCanvasMath.curve300plus10band      0.0789 → 0.0772 ms (97.8%)\n[ ok ] phaseCorrelation.fft2048             0.0527 → 0.0528 ms (100.2%)\n[ ok ] anim.fftFramePrep.1024to300          0.0505 → 0.0499 ms (98.8%)\n[ ok ] pipeline.stftFrames.3s.w4096h1024    3.5624 → 3.4714 ms (97.4%)\n[ ok ] pipeline.sequenceFeatures.3s.hop20ms 0.8642 → 0.8209 ms (95.0%)\n[ ok ] io.wavEncode.stereo5s48k             2.8317 → 2.5728 ms (90.9%)\n[ ok ] io.stftWireToSpectrogram.500x1024    0.6137 → 0.5648 ms (92.0%)\n[ ok ] render.oouraSpectrogram.3s.w1024h80  24.4731 → 24.2038 ms (98.9%)\n[ ok ] render.spectrogramTexFlatten.1755x2048 2.6511 → 2.4035 ms (90.7%)\n\ncompare: all gates passed\n"
+  },
+  "boundary": "Historical baseline remains failed for 2 cases on serial repeat. Same-Node immutable source baseline passes all existing gates; this does not erase historical failures. pipeline.* uses Essentia stubs and texture-flatten is CPU preparation. Net heap deltas are approximate, not precise allocations."
+}

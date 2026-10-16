@@ -1,0 +1,1236 @@
+{
+  "checkedOn": "2026-10-16",
+  "version": "0.6.0",
+  "status": "passed",
+  "scope": "Eight-file comparison, attenuation-only RMS matching, same-rate residual statistics, optional exported headphone EQ",
+  "fixtures": {
+    "provenance": "Four user-provided complete MP3 recordings A/B/C/D, two independent loads each for eight tracks; no raw audio checked in",
+    "durationSeconds": [
+      107.36,
+      205.88
+    ],
+    "distinctRecordings": 4,
+    "concurrentFiles": 8,
+    "originalsModified": false,
+    "sampleRate": 48000,
+    "channels": 2
+  },
+  "acceptance": {
+    "animationFrameP95Ms": 50,
+    "livePresentationP95Ms": 100,
+    "crashes": 0,
+    "uncaughtErrors": 0
+  },
+  "baselineTests": {
+    "suites": 78,
+    "passed": 646,
+    "skipped": 1
+  },
+  "finalTests": {
+    "suites": 79,
+    "passed": 654,
+    "skipped": 1
+  },
+  "developmentStress": {
+    "source": "Four complete user-provided MP3 recordings, each loaded twice for eight-track load. Production bundle and real Web Audio; browser host bridge, no VS Code IPC.",
+    "results": [
+      {
+        "count": 4,
+        "run": 1,
+        "readyMs": 3429,
+        "allSources": [
+          "1-A.mp3\nRMS match: 0.00 dB\n48 kHz · stereo · 191.52 s",
+          "2-B.mp3\nRMS match: 0.00 dB\n48 kHz · stereo · 107.36 s",
+          "3-C.mp3\nRMS match: 0.00 dB\n48 kHz · stereo · 205.88 s",
+          "4-D.mp3\nRMS match: 0.00 dB\n48 kHz · stereo · 163.08 s"
+        ],
+        "capture": {
+          "label": "Development bundle, real native buffers and Web Audio; excludes VS Code host IPC",
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36",
+          "files": [
+            "1-A.mp3",
+            "2-B.mp3",
+            "3-C.mp3",
+            "4-D.mp3"
+          ],
+          "activeTracks": 4,
+          "pane": "Live Spec",
+          "timeRange": [
+            10.022666666666666,
+            25.009333333333334
+          ],
+          "animationFrames": {
+            "count": 899,
+            "medianMs": 16.69999999999891,
+            "p95Ms": 16.700000000000728,
+            "maxMs": 16.80000000000291
+          },
+          "livePresentationIntervals": {
+            "count": 899,
+            "medianMs": 16.600000023841858,
+            "p95Ms": 18,
+            "maxMs": 19.899999976158142
+          },
+          "liveBatchRoundtripAndDraw": {
+            "count": 899,
+            "medianMs": 2.4000000953674316,
+            "p95Ms": 3.600000023841858,
+            "maxMs": 4.299999952316284
+          },
+          "heap": {
+            "usedJSHeapSize": 287068337,
+            "totalJSHeapSize": 302599929
+          },
+          "timestamp": "2026-10-16T15:30:14.746Z"
+        },
+        "interactionCycles": 12,
+        "narrowHit": {
+          "width": 160,
+          "action": "focus",
+          "scrollWidth": 640,
+          "clientWidth": 634
+        },
+        "errors": []
+      },
+      {
+        "count": 8,
+        "run": 1,
+        "readyMs": 6333,
+        "allSources": [
+          "1-A.mp3\nRMS match: 0.00 dB\n48 kHz · stereo · 191.52 s",
+          "2-B.mp3\nRMS match: 0.00 dB\n48 kHz · stereo · 107.36 s",
+          "3-C.mp3\nRMS match: 0.00 dB\n48 kHz · stereo · 205.88 s",
+          "4-D.mp3\nRMS match: 0.00 dB\n48 kHz · stereo · 163.08 s",
+          "5-A.mp3\nRMS match: 0.00 dB\n48 kHz · stereo · 191.52 s",
+          "6-B.mp3\nRMS match: 0.00 dB\n48 kHz · stereo · 107.36 s",
+          "7-C.mp3\nRMS match: 0.00 dB\n48 kHz · stereo · 205.88 s",
+          "8-D.mp3\nRMS match: 0.00 dB\n48 kHz · stereo · 163.08 s"
+        ],
+        "capture": {
+          "label": "Development bundle, real native buffers and Web Audio; excludes VS Code host IPC",
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36",
+          "files": [
+            "1-A.mp3",
+            "2-B.mp3",
+            "3-C.mp3",
+            "4-D.mp3",
+            "5-A.mp3",
+            "6-B.mp3",
+            "7-C.mp3",
+            "8-D.mp3"
+          ],
+          "activeTracks": 8,
+          "pane": "Live Spec",
+          "timeRange": [
+            10.028,
+            25.009333333333334
+          ],
+          "animationFrames": {
+            "count": 899,
+            "medianMs": 16.69999999999891,
+            "p95Ms": 16.700000000000728,
+            "maxMs": 16.80000000000291
+          },
+          "livePresentationIntervals": {
+            "count": 899,
+            "medianMs": 16.600000023841858,
+            "p95Ms": 18,
+            "maxMs": 19.800000071525574
+          },
+          "liveBatchRoundtripAndDraw": {
+            "count": 899,
+            "medianMs": 2.399999976158142,
+            "p95Ms": 4,
+            "maxMs": 5.100000023841858
+          },
+          "heap": {
+            "usedJSHeapSize": 564365057,
+            "totalJSHeapSize": 590482293
+          },
+          "timestamp": "2026-10-16T15:30:37.956Z"
+        },
+        "interactionCycles": 12,
+        "narrowHit": {
+          "width": 160,
+          "action": "focus",
+          "scrollWidth": 1280,
+          "clientWidth": 634
+        },
+        "errors": []
+      },
+      {
+        "count": 4,
+        "run": 2,
+        "readyMs": 3164,
+        "allSources": [
+          "1-A.mp3\nRMS match: 0.00 dB\n48 kHz · stereo · 191.52 s",
+          "2-B.mp3\nRMS match: 0.00 dB\n48 kHz · stereo · 107.36 s",
+          "3-C.mp3\nRMS match: 0.00 dB\n48 kHz · stereo · 205.88 s",
+          "4-D.mp3\nRMS match: 0.00 dB\n48 kHz · stereo · 163.08 s"
+        ],
+        "capture": {
+          "label": "Development bundle, real native buffers and Web Audio; excludes VS Code host IPC",
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36",
+          "files": [
+            "1-A.mp3",
+            "2-B.mp3",
+            "3-C.mp3",
+            "4-D.mp3"
+          ],
+          "activeTracks": 4,
+          "pane": "Live Spec",
+          "timeRange": [
+            10.028,
+            25.009333333333334
+          ],
+          "animationFrames": {
+            "count": 899,
+            "medianMs": 16.69999999999891,
+            "p95Ms": 16.799999999999272,
+            "maxMs": 16.80000000000291
+          },
+          "livePresentationIntervals": {
+            "count": 899,
+            "medianMs": 16.600000023841858,
+            "p95Ms": 18,
+            "maxMs": 20.299999952316284
+          },
+          "liveBatchRoundtripAndDraw": {
+            "count": 899,
+            "medianMs": 1.600000023841858,
+            "p95Ms": 3.3000000715255737,
+            "maxMs": 4.700000047683716
+          },
+          "heap": {
+            "usedJSHeapSize": 290522501,
+            "totalJSHeapSize": 300294465
+          },
+          "timestamp": "2026-10-16T15:30:58.389Z"
+        },
+        "interactionCycles": 12,
+        "narrowHit": {
+          "width": 160,
+          "action": "focus",
+          "scrollWidth": 640,
+          "clientWidth": 634
+        },
+        "errors": []
+      },
+      {
+        "count": 8,
+        "run": 2,
+        "readyMs": 6225,
+        "allSources": [
+          "1-A.mp3\nRMS match: 0.00 dB\n48 kHz · stereo · 191.52 s",
+          "2-B.mp3\nRMS match: 0.00 dB\n48 kHz · stereo · 107.36 s",
+          "3-C.mp3\nRMS match: 0.00 dB\n48 kHz · stereo · 205.88 s",
+          "4-D.mp3\nRMS match: 0.00 dB\n48 kHz · stereo · 163.08 s",
+          "5-A.mp3\nRMS match: 0.00 dB\n48 kHz · stereo · 191.52 s",
+          "6-B.mp3\nRMS match: 0.00 dB\n48 kHz · stereo · 107.36 s",
+          "7-C.mp3\nRMS match: 0.00 dB\n48 kHz · stereo · 205.88 s",
+          "8-D.mp3\nRMS match: 0.00 dB\n48 kHz · stereo · 163.08 s"
+        ],
+        "capture": {
+          "label": "Development bundle, real native buffers and Web Audio; excludes VS Code host IPC",
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36",
+          "files": [
+            "1-A.mp3",
+            "2-B.mp3",
+            "3-C.mp3",
+            "4-D.mp3",
+            "5-A.mp3",
+            "6-B.mp3",
+            "7-C.mp3",
+            "8-D.mp3"
+          ],
+          "activeTracks": 8,
+          "pane": "Live Spec",
+          "timeRange": [
+            10.028,
+            25.014666666666667
+          ],
+          "animationFrames": {
+            "count": 899,
+            "medianMs": 16.69999999999891,
+            "p95Ms": 16.799999999999272,
+            "maxMs": 16.80000000000291
+          },
+          "livePresentationIntervals": {
+            "count": 899,
+            "medianMs": 16.699999928474426,
+            "p95Ms": 17.799999952316284,
+            "maxMs": 21
+          },
+          "liveBatchRoundtripAndDraw": {
+            "count": 899,
+            "medianMs": 2.299999952316284,
+            "p95Ms": 3.6999999284744263,
+            "maxMs": 6.100000023841858
+          },
+          "heap": {
+            "usedJSHeapSize": 566117762,
+            "totalJSHeapSize": 591437026
+          },
+          "timestamp": "2026-10-16T15:31:21.461Z"
+        },
+        "interactionCycles": 12,
+        "narrowHit": {
+          "width": 160,
+          "action": "focus",
+          "scrollWidth": 1280,
+          "clientWidth": 634
+        },
+        "errors": []
+      },
+      {
+        "count": 4,
+        "run": 3,
+        "readyMs": 3194,
+        "allSources": [
+          "1-A.mp3\nRMS match: 0.00 dB\n48 kHz · stereo · 191.52 s",
+          "2-B.mp3\nRMS match: 0.00 dB\n48 kHz · stereo · 107.36 s",
+          "3-C.mp3\nRMS match: 0.00 dB\n48 kHz · stereo · 205.88 s",
+          "4-D.mp3\nRMS match: 0.00 dB\n48 kHz · stereo · 163.08 s"
+        ],
+        "capture": {
+          "label": "Development bundle, real native buffers and Web Audio; excludes VS Code host IPC",
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36",
+          "files": [
+            "1-A.mp3",
+            "2-B.mp3",
+            "3-C.mp3",
+            "4-D.mp3"
+          ],
+          "activeTracks": 4,
+          "pane": "Live Spec",
+          "timeRange": [
+            10.028,
+            25.009333333333334
+          ],
+          "animationFrames": {
+            "count": 899,
+            "medianMs": 16.69999999999891,
+            "p95Ms": 16.799999999999272,
+            "maxMs": 16.80000000000291
+          },
+          "livePresentationIntervals": {
+            "count": 899,
+            "medianMs": 16.600000023841858,
+            "p95Ms": 18.100000023841858,
+            "maxMs": 20.100000023841858
+          },
+          "liveBatchRoundtripAndDraw": {
+            "count": 899,
+            "medianMs": 1.6999999284744263,
+            "p95Ms": 3.399999976158142,
+            "maxMs": 4.400000095367432
+          },
+          "heap": {
+            "usedJSHeapSize": 293691545,
+            "totalJSHeapSize": 303654553
+          },
+          "timestamp": "2026-10-16T15:31:41.934Z"
+        },
+        "interactionCycles": 12,
+        "narrowHit": {
+          "width": 160,
+          "action": "focus",
+          "scrollWidth": 640,
+          "clientWidth": 634
+        },
+        "errors": []
+      },
+      {
+        "count": 8,
+        "run": 3,
+        "readyMs": 6243,
+        "allSources": [
+          "1-A.mp3\nRMS match: 0.00 dB\n48 kHz · stereo · 191.52 s",
+          "2-B.mp3\nRMS match: 0.00 dB\n48 kHz · stereo · 107.36 s",
+          "3-C.mp3\nRMS match: 0.00 dB\n48 kHz · stereo · 205.88 s",
+          "4-D.mp3\nRMS match: 0.00 dB\n48 kHz · stereo · 163.08 s",
+          "5-A.mp3\nRMS match: 0.00 dB\n48 kHz · stereo · 191.52 s",
+          "6-B.mp3\nRMS match: 0.00 dB\n48 kHz · stereo · 107.36 s",
+          "7-C.mp3\nRMS match: 0.00 dB\n48 kHz · stereo · 205.88 s",
+          "8-D.mp3\nRMS match: 0.00 dB\n48 kHz · stereo · 163.08 s"
+        ],
+        "capture": {
+          "label": "Development bundle, real native buffers and Web Audio; excludes VS Code host IPC",
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36",
+          "files": [
+            "1-A.mp3",
+            "2-B.mp3",
+            "3-C.mp3",
+            "4-D.mp3",
+            "5-A.mp3",
+            "6-B.mp3",
+            "7-C.mp3",
+            "8-D.mp3"
+          ],
+          "activeTracks": 8,
+          "pane": "Live Spec",
+          "timeRange": [
+            10.028,
+            25.00933333333333
+          ],
+          "animationFrames": {
+            "count": 899,
+            "medianMs": 16.69999999999891,
+            "p95Ms": 16.700000000000728,
+            "maxMs": 16.80000000000291
+          },
+          "livePresentationIntervals": {
+            "count": 899,
+            "medianMs": 16.699999928474426,
+            "p95Ms": 17.600000023841858,
+            "maxMs": 18.399999976158142
+          },
+          "liveBatchRoundtripAndDraw": {
+            "count": 899,
+            "medianMs": 2.5,
+            "p95Ms": 3,
+            "maxMs": 3.700000047683716
+          },
+          "heap": {
+            "usedJSHeapSize": 567834003,
+            "totalJSHeapSize": 592389567
+          },
+          "timestamp": "2026-10-16T15:32:04.980Z"
+        },
+        "interactionCycles": 12,
+        "narrowHit": {
+          "width": 160,
+          "action": "focus",
+          "scrollWidth": 1280,
+          "clientWidth": 634
+        },
+        "errors": []
+      }
+    ],
+    "bundleMode": "development (npm run webpack)"
+  },
+  "developmentAcceptance": [
+    {
+      "count": 4,
+      "matched": "RMS matched over 0.00–107.36 s · 1-A.mp3: 0.00 dB · 2-B.mp3: -4.12 dB · 3-C.mp3: -3.77 dB · 4-D.mp3: -3.04 dB",
+      "residual": "Residual vs 1-A.mp3\n\n0.00–107.36 s · current RMS matching gains · same timeline positions, no automatic alignment.\n\nFile\tRMS dBFS\tPeak dBFS\tRelative dB\n2-B.mp3\t-17.03\t-0.26\t2.99\n3-C.mp3\t-16.99\t0.72\t3.03\n4-D.mp3\t-17.01\t-0.33\t3.01\nClose",
+      "cqt": {
+        "label": "Development bundle, real native buffers and Web Audio; excludes VS Code host IPC",
+        "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36",
+        "files": [
+          "1-A.mp3",
+          "2-B.mp3",
+          "3-C.mp3",
+          "4-D.mp3"
+        ],
+        "activeTracks": 4,
+        "pane": "Live Spec",
+        "timeRange": [
+          11.057333333333332,
+          26.038666666666664
+        ],
+        "animationFrames": {
+          "count": 899,
+          "medianMs": 16.69999999999891,
+          "p95Ms": 16.700000000000728,
+          "maxMs": 16.80000000000109
+        },
+        "livePresentationIntervals": {
+          "count": 899,
+          "medianMs": 16.699999928474426,
+          "p95Ms": 17.800000071525574,
+          "maxMs": 19.100000023841858
+        },
+        "liveBatchRoundtripAndDraw": {
+          "count": 899,
+          "medianMs": 7,
+          "p95Ms": 8,
+          "maxMs": 9.5
+        },
+        "heap": {
+          "usedJSHeapSize": 276078663,
+          "totalJSHeapSize": 288261971
+        },
+        "timestamp": "2026-10-16T15:33:18.613Z"
+      },
+      "errors": []
+    },
+    {
+      "count": 8,
+      "matched": "RMS matched over 0.00–107.36 s · 1-A.mp3: 0.00 dB · 2-B.mp3: -4.12 dB · 3-C.mp3: -3.77 dB · 4-D.mp3: -3.04 dB · 5-A.mp3: 0.00 dB · 6-B.mp3: -4.12 dB · 7-C.mp3: -3.77 dB · 8-D.mp3: -3.04 dB",
+      "residual": "Residual vs 1-A.mp3\n\n0.00–107.36 s · current RMS matching gains · same timeline positions, no automatic alignment.\n\nFile\tRMS dBFS\tPeak dBFS\tRelative dB\n2-B.mp3\t-17.03\t-0.26\t2.99\n3-C.mp3\t-16.99\t0.72\t3.03\n4-D.mp3\t-17.01\t-0.33\t3.01\n5-A.mp3\t−∞\t−∞\t−∞\n6-B.mp3\t-17.03\t-0.26\t2.99\n7-C.mp3\t-16.99\t0.72\t3.03\n8-D.mp3\t-17.01\t-0.33\t3.01\nClose",
+      "cqt": {
+        "label": "Development bundle, real native buffers and Web Audio; excludes VS Code host IPC",
+        "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36",
+        "files": [
+          "1-A.mp3",
+          "2-B.mp3",
+          "3-C.mp3",
+          "4-D.mp3",
+          "5-A.mp3",
+          "6-B.mp3",
+          "7-C.mp3",
+          "8-D.mp3"
+        ],
+        "activeTracks": 8,
+        "pane": "Live Spec",
+        "timeRange": [
+          11.068,
+          26.049333333333333
+        ],
+        "animationFrames": {
+          "count": 899,
+          "medianMs": 16.69999999999891,
+          "p95Ms": 16.700000000000728,
+          "maxMs": 16.80000000000291
+        },
+        "livePresentationIntervals": {
+          "count": 899,
+          "medianMs": 16.600000023841858,
+          "p95Ms": 18.600000023841858,
+          "maxMs": 21.600000023841858
+        },
+        "liveBatchRoundtripAndDraw": {
+          "count": 899,
+          "medianMs": 13.399999976158142,
+          "p95Ms": 15.299999952316284,
+          "maxMs": 17.800000071525574
+        },
+        "heap": {
+          "usedJSHeapSize": 584147019,
+          "totalJSHeapSize": 613056647
+        },
+        "timestamp": "2026-10-16T15:33:38.305Z"
+      },
+      "errors": []
+    }
+  ],
+  "realWebAudio": {
+    "levels": [
+      0.14142135651908472,
+      0.07071067825954236
+    ],
+    "gains": [
+      0.5,
+      1
+    ],
+    "residual": {
+      "rmsDbfs": "-Infinity",
+      "peakDbfs": "-Infinity",
+      "relativeDb": "-Infinity",
+      "frames": 96000
+    },
+    "maxMixError": 0,
+    "eqHighVsLowDb": 5.934813767789869,
+    "asynchronousCancellation": true
+  },
+  "nativeProduction": {
+    "editor": "1.111.0",
+    "readyMs": 7501,
+    "playback": {
+      "frames": 1799,
+      "p95Ms": 9.200000000000728,
+      "visibility": "visible",
+      "liveTime": 17.02,
+      "active": 8,
+      "unmuted": 8
+    },
+    "rapidReopens": 6,
+    "snapshot": {
+      "tracks": 8,
+      "status": "8 / 8 audio files · analysis uses original decoded signals"
+    },
+    "notifications": []
+  },
+  "measurementEfficiency": {
+    "measuredAt": "2026-10-16T15:34:40.136Z",
+    "currentSource": "src/webview/comparison/comparisonMeasurements.ts",
+    "currentSha256": "6485eb0c10c2b497f0e3eaa5c6e99253451ac3518439feacafec845cf911217e",
+    "originalMethod": "Current module reconstructed in memory by replacing 8 ms conditional yields with original unconditional yields and removing yieldAt variables; current timings include comparisonApp per-file yields.",
+    "scope": "Measurement-only browser evaluation; not whole editor performance.",
+    "browserUserAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36",
+    "tracks": 8,
+    "seconds": 60,
+    "sampleRate": 48000,
+    "channels": 2,
+    "trials": [
+      {
+        "trial": 0,
+        "original": {
+          "rmsMs": 3133.899999976158,
+          "residualMs": 1679,
+          "rms": [
+            0.14142142027784485,
+            0.14142133919133126,
+            0.14142130638405917,
+            0.141421414776029,
+            0.14142135736821893,
+            0.14142129675487766,
+            0.1414214046084698,
+            0.14142137545776137
+          ],
+          "residuals": [
+            {
+              "rmsDbfs": -17.35467950472813,
+              "peakDbfs": -14.344376746926065,
+              "relativeDb": -0.36498339464161067,
+              "frames": 2880000
+            },
+            {
+              "rmsDbfs": -12.46831617434715,
+              "peakDbfs": -9.458017169196776,
+              "relativeDb": 4.521379935739368,
+              "frames": 2880000
+            },
+            {
+              "rmsDbfs": -10.990881895588158,
+              "peakDbfs": -7.980585468401687,
+              "relativeDb": 5.998814214498358,
+              "frames": 2880000
+            },
+            {
+              "rmsDbfs": -11.794977826134616,
+              "peakDbfs": -8.78468091040525,
+              "relativeDb": 5.194718283951901,
+              "frames": 2880000
+            },
+            {
+              "rmsDbfs": -15.42822180435034,
+              "peakDbfs": -12.41792124083916,
+              "relativeDb": 1.5614743057361782,
+              "frames": 2880000
+            },
+            {
+              "rmsDbfs": -27.977331873884964,
+              "peakDbfs": -24.9670283134121,
+              "relativeDb": -10.987635763798448,
+              "frames": 2880000
+            },
+            {
+              "rmsDbfs": -20.06832712415115,
+              "peakDbfs": -17.05802337749113,
+              "relativeDb": -3.0786310140646322,
+              "frames": 2880000
+            }
+          ],
+          "resultFloat64BytesHex": "230b86db181ac23fe042642d181ac23fcd45f0e6171ac23f6463b5cf181ac23f641c6d54181ac23ffb9242d2171ac23fa6b6dfb9181ac23f29f1457b181ac23f695ea946cc5a31c0c319232652b02cc0e266e44fe35bd7bf0000000000f9454187043a23c7ef28c0ce69f53981ea22c0282a339fe41512400000000000f94541cf7f2fdf54fb25c052dfd6981eec1fc096334827c9fe17400000000000f9454132966855079727c0dcf83fb2c19121c0d106d63a64c714400000000000f94541d63c6ae33fdb2ec0766adbc5f9d528c028e64a7bccfbf83f0000000000f94541a0acf36b32fa3bc03869e42a8ff738c0a6bf1365abf925c00000000000f94541afa8ebe27d1134c055babc9eda0e31c00ddf0e4c09a108c00000000000f94541"
+        },
+        "current": {
+          "rmsMs": 96.19999992847443,
+          "residualMs": 298.39999997615814,
+          "rms": [
+            0.14142142027784485,
+            0.14142133919133126,
+            0.14142130638405917,
+            0.141421414776029,
+            0.14142135736821893,
+            0.14142129675487766,
+            0.1414214046084698,
+            0.14142137545776137
+          ],
+          "residuals": [
+            {
+              "rmsDbfs": -17.35467950472813,
+              "peakDbfs": -14.344376746926065,
+              "relativeDb": -0.36498339464161067,
+              "frames": 2880000
+            },
+            {
+              "rmsDbfs": -12.46831617434715,
+              "peakDbfs": -9.458017169196776,
+              "relativeDb": 4.521379935739368,
+              "frames": 2880000
+            },
+            {
+              "rmsDbfs": -10.990881895588158,
+              "peakDbfs": -7.980585468401687,
+              "relativeDb": 5.998814214498358,
+              "frames": 2880000
+            },
+            {
+              "rmsDbfs": -11.794977826134616,
+              "peakDbfs": -8.78468091040525,
+              "relativeDb": 5.194718283951901,
+              "frames": 2880000
+            },
+            {
+              "rmsDbfs": -15.42822180435034,
+              "peakDbfs": -12.41792124083916,
+              "relativeDb": 1.5614743057361782,
+              "frames": 2880000
+            },
+            {
+              "rmsDbfs": -27.977331873884964,
+              "peakDbfs": -24.9670283134121,
+              "relativeDb": -10.987635763798448,
+              "frames": 2880000
+            },
+            {
+              "rmsDbfs": -20.06832712415115,
+              "peakDbfs": -17.05802337749113,
+              "relativeDb": -3.0786310140646322,
+              "frames": 2880000
+            }
+          ],
+          "resultFloat64BytesHex": "230b86db181ac23fe042642d181ac23fcd45f0e6171ac23f6463b5cf181ac23f641c6d54181ac23ffb9242d2171ac23fa6b6dfb9181ac23f29f1457b181ac23f695ea946cc5a31c0c319232652b02cc0e266e44fe35bd7bf0000000000f9454187043a23c7ef28c0ce69f53981ea22c0282a339fe41512400000000000f94541cf7f2fdf54fb25c052dfd6981eec1fc096334827c9fe17400000000000f9454132966855079727c0dcf83fb2c19121c0d106d63a64c714400000000000f94541d63c6ae33fdb2ec0766adbc5f9d528c028e64a7bccfbf83f0000000000f94541a0acf36b32fa3bc03869e42a8ff738c0a6bf1365abf925c00000000000f94541afa8ebe27d1134c055babc9eda0e31c00ddf0e4c09a108c00000000000f94541"
+        },
+        "byteIdentical": true
+      },
+      {
+        "trial": 1,
+        "current": {
+          "rmsMs": 65.10000002384186,
+          "residualMs": 275.10000002384186,
+          "rms": [
+            0.14142142027784485,
+            0.14142133919133126,
+            0.14142130638405917,
+            0.141421414776029,
+            0.14142135736821893,
+            0.14142129675487766,
+            0.1414214046084698,
+            0.14142137545776137
+          ],
+          "residuals": [
+            {
+              "rmsDbfs": -17.35467950472813,
+              "peakDbfs": -14.344376746926065,
+              "relativeDb": -0.36498339464161067,
+              "frames": 2880000
+            },
+            {
+              "rmsDbfs": -12.46831617434715,
+              "peakDbfs": -9.458017169196776,
+              "relativeDb": 4.521379935739368,
+              "frames": 2880000
+            },
+            {
+              "rmsDbfs": -10.990881895588158,
+              "peakDbfs": -7.980585468401687,
+              "relativeDb": 5.998814214498358,
+              "frames": 2880000
+            },
+            {
+              "rmsDbfs": -11.794977826134616,
+              "peakDbfs": -8.78468091040525,
+              "relativeDb": 5.194718283951901,
+              "frames": 2880000
+            },
+            {
+              "rmsDbfs": -15.42822180435034,
+              "peakDbfs": -12.41792124083916,
+              "relativeDb": 1.5614743057361782,
+              "frames": 2880000
+            },
+            {
+              "rmsDbfs": -27.977331873884964,
+              "peakDbfs": -24.9670283134121,
+              "relativeDb": -10.987635763798448,
+              "frames": 2880000
+            },
+            {
+              "rmsDbfs": -20.06832712415115,
+              "peakDbfs": -17.05802337749113,
+              "relativeDb": -3.0786310140646322,
+              "frames": 2880000
+            }
+          ],
+          "resultFloat64BytesHex": "230b86db181ac23fe042642d181ac23fcd45f0e6171ac23f6463b5cf181ac23f641c6d54181ac23ffb9242d2171ac23fa6b6dfb9181ac23f29f1457b181ac23f695ea946cc5a31c0c319232652b02cc0e266e44fe35bd7bf0000000000f9454187043a23c7ef28c0ce69f53981ea22c0282a339fe41512400000000000f94541cf7f2fdf54fb25c052dfd6981eec1fc096334827c9fe17400000000000f9454132966855079727c0dcf83fb2c19121c0d106d63a64c714400000000000f94541d63c6ae33fdb2ec0766adbc5f9d528c028e64a7bccfbf83f0000000000f94541a0acf36b32fa3bc03869e42a8ff738c0a6bf1365abf925c00000000000f94541afa8ebe27d1134c055babc9eda0e31c00ddf0e4c09a108c00000000000f94541"
+        },
+        "original": {
+          "rmsMs": 3136.100000023842,
+          "residualMs": 1595.2999999523163,
+          "rms": [
+            0.14142142027784485,
+            0.14142133919133126,
+            0.14142130638405917,
+            0.141421414776029,
+            0.14142135736821893,
+            0.14142129675487766,
+            0.1414214046084698,
+            0.14142137545776137
+          ],
+          "residuals": [
+            {
+              "rmsDbfs": -17.35467950472813,
+              "peakDbfs": -14.344376746926065,
+              "relativeDb": -0.36498339464161067,
+              "frames": 2880000
+            },
+            {
+              "rmsDbfs": -12.46831617434715,
+              "peakDbfs": -9.458017169196776,
+              "relativeDb": 4.521379935739368,
+              "frames": 2880000
+            },
+            {
+              "rmsDbfs": -10.990881895588158,
+              "peakDbfs": -7.980585468401687,
+              "relativeDb": 5.998814214498358,
+              "frames": 2880000
+            },
+            {
+              "rmsDbfs": -11.794977826134616,
+              "peakDbfs": -8.78468091040525,
+              "relativeDb": 5.194718283951901,
+              "frames": 2880000
+            },
+            {
+              "rmsDbfs": -15.42822180435034,
+              "peakDbfs": -12.41792124083916,
+              "relativeDb": 1.5614743057361782,
+              "frames": 2880000
+            },
+            {
+              "rmsDbfs": -27.977331873884964,
+              "peakDbfs": -24.9670283134121,
+              "relativeDb": -10.987635763798448,
+              "frames": 2880000
+            },
+            {
+              "rmsDbfs": -20.06832712415115,
+              "peakDbfs": -17.05802337749113,
+              "relativeDb": -3.0786310140646322,
+              "frames": 2880000
+            }
+          ],
+          "resultFloat64BytesHex": "230b86db181ac23fe042642d181ac23fcd45f0e6171ac23f6463b5cf181ac23f641c6d54181ac23ffb9242d2171ac23fa6b6dfb9181ac23f29f1457b181ac23f695ea946cc5a31c0c319232652b02cc0e266e44fe35bd7bf0000000000f9454187043a23c7ef28c0ce69f53981ea22c0282a339fe41512400000000000f94541cf7f2fdf54fb25c052dfd6981eec1fc096334827c9fe17400000000000f9454132966855079727c0dcf83fb2c19121c0d106d63a64c714400000000000f94541d63c6ae33fdb2ec0766adbc5f9d528c028e64a7bccfbf83f0000000000f94541a0acf36b32fa3bc03869e42a8ff738c0a6bf1365abf925c00000000000f94541afa8ebe27d1134c055babc9eda0e31c00ddf0e4c09a108c00000000000f94541"
+        },
+        "byteIdentical": true
+      },
+      {
+        "trial": 2,
+        "original": {
+          "rmsMs": 3179.5999999046326,
+          "residualMs": 1731.9000000953674,
+          "rms": [
+            0.14142142027784485,
+            0.14142133919133126,
+            0.14142130638405917,
+            0.141421414776029,
+            0.14142135736821893,
+            0.14142129675487766,
+            0.1414214046084698,
+            0.14142137545776137
+          ],
+          "residuals": [
+            {
+              "rmsDbfs": -17.35467950472813,
+              "peakDbfs": -14.344376746926065,
+              "relativeDb": -0.36498339464161067,
+              "frames": 2880000
+            },
+            {
+              "rmsDbfs": -12.46831617434715,
+              "peakDbfs": -9.458017169196776,
+              "relativeDb": 4.521379935739368,
+              "frames": 2880000
+            },
+            {
+              "rmsDbfs": -10.990881895588158,
+              "peakDbfs": -7.980585468401687,
+              "relativeDb": 5.998814214498358,
+              "frames": 2880000
+            },
+            {
+              "rmsDbfs": -11.794977826134616,
+              "peakDbfs": -8.78468091040525,
+              "relativeDb": 5.194718283951901,
+              "frames": 2880000
+            },
+            {
+              "rmsDbfs": -15.42822180435034,
+              "peakDbfs": -12.41792124083916,
+              "relativeDb": 1.5614743057361782,
+              "frames": 2880000
+            },
+            {
+              "rmsDbfs": -27.977331873884964,
+              "peakDbfs": -24.9670283134121,
+              "relativeDb": -10.987635763798448,
+              "frames": 2880000
+            },
+            {
+              "rmsDbfs": -20.06832712415115,
+              "peakDbfs": -17.05802337749113,
+              "relativeDb": -3.0786310140646322,
+              "frames": 2880000
+            }
+          ],
+          "resultFloat64BytesHex": "230b86db181ac23fe042642d181ac23fcd45f0e6171ac23f6463b5cf181ac23f641c6d54181ac23ffb9242d2171ac23fa6b6dfb9181ac23f29f1457b181ac23f695ea946cc5a31c0c319232652b02cc0e266e44fe35bd7bf0000000000f9454187043a23c7ef28c0ce69f53981ea22c0282a339fe41512400000000000f94541cf7f2fdf54fb25c052dfd6981eec1fc096334827c9fe17400000000000f9454132966855079727c0dcf83fb2c19121c0d106d63a64c714400000000000f94541d63c6ae33fdb2ec0766adbc5f9d528c028e64a7bccfbf83f0000000000f94541a0acf36b32fa3bc03869e42a8ff738c0a6bf1365abf925c00000000000f94541afa8ebe27d1134c055babc9eda0e31c00ddf0e4c09a108c00000000000f94541"
+        },
+        "current": {
+          "rmsMs": 69.40000009536743,
+          "residualMs": 266.7999999523163,
+          "rms": [
+            0.14142142027784485,
+            0.14142133919133126,
+            0.14142130638405917,
+            0.141421414776029,
+            0.14142135736821893,
+            0.14142129675487766,
+            0.1414214046084698,
+            0.14142137545776137
+          ],
+          "residuals": [
+            {
+              "rmsDbfs": -17.35467950472813,
+              "peakDbfs": -14.344376746926065,
+              "relativeDb": -0.36498339464161067,
+              "frames": 2880000
+            },
+            {
+              "rmsDbfs": -12.46831617434715,
+              "peakDbfs": -9.458017169196776,
+              "relativeDb": 4.521379935739368,
+              "frames": 2880000
+            },
+            {
+              "rmsDbfs": -10.990881895588158,
+              "peakDbfs": -7.980585468401687,
+              "relativeDb": 5.998814214498358,
+              "frames": 2880000
+            },
+            {
+              "rmsDbfs": -11.794977826134616,
+              "peakDbfs": -8.78468091040525,
+              "relativeDb": 5.194718283951901,
+              "frames": 2880000
+            },
+            {
+              "rmsDbfs": -15.42822180435034,
+              "peakDbfs": -12.41792124083916,
+              "relativeDb": 1.5614743057361782,
+              "frames": 2880000
+            },
+            {
+              "rmsDbfs": -27.977331873884964,
+              "peakDbfs": -24.9670283134121,
+              "relativeDb": -10.987635763798448,
+              "frames": 2880000
+            },
+            {
+              "rmsDbfs": -20.06832712415115,
+              "peakDbfs": -17.05802337749113,
+              "relativeDb": -3.0786310140646322,
+              "frames": 2880000
+            }
+          ],
+          "resultFloat64BytesHex": "230b86db181ac23fe042642d181ac23fcd45f0e6171ac23f6463b5cf181ac23f641c6d54181ac23ffb9242d2171ac23fa6b6dfb9181ac23f29f1457b181ac23f695ea946cc5a31c0c319232652b02cc0e266e44fe35bd7bf0000000000f9454187043a23c7ef28c0ce69f53981ea22c0282a339fe41512400000000000f94541cf7f2fdf54fb25c052dfd6981eec1fc096334827c9fe17400000000000f9454132966855079727c0dcf83fb2c19121c0d106d63a64c714400000000000f94541d63c6ae33fdb2ec0766adbc5f9d528c028e64a7bccfbf83f0000000000f94541a0acf36b32fa3bc03869e42a8ff738c0a6bf1365abf925c00000000000f94541afa8ebe27d1134c055babc9eda0e31c00ddf0e4c09a108c00000000000f94541"
+        },
+        "byteIdentical": true
+      }
+    ]
+  },
+  "deferred": [
+    {
+      "feature": "Automatic time alignment",
+      "reason": "Requires shared per-track offsets in playback, waveform, STFT, features, export and robust confidence handling for unrelated inputs; not a small gain change."
+    },
+    {
+      "feature": "Single-file F0/onset Worker",
+      "reason": "Existing host path yields cooperatively but still runs Essentia in extension host. Comparison F0/onset also delegates to host; its loudness and spectral workers do not complete this task."
+    },
+    {
+      "feature": "Chroma/Melodia, centroid curves, A/B/C weighted RMS",
+      "reason": "New analysis contracts, controls and numerical references are still needed."
+    }
+  ],
+  "sourceFiles": [
+    {
+      "path": "src/comparison/limits.ts",
+      "sha256": "280b7d116ca9593956434cfe72d7c33fec7432c8ac5c5abfa7d5d806136b13c3"
+    },
+    {
+      "path": "src/webview/comparison/comparisonMeasurements.ts",
+      "sha256": "6485eb0c10c2b497f0e3eaa5c6e99253451ac3518439feacafec845cf911217e"
+    },
+    {
+      "path": "src/webview/comparison/comparisonApp.ts",
+      "sha256": "a6e0b516de3fd5a8d7e7d077a48f5d88b462f4cdf74805104991a13ecbe77ad7"
+    },
+    {
+      "path": "src/webview/comparison/comparisonSession.ts",
+      "sha256": "0245c3bbb9b5d3e5da83f1ea167d681c6db085ca8860650feed585bc981a75c1"
+    },
+    {
+      "path": "src/webview/comparison/comparisonTransport.ts",
+      "sha256": "1c349ff2f16f23e86ee6ed34a6976654b5c2e2e78c9b91125ad1f93b8234ecd8"
+    },
+    {
+      "path": "src/webview/comparison/comparison.css",
+      "sha256": "c15876de07b7d4134782aa900af49ab3dab48f85c05620e96127502cd6db4e38"
+    },
+    {
+      "path": "src/webview/services/headphoneEqService.ts",
+      "sha256": "1377c3633beadfdce9d24d717f99db175349db11027404c58c8b58a85b2de603"
+    },
+    {
+      "path": "src/webview/services/wavExportFormat.ts",
+      "sha256": "34284ed9e574092b1aa55d7808a9b72cd017fd835183e837d30e99b1d9738d1c"
+    },
+    {
+      "path": "src/webview/services/audioExportService.ts",
+      "sha256": "b006e44c61437a470eb37bdfe23925809f9647aa4bb084df3c75d19856b05784"
+    }
+  ],
+  "productionStress": {
+    "source": "Four complete user-provided MP3 recordings, each loaded twice for eight-track load. Production bundle and real Web Audio; browser host bridge, no VS Code IPC.",
+    "results": [
+      {
+        "count": 4,
+        "run": 1,
+        "readyMs": 3404,
+        "allSources": [
+          "1-A.mp3\nRMS match: 0.00 dB\n48 kHz · stereo · 191.52 s",
+          "2-B.mp3\nRMS match: 0.00 dB\n48 kHz · stereo · 107.36 s",
+          "3-C.mp3\nRMS match: 0.00 dB\n48 kHz · stereo · 205.88 s",
+          "4-D.mp3\nRMS match: 0.00 dB\n48 kHz · stereo · 163.08 s"
+        ],
+        "capture": {
+          "label": "Actual browser production bundle, real native buffers and Web Audio; excludes VS Code host IPC",
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36",
+          "files": [
+            "1-A.mp3",
+            "2-B.mp3",
+            "3-C.mp3",
+            "4-D.mp3"
+          ],
+          "activeTracks": 4,
+          "pane": "Live Spec",
+          "timeRange": [
+            10.028,
+            25.009333333333334
+          ],
+          "animationFrames": {
+            "count": 899,
+            "medianMs": 16.69999999999891,
+            "p95Ms": 16.700000000000728,
+            "maxMs": 16.80000000000291
+          },
+          "livePresentationIntervals": {
+            "count": 899,
+            "medianMs": 16.600000023841858,
+            "p95Ms": 17.899999976158142,
+            "maxMs": 19.100000023841858
+          },
+          "liveBatchRoundtripAndDraw": {
+            "count": 899,
+            "medianMs": 2.799999952316284,
+            "p95Ms": 3.4000000953674316,
+            "maxMs": 3.8000000715255737
+          },
+          "heap": {
+            "usedJSHeapSize": 290928700,
+            "totalJSHeapSize": 302095344
+          },
+          "timestamp": "2026-10-16T15:41:25.449Z"
+        },
+        "interactionCycles": 12,
+        "narrowHit": {
+          "width": 160,
+          "action": "focus",
+          "scrollWidth": 640,
+          "clientWidth": 634
+        },
+        "errors": []
+      },
+      {
+        "count": 8,
+        "run": 1,
+        "readyMs": 6309,
+        "allSources": [
+          "1-A.mp3\nRMS match: 0.00 dB\n48 kHz · stereo · 191.52 s",
+          "2-B.mp3\nRMS match: 0.00 dB\n48 kHz · stereo · 107.36 s",
+          "3-C.mp3\nRMS match: 0.00 dB\n48 kHz · stereo · 205.88 s",
+          "4-D.mp3\nRMS match: 0.00 dB\n48 kHz · stereo · 163.08 s",
+          "5-A.mp3\nRMS match: 0.00 dB\n48 kHz · stereo · 191.52 s",
+          "6-B.mp3\nRMS match: 0.00 dB\n48 kHz · stereo · 107.36 s",
+          "7-C.mp3\nRMS match: 0.00 dB\n48 kHz · stereo · 205.88 s",
+          "8-D.mp3\nRMS match: 0.00 dB\n48 kHz · stereo · 163.08 s"
+        ],
+        "capture": {
+          "label": "Actual browser production bundle, real native buffers and Web Audio; excludes VS Code host IPC",
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36",
+          "files": [
+            "1-A.mp3",
+            "2-B.mp3",
+            "3-C.mp3",
+            "4-D.mp3",
+            "5-A.mp3",
+            "6-B.mp3",
+            "7-C.mp3",
+            "8-D.mp3"
+          ],
+          "activeTracks": 8,
+          "pane": "Live Spec",
+          "timeRange": [
+            10.028,
+            25.009333333333334
+          ],
+          "animationFrames": {
+            "count": 899,
+            "medianMs": 16.69999999999891,
+            "p95Ms": 16.799999999999272,
+            "maxMs": 16.80000000000291
+          },
+          "livePresentationIntervals": {
+            "count": 899,
+            "medianMs": 16.699999928474426,
+            "p95Ms": 18.5,
+            "maxMs": 20.200000047683716
+          },
+          "liveBatchRoundtripAndDraw": {
+            "count": 899,
+            "medianMs": 2.899999976158142,
+            "p95Ms": 4.399999976158142,
+            "maxMs": 5.400000095367432
+          },
+          "heap": {
+            "usedJSHeapSize": 564884941,
+            "totalJSHeapSize": 592289861
+          },
+          "timestamp": "2026-10-16T15:41:48.558Z"
+        },
+        "interactionCycles": 12,
+        "narrowHit": {
+          "width": 160,
+          "action": "focus",
+          "scrollWidth": 1280,
+          "clientWidth": 634
+        },
+        "errors": []
+      }
+    ],
+    "bundleMode": "production (vsce prepublish)"
+  },
+  "nativeHarnessNotes": "First two native sampling attempts failed in the test driver (context discovery / unbounded RAF sampling). Final driver explicitly foregrounds the editor and stops sampling after 15 seconds; final visible run passed. No runtime fix was attributed to those driver failures.",
+  "productionAcceptance": [
+    {
+      "count": 4,
+      "matched": "RMS matched over 0.00–107.36 s · 1-A.mp3: 0.00 dB · 2-B.mp3: -4.12 dB · 3-C.mp3: -3.77 dB · 4-D.mp3: -3.04 dB",
+      "residual": "Residual vs 1-A.mp3\n\n0.00–107.36 s · current RMS matching gains · same timeline positions, no automatic alignment.\n\nFile\tRMS dBFS\tPeak dBFS\tRelative dB\n2-B.mp3\t-17.03\t-0.26\t2.99\n3-C.mp3\t-16.99\t0.72\t3.03\n4-D.mp3\t-17.01\t-0.33\t3.01\nClose",
+      "cqt": {
+        "label": "Actual browser production bundle, real native buffers and Web Audio; excludes VS Code host IPC",
+        "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36",
+        "files": [
+          "1-A.mp3",
+          "2-B.mp3",
+          "3-C.mp3",
+          "4-D.mp3"
+        ],
+        "activeTracks": 4,
+        "pane": "Live Spec",
+        "timeRange": [
+          11.062666666666667,
+          26.060000000000002
+        ],
+        "animationFrames": {
+          "count": 899,
+          "medianMs": 16.69999999999891,
+          "p95Ms": 16.700000000000728,
+          "maxMs": 16.80000000000291
+        },
+        "livePresentationIntervals": {
+          "count": 900,
+          "medianMs": 16.699999928474426,
+          "p95Ms": 17.700000047683716,
+          "maxMs": 19
+        },
+        "liveBatchRoundtripAndDraw": {
+          "count": 900,
+          "medianMs": 7.5,
+          "p95Ms": 8.399999976158142,
+          "maxMs": 10
+        },
+        "heap": {
+          "usedJSHeapSize": 289333607,
+          "totalJSHeapSize": 299517659
+        },
+        "timestamp": "2026-10-16T15:43:35.690Z"
+      },
+      "errors": []
+    },
+    {
+      "count": 8,
+      "matched": "RMS matched over 0.00–107.36 s · 1-A.mp3: 0.00 dB · 2-B.mp3: -4.12 dB · 3-C.mp3: -3.77 dB · 4-D.mp3: -3.04 dB · 5-A.mp3: 0.00 dB · 6-B.mp3: -4.12 dB · 7-C.mp3: -3.77 dB · 8-D.mp3: -3.04 dB",
+      "residual": "Residual vs 1-A.mp3\n\n0.00–107.36 s · current RMS matching gains · same timeline positions, no automatic alignment.\n\nFile\tRMS dBFS\tPeak dBFS\tRelative dB\n2-B.mp3\t-17.03\t-0.26\t2.99\n3-C.mp3\t-16.99\t0.72\t3.03\n4-D.mp3\t-17.01\t-0.33\t3.01\n5-A.mp3\t−∞\t−∞\t−∞\n6-B.mp3\t-17.03\t-0.26\t2.99\n7-C.mp3\t-16.99\t0.72\t3.03\n8-D.mp3\t-17.01\t-0.33\t3.01\nClose",
+      "cqt": {
+        "label": "Actual browser production bundle, real native buffers and Web Audio; excludes VS Code host IPC",
+        "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36",
+        "files": [
+          "1-A.mp3",
+          "2-B.mp3",
+          "3-C.mp3",
+          "4-D.mp3",
+          "5-A.mp3",
+          "6-B.mp3",
+          "7-C.mp3",
+          "8-D.mp3"
+        ],
+        "activeTracks": 8,
+        "pane": "Live Spec",
+        "timeRange": [
+          11.062666666666667,
+          26.043999999999997
+        ],
+        "animationFrames": {
+          "count": 899,
+          "medianMs": 16.69999999999891,
+          "p95Ms": 16.700000000000728,
+          "maxMs": 16.80000000000291
+        },
+        "livePresentationIntervals": {
+          "count": 899,
+          "medianMs": 16.600000023841858,
+          "p95Ms": 18.600000023841858,
+          "maxMs": 21.200000047683716
+        },
+        "liveBatchRoundtripAndDraw": {
+          "count": 899,
+          "medianMs": 13.900000095367432,
+          "p95Ms": 15.899999976158142,
+          "maxMs": 18.5
+        },
+        "heap": {
+          "usedJSHeapSize": 562769708,
+          "totalJSHeapSize": 589212996
+        },
+        "timestamp": "2026-10-16T15:43:55.376Z"
+      },
+      "errors": []
+    }
+  ],
+  "narrowReloadUi": {
+    "filename": "focus",
+    "buttons": [
+      {
+        "action": "mute",
+        "reachable": true
+      },
+      {
+        "action": "reload",
+        "reachable": true
+      },
+      {
+        "action": "remove",
+        "reachable": true
+      }
+    ]
+  },
+  "finalPackage": {
+    "path": "ear-audio-preview-0.6.0.vsix",
+    "bytes": 3608351,
+    "sha256": "3d1149dc526b4afb433be79854d441561b51803841c08cefedf6d93f0c3e128f",
+    "files": 21
+  },
+  "finalChecks": {
+    "typecheck": "passed",
+    "eslint": "passed",
+    "prettier": "passed",
+    "releaseNotes": "passed",
+    "toolingTests": 5,
+    "gitDiffCheck": "passed",
+    "postStressChanges": "Scoped residual dialog spacing/centering only; playback and DSP unchanged. Rebuilt and visually checked."
+  }
+}

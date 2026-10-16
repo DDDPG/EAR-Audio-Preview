@@ -1,0 +1,310 @@
+{
+  "date": "2026-10-16",
+  "method": "Actual downloaded pinned VSIX packages; all ZIP entries CRC checked. InstalledArchiveBytes sums every entry uncompressed size. Code/WASM metric includes shipped js/cjs/mjs/wasm files, each gzip level9 separately; excludes source maps, editor RAM, and post-install lazy assets.",
+  "packages": [
+    {
+      "id": "Eps-Acoustic-Revolution-Lab.ear-audio-preview",
+      "version": "0.6.0",
+      "archiveBytes": 3606799,
+      "archiveSha256": "2bb63da39ad804b5b88027cd42b247fed580b61ca7a4e8db55130fd079cde8ce",
+      "installedArchiveBytes": 10339602,
+      "fileCount": 21,
+      "codeAndWasmBytes": 9932935,
+      "codeAndWasmGzipBytes": 3220215,
+      "codeAndWasmFiles": [
+        {
+          "path": "extension/dist/loudness.worklet.js",
+          "bytes": 14689
+        },
+        {
+          "path": "extension/dist/extension.js",
+          "bytes": 2590025
+        },
+        {
+          "path": "extension/dist/comparisonWorker.js",
+          "bytes": 2632596
+        },
+        {
+          "path": "extension/dist/comparisonLoudnessWorker.js",
+          "bytes": 17022
+        },
+        {
+          "path": "extension/dist/comparison.js",
+          "bytes": 902735
+        },
+        {
+          "path": "extension/dist/audioPreview.js",
+          "bytes": 1092629
+        },
+        {
+          "path": "extension/dist/4062d505493786e728bb.module.wasm",
+          "bytes": 87519
+        },
+        {
+          "path": "extension/dist/web/extension.js",
+          "bytes": 2595720
+        }
+      ]
+    },
+    {
+      "id": "sukumo28.wav-preview",
+      "version": "2.6.0",
+      "archiveBytes": 791245,
+      "archiveSha256": "e037d579a7bff65dc5abc0f2996ed13f51d655a10f85877529d261acef0a280b",
+      "installedArchiveBytes": 1862103,
+      "fileCount": 15,
+      "codeAndWasmBytes": 1831998,
+      "codeAndWasmGzipBytes": 772066,
+      "codeAndWasmFiles": [
+        {
+          "path": "extension/dist/audioPreview.js",
+          "bytes": 1815244
+        },
+        {
+          "path": "extension/dist/extension.js",
+          "bytes": 8212
+        },
+        {
+          "path": "extension/dist/web/extension.js",
+          "bytes": 8293
+        },
+        {
+          "path": "extension/jest.config.js",
+          "bytes": 249
+        }
+      ]
+    },
+    {
+      "id": "huachao.audio-player",
+      "version": "0.1.4",
+      "archiveBytes": 844547,
+      "archiveSha256": "49ceaa1f4a52fad1c2567d873e1d5a71a6c43e67892e84ce22da94a48d0c3d11",
+      "installedArchiveBytes": 3329009,
+      "fileCount": 24,
+      "codeAndWasmBytes": 64276,
+      "codeAndWasmGzipBytes": 20525,
+      "codeAndWasmFiles": [
+        {
+          "path": "extension/dist/extension.js",
+          "bytes": 11284
+        },
+        {
+          "path": "extension/dist/webview.js",
+          "bytes": 52404
+        },
+        {
+          "path": "extension/scripts/svg2png.js",
+          "bytes": 588
+        }
+      ]
+    },
+    {
+      "id": "jojonki.wave-explorer",
+      "version": "0.1.4",
+      "archiveBytes": 3364683,
+      "archiveSha256": "ca983ea50d0b819c1aa5877b176492feaabceafc7c913737ad67f2186773b284",
+      "installedArchiveBytes": 3580054,
+      "fileCount": 15,
+      "codeAndWasmBytes": 46366,
+      "codeAndWasmGzipBytes": 16646,
+      "codeAndWasmFiles": [
+        {
+          "path": "extension/out/worker.js",
+          "bytes": 2341
+        },
+        {
+          "path": "extension/out/webview.js",
+          "bytes": 38390
+        },
+        {
+          "path": "extension/out/extension.js",
+          "bytes": 5635
+        }
+      ]
+    },
+    {
+      "id": "sunxingwei.specview",
+      "version": "0.2.2",
+      "archiveBytes": 119905,
+      "archiveSha256": "bcb795864237c164803f9129b4b768c03fd1ed6faafee3c1a123deb16523f874",
+      "installedArchiveBytes": 260235,
+      "fileCount": 10,
+      "codeAndWasmBytes": 165255,
+      "codeAndWasmGzipBytes": 50866,
+      "codeAndWasmFiles": [
+        {
+          "path": "extension/dist/webview.js",
+          "bytes": 100860
+        },
+        {
+          "path": "extension/dist/extension.js",
+          "bytes": 64395
+        }
+      ]
+    },
+    {
+      "id": "YongsooIm.audioscope",
+      "version": "1.1.7",
+      "archiveBytes": 4779191,
+      "archiveSha256": "33c2554428564025401aaf6b3ea22d95359fbe7f99e13725cbb4995ede7f9684",
+      "installedArchiveBytes": 11257284,
+      "fileCount": 65,
+      "codeAndWasmBytes": 10546203,
+      "codeAndWasmGzipBytes": 4375050,
+      "codeAndWasmFiles": [
+        {
+          "path": "extension/out/audioscopeEditor.js",
+          "bytes": 29500
+        },
+        {
+          "path": "extension/out/embeddedDecodeWorkerThread.js",
+          "bytes": 8567
+        },
+        {
+          "path": "extension/out/embeddedMediaTools.js",
+          "bytes": 21805
+        },
+        {
+          "path": "extension/out/extension.js",
+          "bytes": 2767
+        },
+        {
+          "path": "extension/out/externalAudioTools.js",
+          "bytes": 17740
+        },
+        {
+          "path": "extension/out/hostWebviewProtocol.js",
+          "bytes": 334
+        },
+        {
+          "path": "extension/out/mediaHostCache.js",
+          "bytes": 6841
+        },
+        {
+          "path": "extension/out/playbackVolume.js",
+          "bytes": 1940
+        },
+        {
+          "path": "extension/dist/embedded-tools/ffdecode_browser_module.js",
+          "bytes": 76910
+        },
+        {
+          "path": "extension/dist/embedded-tools/ffdecode_module.js",
+          "bytes": 77400
+        },
+        {
+          "path": "extension/dist/embedded-tools/ffdecode_module.wasm",
+          "bytes": 2055525
+        },
+        {
+          "path": "extension/dist/embedded-tools/ffencode.wasm",
+          "bytes": 1955632
+        },
+        {
+          "path": "extension/dist/embedded-tools/ffloudness.wasm",
+          "bytes": 2041241
+        },
+        {
+          "path": "extension/dist/embedded-tools/ffmpeg.wasm",
+          "bytes": 1950933
+        },
+        {
+          "path": "extension/dist/embedded-tools/ffprobe_g.wasm",
+          "bytes": 1406607
+        },
+        {
+          "path": "extension/dist/wasm/wasm_core_fallback.wasm",
+          "bytes": 86165
+        },
+        {
+          "path": "extension/dist/wasm/wasm_core_simd.wasm",
+          "bytes": 101441
+        },
+        {
+          "path": "extension/dist/webview/SignalsmithStretch-Cwqb3m7b.js",
+          "bytes": 99200
+        },
+        {
+          "path": "extension/dist/webview/audioAnalysisWorker.js",
+          "bytes": 131355
+        },
+        {
+          "path": "extension/dist/webview/audioEngineWorker.js",
+          "bytes": 32204
+        },
+        {
+          "path": "extension/dist/webview/audioTransportProcessor.js",
+          "bytes": 5504
+        },
+        {
+          "path": "extension/dist/webview/audioscope.js",
+          "bytes": 193547
+        },
+        {
+          "path": "extension/dist/webview/compareWorker.js",
+          "bytes": 5342
+        },
+        {
+          "path": "extension/dist/webview/embeddedDecodeWorker.js",
+          "bytes": 50715
+        },
+        {
+          "path": "extension/dist/webview/interactiveWaveformWorker.js",
+          "bytes": 12414
+        },
+        {
+          "path": "extension/dist/webview/pcmDownmixWorker.js",
+          "bytes": 985
+        },
+        {
+          "path": "extension/out/audioscope-editor/constants.js",
+          "bytes": 1783
+        },
+        {
+          "path": "extension/out/audioscope-editor/document.js",
+          "bytes": 1989
+        },
+        {
+          "path": "extension/out/audioscope-editor/editorTarget.js",
+          "bytes": 3026
+        },
+        {
+          "path": "extension/out/audioscope-editor/spectrogramDefaults.js",
+          "bytes": 6545
+        },
+        {
+          "path": "extension/out/audioscope-editor/webviewHtml.js",
+          "bytes": 46379
+        },
+        {
+          "path": "extension/src-webview/vendor/SignalsmithStretch.mjs",
+          "bytes": 113867
+        }
+      ]
+    },
+    {
+      "id": "simzhou.audiolens",
+      "version": "1.10.0",
+      "archiveBytes": 253475,
+      "archiveSha256": "3edff51d1948f9d1157b843f149bc89a5c9ce469427cfabc4893a1ce0d185513",
+      "installedArchiveBytes": 747656,
+      "fileCount": 28,
+      "codeAndWasmBytes": 588617,
+      "codeAndWasmGzipBytes": 139741,
+      "codeAndWasmFiles": [
+        {
+          "path": "extension/dist/audioCacheWorker.js",
+          "bytes": 3163
+        },
+        {
+          "path": "extension/dist/extension.js",
+          "bytes": 65476
+        },
+        {
+          "path": "extension/dist/webview.js",
+          "bytes": 519978
+        }
+      ]
+    }
+  ]
+}

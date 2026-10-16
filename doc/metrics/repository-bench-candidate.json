@@ -1,0 +1,114 @@
+{
+  "meta": {
+    "node": "v24.9.0",
+    "date": "2026-10-16T13:18:47.661Z",
+    "gcExposed": true
+  },
+  "dsp": {
+    "goertzelCqt.pazFrame4096": {
+      "opsPerSec": 10368,
+      "meanMs": 0.0965,
+      "p95Ms": 0.1122,
+      "frameBudgetPct": 0.58,
+      "allocKbPerOp": 0.6
+    },
+    "quinticBSplineSmooth.300": {
+      "opsPerSec": 783159,
+      "meanMs": 0.0013,
+      "p95Ms": 0.0023,
+      "frameBudgetPct": 0.01,
+      "allocKbPerOp": 0.8
+    },
+    "akimaResample.128to300": {
+      "opsPerSec": 133052,
+      "meanMs": 0.0075,
+      "p95Ms": 0.0186,
+      "frameBudgetPct": 0.05,
+      "allocKbPerOp": 9.6
+    },
+    "liveBallistics.emaFrame300": {
+      "opsPerSec": 1739040,
+      "meanMs": 0.0006,
+      "p95Ms": 0.0006,
+      "frameBudgetPct": 0,
+      "allocKbPerOp": 0.7
+    },
+    "spectralPeakDisplay.frame300": {
+      "opsPerSec": 374532,
+      "meanMs": 0.0027,
+      "p95Ms": 0.0032,
+      "frameBudgetPct": 0.02,
+      "allocKbPerOp": 10
+    },
+    "stereoPolarField.instant4096x64": {
+      "opsPerSec": 44263,
+      "meanMs": 0.0226,
+      "p95Ms": 0.0395,
+      "frameBudgetPct": 0.14,
+      "allocKbPerOp": 47.9
+    },
+    "eqCanvasMath.curve300plus10band": {
+      "opsPerSec": 12701,
+      "meanMs": 0.0787,
+      "p95Ms": 0.1023,
+      "frameBudgetPct": 0.47,
+      "allocKbPerOp": 69.9
+    },
+    "phaseCorrelation.fft2048": {
+      "opsPerSec": 17892,
+      "meanMs": 0.0559,
+      "p95Ms": 0.0822,
+      "frameBudgetPct": 0.34,
+      "allocKbPerOp": 69.3
+    },
+    "anim.fftFramePrep.1024to300": {
+      "opsPerSec": 19737,
+      "meanMs": 0.0507,
+      "p95Ms": 0.0602,
+      "frameBudgetPct": 0.3,
+      "allocKbPerOp": 1.3
+    },
+    "pipeline.stftFrames.3s.w4096h1024": {
+      "opsPerSec": 287,
+      "meanMs": 3.4902,
+      "p95Ms": 8.1578,
+      "frameBudgetPct": 20.94,
+      "allocKbPerOp": 328.1
+    },
+    "pipeline.sequenceFeatures.3s.hop20ms": {
+      "opsPerSec": 1031,
+      "meanMs": 0.9702,
+      "p95Ms": 1.9348,
+      "frameBudgetPct": 5.82,
+      "allocKbPerOp": 110.7
+    },
+    "io.wavEncode.stereo5s48k": {
+      "opsPerSec": 313,
+      "meanMs": 3.1899,
+      "p95Ms": 3.4492,
+      "frameBudgetPct": 19.14,
+      "allocKbPerOp": 98.9
+    },
+    "io.stftWireToSpectrogram.500x1024": {
+      "opsPerSec": 1426,
+      "meanMs": 0.7012,
+      "p95Ms": 1.582,
+      "frameBudgetPct": 4.21,
+      "allocKbPerOp": 836.7
+    },
+    "render.oouraSpectrogram.3s.w1024h80": {
+      "opsPerSec": 41,
+      "meanMs": 24.5467,
+      "p95Ms": 25.4765,
+      "frameBudgetPct": 147.28,
+      "allocKbPerOp": 4803
+    },
+    "render.spectrogramTexFlatten.1755x2048": {
+      "opsPerSec": 254,
+      "meanMs": 3.935,
+      "p95Ms": 31.2423,
+      "frameBudgetPct": 23.61,
+      "allocKbPerOp": 2808.9
+    }
+  }
+}

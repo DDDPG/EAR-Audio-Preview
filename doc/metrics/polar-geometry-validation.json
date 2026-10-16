@@ -1,0 +1,19 @@
+{
+  "date": "2026-10-16T14:45:19.391Z",
+  "geometryCases": 373,
+  "smooth": {
+    "cases": 132,
+    "elements": 66384,
+    "byteIdentical": true
+  },
+  "energy": {
+    "cases": 4096,
+    "elements": 158887,
+    "byteIdentical": true
+  },
+  "sourceSha256": {
+    "src/webview/utils/stereoPolarField.ts": "c015f1dd84cbd59ab46354b112c24cf6db6339d61cb5ca0a9ddb3d241cc37ff0",
+    "src/webview/utils/quinticBSpline.ts": "b77ccc56d7cf31ab87b7b2dab0b74e3011b3003684b838a08fc0ecbbcbdac220"
+  },
+  "interpretation": "Geometry intentionally corrects inherited polarity/direction/endpoint defects. Strict byte equality compares the optimized RMS energy with a hypot reference under that corrected geometry. The frozen historical liveKernelValidation corpus describes the prior incorrect geometry and is retained unchanged; this report does not claim byte equivalence with that geometry or measure speed."
+}

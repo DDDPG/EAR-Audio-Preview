@@ -1,0 +1,248 @@
+{
+  "date": "2026-10-16",
+  "metric": "Complete single-file getSpectrogram Ooura call, including framing and relative-dB normalization; no decoding/rendering/IPC",
+  "upstream": {
+    "repository": "https://github.com/sukumo28/vscode-audio-preview",
+    "commit": "3edd1bc0761d026a2f24d96055ee7430365ba2aa",
+    "sourceUrl": "https://raw.githubusercontent.com/sukumo28/vscode-audio-preview/3edd1bc0761d026a2f24d96055ee7430365ba2aa/src/webview/services/analyzeService.ts",
+    "sourceSha256": "b1fbe49de3892488a888c6b8803fb4640082aaa5491e238f0b89053aa2771009"
+  },
+  "ear": {
+    "head": "06705d4807e121e60737a080daa0a2d6bd2827dd",
+    "sourcePath": "src/webview/services/analyzeService.ts",
+    "sourceSha256": "01c78cde3f1fd88f7b5f15b85e3f79660f77e0a9c12f38e683aa03f0579c1398",
+    "state": "uncommitted working tree"
+  },
+  "environment": {
+    "node": "v24.9.0",
+    "cpu": "Apple M5 Pro",
+    "platform": "darwin",
+    "arch": "arm64",
+    "ooura": "2.1.6",
+    "gcExposed": true
+  },
+  "method": {
+    "warmupCallsPerImplementation": 3,
+    "pairedTrials": 9,
+    "alternatingOrder": true,
+    "explicitGcOutsideTimedRegion": true,
+    "analysisRegion": "Interior region from 1s through duration+1s of a duration+2s seeded signal; no endpoint zero padding",
+    "window": "periodic Hann",
+    "input": "seeded tone plus noise; shared Float32 samples",
+    "workspaceMetric": "Exact FFT factory call/array-length accounting, not heap or whole-process RAM",
+    "exclusions": [
+      "audio decoding",
+      "canvas/WebGL rendering",
+      "extension host",
+      "application launch",
+      "competing desktop applications"
+    ]
+  },
+  "results": [
+    {
+      "seconds": 10,
+      "channels": 1,
+      "sampleRate": 48000,
+      "windowSize": 1024,
+      "hopSize": 256,
+      "binsPerFrame": 512,
+      "framesPerChannel": 1875,
+      "cellsCompared": 960000,
+      "outputSha256PerChannel": [
+        "9ee9840a7ad72d48c7a51368690c14296fa397d00463171408f0e7aa53ed9f9a"
+      ],
+      "byteIdentical": true,
+      "trials": [
+        [
+          38.99683300000004,
+          35.377500000000055,
+          32.03191700000002,
+          31.435416999999916,
+          31.301124999999956,
+          31.57441700000004,
+          31.90591699999993,
+          31.397040999999945,
+          31.204083000000082
+        ],
+        [
+          28.874167000000057,
+          28.42416700000001,
+          28.764082999999914,
+          28.260832999999934,
+          28.283416999999986,
+          27.890582999999992,
+          28.390207999999802,
+          27.89370800000006,
+          28.27754099999993
+        ]
+      ],
+      "upstreamMedianMs": 31.57441700000004,
+      "earMedianMs": 28.283416999999986,
+      "speedup": 1.1163579351108834,
+      "timeReductionPct": 10.422995300277593,
+      "earRealtimeFactor": 353.56406900905944,
+      "fftWorkspaceFactoryCalls": {
+        "upstream": 5625,
+        "ear": 3
+      },
+      "fftWorkspaceRequestedBytes": {
+        "upstream": 30750000,
+        "ear": 16400
+      }
+    },
+    {
+      "seconds": 60,
+      "channels": 1,
+      "sampleRate": 48000,
+      "windowSize": 1024,
+      "hopSize": 256,
+      "binsPerFrame": 512,
+      "framesPerChannel": 11250,
+      "cellsCompared": 5760000,
+      "outputSha256PerChannel": [
+        "687e14335128749d1b8b422eedb03275ce44aa2a3f53b790fe090c6ee4d480ea"
+      ],
+      "byteIdentical": true,
+      "trials": [
+        [
+          175.990542,
+          171.8708340000003,
+          171.5914170000001,
+          172.81041700000014,
+          173.888375,
+          172.18816699999934,
+          172.9788329999992,
+          172.31216700000004,
+          173.30349999999999
+        ],
+        [
+          151.014584,
+          150.97437500000024,
+          150.6798749999998,
+          150.37699999999995,
+          151.4623329999995,
+          151.12045799999942,
+          151.66449999999986,
+          151.14587500000016,
+          153.5528749999994
+        ]
+      ],
+      "upstreamMedianMs": 172.81041700000014,
+      "earMedianMs": 151.12045799999942,
+      "speedup": 1.1435276155661254,
+      "timeReductionPct": 12.551302969195833,
+      "earRealtimeFactor": 397.0342652084884,
+      "fftWorkspaceFactoryCalls": {
+        "upstream": 33750,
+        "ear": 3
+      },
+      "fftWorkspaceRequestedBytes": {
+        "upstream": 184500000,
+        "ear": 16400
+      }
+    },
+    {
+      "seconds": 180,
+      "channels": 1,
+      "sampleRate": 48000,
+      "windowSize": 1024,
+      "hopSize": 256,
+      "binsPerFrame": 512,
+      "framesPerChannel": 33750,
+      "cellsCompared": 17280000,
+      "outputSha256PerChannel": [
+        "a9781faf351249abe057b46ccfb4b3913cffa32cef3938b6f28a0a0e2452b050"
+      ],
+      "byteIdentical": true,
+      "trials": [
+        [
+          520.502375,
+          515.000333,
+          517.9427080000005,
+          518.3938330000001,
+          518.2352920000012,
+          514.0682910000014,
+          515.894542,
+          513.6466670000009,
+          515.3550829999986
+        ],
+        [
+          456.2443750000002,
+          453.7235409999994,
+          455.0687080000007,
+          453.5257499999989,
+          454.73379099999875,
+          451.52387500000077,
+          451.83566599999904,
+          449.93475000000035,
+          454.2920000000013
+        ]
+      ],
+      "upstreamMedianMs": 515.894542,
+      "earMedianMs": 453.7235409999994,
+      "speedup": 1.1370239702859075,
+      "timeReductionPct": 12.05110656123216,
+      "earRealtimeFactor": 396.7173481968401,
+      "fftWorkspaceFactoryCalls": {
+        "upstream": 101250,
+        "ear": 3
+      },
+      "fftWorkspaceRequestedBytes": {
+        "upstream": 553500000,
+        "ear": 16400
+      }
+    },
+    {
+      "seconds": 60,
+      "channels": 2,
+      "sampleRate": 48000,
+      "windowSize": 1024,
+      "hopSize": 256,
+      "binsPerFrame": 512,
+      "framesPerChannel": 11250,
+      "cellsCompared": 11520000,
+      "outputSha256PerChannel": [
+        "687e14335128749d1b8b422eedb03275ce44aa2a3f53b790fe090c6ee4d480ea",
+        "0699b889290c3b11135bd425a2e891866b8d99086a7030b5a93feadd2255c628"
+      ],
+      "byteIdentical": true,
+      "trials": [
+        [
+          343.05795899999794,
+          341.81595800000287,
+          343.68195899999773,
+          332.7580409999973,
+          335.3698750000003,
+          333.914249999998,
+          333.333375000002,
+          335.6900829999977,
+          336.02545800000007
+        ],
+        [
+          302.8001669999976,
+          300.5449589999989,
+          290.5951249999998,
+          290.54745900000125,
+          289.2230000000018,
+          289.05474999999933,
+          292.0074170000007,
+          289.4552500000027,
+          293.570499999998
+        ]
+      ],
+      "upstreamMedianMs": 335.6900829999977,
+      "earMedianMs": 290.5951249999998,
+      "speedup": 1.1551813988620694,
+      "timeReductionPct": 13.433509145397714,
+      "earRealtimeFactor": 206.4728374228578,
+      "fftWorkspaceFactoryCalls": {
+        "upstream": 67500,
+        "ear": 6
+      },
+      "fftWorkspaceRequestedBytes": {
+        "upstream": 369000000,
+        "ear": 32800
+      }
+    }
+  ]
+}

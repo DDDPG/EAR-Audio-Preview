@@ -1,0 +1,72 @@
+{
+  "date": "2026-10-16T13:23:24.939Z",
+  "sourceState": "local uncommitted working tree",
+  "benchmarkSha256": "2b49b3b00dadb55ef5cc2d38b7f5075364a3eeb1e60e4de890f909c10e2ed7a4",
+  "historicalBaselineSha256": "d12d5ce5f7482e4e47d9995823431eab11925befbffd0c968d11cb7ea62e3bb8",
+  "gateScriptSha256": "385d3bd1a19884ddc02850032f14f7a2a3f5d30163ed21002c47aa9d9d3c27b5",
+  "testInputsWarmupsSamplesAndThresholdsChanged": false,
+  "before": "repository-bench-before-fix.json",
+  "candidate": "repository-bench-candidate.json",
+  "runs": [
+    {
+      "file": "repository-bench-postfix-1.json",
+      "meta": {
+        "node": "v24.9.0",
+        "date": "2026-10-16T13:22:44.960Z",
+        "gcExposed": true
+      },
+      "allHistoricalGatesPassed": true,
+      "gateLog": "[ ok ] goertzelCqt.pazFrame4096             0.1022 → 0.0946 ms (92.6%)\n[ ok ] quinticBSplineSmooth.300             0.0013 → 0.0011 ms (84.6%)\n[ ok ] akimaResample.128to300               0.0067 → 0.0060 ms (89.6%)\n[ ok ] liveBallistics.emaFrame300           0.0006 → 0.0005 ms (83.3%)\n[ ok ] spectralPeakDisplay.frame300         0.0026 → 0.0026 ms (100.0%)\n[ ok ] stereoPolarField.instant4096x64      0.0231 → 0.0217 ms (93.9%)\n[ ok ] eqCanvasMath.curve300plus10band      0.0913 → 0.0762 ms (83.5%)\n[ ok ] phaseCorrelation.fft2048             0.0639 → 0.0530 ms (82.9%)\n[ ok ] anim.fftFramePrep.1024to300          0.0587 → 0.0506 ms (86.2%)\n[ ok ] pipeline.stftFrames.3s.w4096h1024    8.4681 → 3.5309 ms (41.7%)\n[ ok ] pipeline.sequenceFeatures.3s.hop20ms 2.9681 → 0.8323 ms (28.0%)\n[ ok ] io.wavEncode.stereo5s48k             5.4049 → 2.6303 ms (48.7%)\n[ ok ] io.stftWireToSpectrogram.500x1024    1.6758 → 0.5609 ms (33.5%)\n[ ok ] dist gzip total                      5736.2 → 3147.6 KiB (54.9%)\n[ ok ] dist raw total                       12212.3 → 9705.8 KiB (79.5%)\n[ ok ] vsix size                            15587.2 → 3521.3 KiB (22.6%)\n[info] dist file removed: 52.audioPreview.js\n[info] dist file removed: essentia-wasm.web.wasm\n[info] dist file added: comparison.js\n[info] dist file added: comparison.js.LICENSE.txt\n[info] dist file added: comparisonLoudnessWorker.js\n[info] dist file added: comparisonWorker.js\n[info] dist file added: comparisonWorker.js.LICENSE.txt\n\ncompare: all gates passed\n"
+    },
+    {
+      "file": "repository-bench-postfix-2.json",
+      "meta": {
+        "node": "v24.9.0",
+        "date": "2026-10-16T13:22:46.036Z",
+        "gcExposed": true
+      },
+      "allHistoricalGatesPassed": true,
+      "gateLog": "[ ok ] goertzelCqt.pazFrame4096             0.1022 → 0.0925 ms (90.5%)\n[ ok ] quinticBSplineSmooth.300             0.0013 → 0.0013 ms (100.0%)\n[ ok ] akimaResample.128to300               0.0067 → 0.0060 ms (89.6%)\n[ ok ] liveBallistics.emaFrame300           0.0006 → 0.0005 ms (83.3%)\n[ ok ] spectralPeakDisplay.frame300         0.0026 → 0.0026 ms (100.0%)\n[ ok ] stereoPolarField.instant4096x64      0.0231 → 0.0215 ms (93.1%)\n[ ok ] eqCanvasMath.curve300plus10band      0.0913 → 0.0768 ms (84.1%)\n[ ok ] phaseCorrelation.fft2048             0.0639 → 0.0624 ms (97.7%)\n[ ok ] anim.fftFramePrep.1024to300          0.0587 → 0.0628 ms (107.0%)\n[ ok ] pipeline.stftFrames.3s.w4096h1024    8.4681 → 3.1938 ms (37.7%)\n[ ok ] pipeline.sequenceFeatures.3s.hop20ms 2.9681 → 0.8239 ms (27.8%)\n[ ok ] io.wavEncode.stereo5s48k             5.4049 → 2.6462 ms (49.0%)\n[ ok ] io.stftWireToSpectrogram.500x1024    1.6758 → 0.5994 ms (35.8%)\n[ ok ] dist gzip total                      5736.2 → 3147.6 KiB (54.9%)\n[ ok ] dist raw total                       12212.3 → 9705.8 KiB (79.5%)\n[ ok ] vsix size                            15587.2 → 3521.3 KiB (22.6%)\n[info] dist file removed: 52.audioPreview.js\n[info] dist file removed: essentia-wasm.web.wasm\n[info] dist file added: comparison.js\n[info] dist file added: comparison.js.LICENSE.txt\n[info] dist file added: comparisonLoudnessWorker.js\n[info] dist file added: comparisonWorker.js\n[info] dist file added: comparisonWorker.js.LICENSE.txt\n\ncompare: all gates passed\n"
+    },
+    {
+      "file": "repository-bench-postfix-3.json",
+      "meta": {
+        "node": "v24.9.0",
+        "date": "2026-10-16T13:22:47.122Z",
+        "gcExposed": true
+      },
+      "allHistoricalGatesPassed": true,
+      "gateLog": "[ ok ] goertzelCqt.pazFrame4096             0.1022 → 0.0927 ms (90.7%)\n[ ok ] quinticBSplineSmooth.300             0.0013 → 0.0013 ms (100.0%)\n[ ok ] akimaResample.128to300               0.0067 → 0.0074 ms (110.4%)\n[ ok ] liveBallistics.emaFrame300           0.0006 → 0.0005 ms (83.3%)\n[ ok ] spectralPeakDisplay.frame300         0.0026 → 0.0027 ms (103.8%)\n[ ok ] stereoPolarField.instant4096x64      0.0231 → 0.0235 ms (101.7%)\n[ ok ] eqCanvasMath.curve300plus10band      0.0913 → 0.0913 ms (100.0%)\n[ ok ] phaseCorrelation.fft2048             0.0639 → 0.0546 ms (85.4%)\n[ ok ] anim.fftFramePrep.1024to300          0.0587 → 0.0502 ms (85.5%)\n[ ok ] pipeline.stftFrames.3s.w4096h1024    8.4681 → 3.5627 ms (42.1%)\n[ ok ] pipeline.sequenceFeatures.3s.hop20ms 2.9681 → 0.7937 ms (26.7%)\n[ ok ] io.wavEncode.stereo5s48k             5.4049 → 2.6986 ms (49.9%)\n[ ok ] io.stftWireToSpectrogram.500x1024    1.6758 → 0.6233 ms (37.2%)\n[ ok ] dist gzip total                      5736.2 → 3147.6 KiB (54.9%)\n[ ok ] dist raw total                       12212.3 → 9705.8 KiB (79.5%)\n[ ok ] vsix size                            15587.2 → 3521.3 KiB (22.6%)\n[info] dist file removed: 52.audioPreview.js\n[info] dist file removed: essentia-wasm.web.wasm\n[info] dist file added: comparison.js\n[info] dist file added: comparison.js.LICENSE.txt\n[info] dist file added: comparisonLoudnessWorker.js\n[info] dist file added: comparisonWorker.js\n[info] dist file added: comparisonWorker.js.LICENSE.txt\n\ncompare: all gates passed\n"
+    }
+  ],
+  "fixes": [
+    {
+      "case": "quinticBSplineSmooth.300",
+      "cause": "Four clamp operations per output, including all interior points.",
+      "change": "Peel first/last two boundary outputs, preserve arithmetic order in branch-free interior.",
+      "beforeMs": 0.0042,
+      "afterMs": [
+        0.0011,
+        0.0013,
+        0.0013
+      ]
+    },
+    {
+      "case": "stereoPolarField.instant4096x64",
+      "cause": "Scaled hypot/square root immediately squared again in every RMS accumulation.",
+      "change": "Direct squared norm; Float32 inputs cannot overflow/underflow the JS double intermediate. Preserve bin mapping, Float32 accumulation and neighbor spread.",
+      "beforeMs": 0.0298,
+      "afterMs": [
+        0.0217,
+        0.0215,
+        0.0235
+      ]
+    }
+  ],
+  "numerics": "live-kernel-validation.json",
+  "boundaries": "Sub-microsecond/microsecond times include original async harness overhead. No historical failure was removed or baseline overwritten. Historical baseline is Node26 while the current before/after runs are Node24.9; no causal claim that Node version alone caused the difference.",
+  "finalDocumentationPackage": {
+    "file": "repository-size-final.json",
+    "gateLog": "[ ok ] dist gzip total                      5736.2 → 3147.6 KiB (54.9%)\n[ ok ] dist raw total                       12212.3 → 9705.8 KiB (79.5%)\n[ ok ] vsix size                            15587.2 → 3522.3 KiB (22.6%)\n[info] dist file removed: 52.audioPreview.js\n[info] dist file removed: essentia-wasm.web.wasm\n[info] dist file added: comparison.js\n[info] dist file added: comparison.js.LICENSE.txt\n[info] dist file added: comparisonLoudnessWorker.js\n[info] dist file added: comparisonWorker.js\n[info] dist file added: comparisonWorker.js.LICENSE.txt\n\ncompare: all gates passed\n"
+  }
+}

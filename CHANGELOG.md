@@ -2,7 +2,19 @@
 
 ## [0.6.0] - Unreleased
 
-- Compare up to four native-rate mono/stereo files with one transport, independent active/mute/focus states and stable track colors.
+- Add reversible same-rate integer-delay alignment through Compare Files → Align, with explicit estimate/apply/reset, optional polarity compensation, and a shared session copy for playback, analysis and export. Search uses at most the first 60 seconds within ±2 seconds; source files remain unchanged.
+- Publish bilingual [alignment design and ablation notes](doc/blog/audio-alignment-dsp.en.md), linked from the blog index and READMEs.
+
+- Fix the first audio render block in channel monitoring by setting each split-channel analyser to an explicit mono layout before connecting it.
+- Prevent stale single-file reloads from replacing newer data, and preserve the source URI scheme/authority when exporting beside remote or virtual files.
+- Preserve the playback cursor when opening Live Spec or meters, apply channel/band monitoring with those panels hidden, and replace full-file playback with the selected loop when entering Edit & Export.
+- Include exact endpoint samples in RMS/residual measurements despite floating-point time conversion; cancel measurements only when their captured inputs change and always clear cancelled progress.
+
+- Correct polar-field direction, fold negative mono half-cycles to the center, and clamp endpoint interpolation. Validate saved/imported headphone profiles and snapshot chains before UI/audio use; recover safely from malformed persisted EQ.
+
+- Add attenuation-only shared-region RMS matching and same-rate residual RMS/peak measurements via the existing comparison context menu. Matching gains affect playback and mix export, not source analysis.
+- Add opt-in headphone EQ rendering to single-file and comparison WAV exports using the monitoring correction chain.
+- Compare up to eight native-rate mono/stereo files with one transport, independent active/mute/focus states and stable track colors.
 - Share waveform/STFT/Loudness time ranges; choose STFT layouts and fullscreen through a themed visualization context menu.
 - Overlay native-buffer Live spectrum, stereo phase, correlation and Loudness/F0/onset/true-peak profiles, including muted active sources.
 - Export a selected stem mix with output-rate/channel/bit-depth controls and explicit integer-overload choices.
@@ -10,6 +22,17 @@
 - Unify single-file and comparison styling, track state controls and loudness summaries.
 - Reuse Monitor and headphone correction controls; add precise playback entry and double-click volume reset.
 - Add an interactive comparison onboarding guide and scrollable pane settings.
+- Fix removal during file reload blocking the next load; clean up comparison panels closed during initialization and failed initial opens.
+- Settle analysis requests after Worker failure/disposal, and keep cancellation cleanup reliable when Worker messaging fails.
+- Render special characters in Loudness hover filenames as text instead of HTML.
+- Cache comparison spectrum frequency-bin mapping, tilt and A-weight terms with complete invalidation and unchanged floating-point evaluation order. Add a Git-anchored 4,096-frame byte-equivalence check and alternating before/after DSP benchmark; measured gains apply to stable Ooura analysis settings.
+- Keep CQT display smoothing continuous when native audio slices differ by one sample; add a regression test discovered while capturing real playback.
+- Remove per-bin interior boundary clamps in B-spline smoothing and the redundant hypot round-trip in polar RMS; pass the unchanged historical benchmark gates in three serial runs with numerical regression checks.
+- Drop late single-file host replies after editor disposal/cancellation, handle rejected webview sends, and release document file watchers; cover rapid reopen and delayed CONFIG/AutoEq/STFT/feature/preset replies.
+- Compare six downloaded VS Code audio extensions using the unchanged repository benchmark, actual installed-editor preview/playback runs and CRC-verified package measurements; retain historical gate failures, invalid attempts and upstream STFT endpoint differences.
+- Add concise, linked English and Chinese READMEs with one current-version highlights block, two reproducible real-audio production-UI GIFs and source-grounded tool comparisons.
+- Share CI/release validation, cache npm dependencies, bound test-worker memory and avoid duplicate development/production builds. Release bodies now include the tagged version's bilingual highlights before generated commit notes.
+- Exclude unused Opus enhancement model code and Essentia add-on entry imports, recompress the icon without changing pixels, and audit actual VSIX contents to keep demo/build resources out of the package.
 
 All notable changes to **EAR Audio Preview** are documented in this file.
 

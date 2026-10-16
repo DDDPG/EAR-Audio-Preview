@@ -1,0 +1,64 @@
+{
+  "bundle": {
+    "files": {
+      "4062d505493786e728bb.module.wasm": {
+        "raw": 87519,
+        "gzip": 44282
+      },
+      "audioPreview.js": {
+        "raw": 1092629,
+        "gzip": 392487
+      },
+      "audioPreview.js.LICENSE.txt": {
+        "raw": 321,
+        "gzip": 245
+      },
+      "comparison.js": {
+        "raw": 902735,
+        "gzip": 351807
+      },
+      "comparison.js.LICENSE.txt": {
+        "raw": 153,
+        "gzip": 139
+      },
+      "comparisonLoudnessWorker.js": {
+        "raw": 17022,
+        "gzip": 4587
+      },
+      "comparisonWorker.js": {
+        "raw": 2632596,
+        "gzip": 817244
+      },
+      "comparisonWorker.js.LICENSE.txt": {
+        "raw": 1888,
+        "gzip": 911
+      },
+      "extension.js": {
+        "raw": 2590025,
+        "gzip": 801894
+      },
+      "extension.js.LICENSE.txt": {
+        "raw": 1734,
+        "gzip": 829
+      },
+      "loudness.worklet.js": {
+        "raw": 14689,
+        "gzip": 3869
+      },
+      "web/extension.js": {
+        "raw": 2595720,
+        "gzip": 804045
+      },
+      "web/extension.js.LICENSE.txt": {
+        "raw": 1734,
+        "gzip": 829
+      }
+    },
+    "distTotalRaw": 9938765,
+    "distTotalGzip": 3223168,
+    "vsix": {
+      "name": "ear-audio-preview-0.6.0.vsix",
+      "size": 3606799
+    }
+  }
+}

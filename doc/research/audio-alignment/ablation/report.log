@@ -1,0 +1,754 @@
+{
+  "all": {
+    "0": {
+      "positiveTotal": 230,
+      "positiveSuccess": 204,
+      "positiveRejected": 26,
+      "positiveWrongAccepted": 0,
+      "negativeTotal": 88,
+      "hasRejectionPolicy": true,
+      "negativeFalseAccepted": 22,
+      "negativeEstimatesReturned": null
+    },
+    "1": {
+      "positiveTotal": 230,
+      "positiveSuccess": 230,
+      "positiveRejected": 0,
+      "positiveWrongAccepted": 0,
+      "negativeTotal": 88,
+      "hasRejectionPolicy": true,
+      "negativeFalseAccepted": 22,
+      "negativeEstimatesReturned": null
+    },
+    "2": {
+      "positiveTotal": 230,
+      "positiveSuccess": 204,
+      "positiveRejected": 26,
+      "positiveWrongAccepted": 0,
+      "negativeTotal": 88,
+      "hasRejectionPolicy": true,
+      "negativeFalseAccepted": 22,
+      "negativeEstimatesReturned": null
+    },
+    "3": {
+      "positiveTotal": 230,
+      "positiveSuccess": 230,
+      "positiveRejected": 0,
+      "positiveWrongAccepted": 0,
+      "negativeTotal": 88,
+      "hasRejectionPolicy": true,
+      "negativeFalseAccepted": 22,
+      "negativeEstimatesReturned": null
+    },
+    "4": {
+      "positiveTotal": 230,
+      "positiveSuccess": 204,
+      "positiveRejected": 26,
+      "positiveWrongAccepted": 0,
+      "negativeTotal": 88,
+      "hasRejectionPolicy": true,
+      "negativeFalseAccepted": 0,
+      "negativeEstimatesReturned": null
+    },
+    "5": {
+      "positiveTotal": 230,
+      "positiveSuccess": 230,
+      "positiveRejected": 0,
+      "positiveWrongAccepted": 0,
+      "negativeTotal": 88,
+      "hasRejectionPolicy": true,
+      "negativeFalseAccepted": 0,
+      "negativeEstimatesReturned": null
+    },
+    "6": {
+      "positiveTotal": 230,
+      "positiveSuccess": 204,
+      "positiveRejected": 26,
+      "positiveWrongAccepted": 0,
+      "negativeTotal": 88,
+      "hasRejectionPolicy": true,
+      "negativeFalseAccepted": 0,
+      "negativeEstimatesReturned": null
+    },
+    "7": {
+      "positiveTotal": 230,
+      "positiveSuccess": 230,
+      "positiveRejected": 0,
+      "positiveWrongAccepted": 0,
+      "negativeTotal": 88,
+      "hasRejectionPolicy": true,
+      "negativeFalseAccepted": 0,
+      "negativeEstimatesReturned": null
+    },
+    "8": {
+      "positiveTotal": 230,
+      "positiveSuccess": 204,
+      "positiveRejected": 26,
+      "positiveWrongAccepted": 0,
+      "negativeTotal": 88,
+      "hasRejectionPolicy": true,
+      "negativeFalseAccepted": 22,
+      "negativeEstimatesReturned": null
+    },
+    "9": {
+      "positiveTotal": 230,
+      "positiveSuccess": 230,
+      "positiveRejected": 0,
+      "positiveWrongAccepted": 0,
+      "negativeTotal": 88,
+      "hasRejectionPolicy": true,
+      "negativeFalseAccepted": 22,
+      "negativeEstimatesReturned": null
+    },
+    "10": {
+      "positiveTotal": 230,
+      "positiveSuccess": 204,
+      "positiveRejected": 26,
+      "positiveWrongAccepted": 0,
+      "negativeTotal": 88,
+      "hasRejectionPolicy": true,
+      "negativeFalseAccepted": 22,
+      "negativeEstimatesReturned": null
+    },
+    "11": {
+      "positiveTotal": 230,
+      "positiveSuccess": 230,
+      "positiveRejected": 0,
+      "positiveWrongAccepted": 0,
+      "negativeTotal": 88,
+      "hasRejectionPolicy": true,
+      "negativeFalseAccepted": 22,
+      "negativeEstimatesReturned": null
+    },
+    "12": {
+      "positiveTotal": 230,
+      "positiveSuccess": 204,
+      "positiveRejected": 26,
+      "positiveWrongAccepted": 0,
+      "negativeTotal": 88,
+      "hasRejectionPolicy": true,
+      "negativeFalseAccepted": 0,
+      "negativeEstimatesReturned": null
+    },
+    "13": {
+      "positiveTotal": 230,
+      "positiveSuccess": 230,
+      "positiveRejected": 0,
+      "positiveWrongAccepted": 0,
+      "negativeTotal": 88,
+      "hasRejectionPolicy": true,
+      "negativeFalseAccepted": 0,
+      "negativeEstimatesReturned": null
+    },
+    "14": {
+      "positiveTotal": 230,
+      "positiveSuccess": 204,
+      "positiveRejected": 26,
+      "positiveWrongAccepted": 0,
+      "negativeTotal": 88,
+      "hasRejectionPolicy": true,
+      "negativeFalseAccepted": 0,
+      "negativeEstimatesReturned": null
+    },
+    "15": {
+      "positiveTotal": 230,
+      "positiveSuccess": 230,
+      "positiveRejected": 0,
+      "positiveWrongAccepted": 0,
+      "negativeTotal": 88,
+      "hasRejectionPolicy": true,
+      "negativeFalseAccepted": 0,
+      "negativeEstimatesReturned": null
+    },
+    "noPolarity": {
+      "positiveTotal": 230,
+      "positiveSuccess": 204,
+      "positiveRejected": 26,
+      "positiveWrongAccepted": 0,
+      "negativeTotal": 88,
+      "hasRejectionPolicy": true,
+      "negativeFalseAccepted": 0,
+      "negativeEstimatesReturned": null
+    },
+    "audioscope": {
+      "positiveTotal": 230,
+      "positiveSuccess": 178,
+      "positiveRejected": 0,
+      "positiveWrongAccepted": 52,
+      "negativeTotal": 88,
+      "hasRejectionPolicy": false,
+      "negativeFalseAccepted": null,
+      "negativeEstimatesReturned": 88
+    }
+  },
+  "factors": [
+    {
+      "name": "channelSelection",
+      "changes": 26,
+      "edges": [
+        {
+          "off": 0,
+          "on": 1,
+          "gains": 26,
+          "losses": 0
+        },
+        {
+          "off": 2,
+          "on": 3,
+          "gains": 26,
+          "losses": 0
+        },
+        {
+          "off": 4,
+          "on": 5,
+          "gains": 26,
+          "losses": 0
+        },
+        {
+          "off": 6,
+          "on": 7,
+          "gains": 26,
+          "losses": 0
+        },
+        {
+          "off": 8,
+          "on": 9,
+          "gains": 26,
+          "losses": 0
+        },
+        {
+          "off": 10,
+          "on": 11,
+          "gains": 26,
+          "losses": 0
+        },
+        {
+          "off": 12,
+          "on": 13,
+          "gains": 26,
+          "losses": 0
+        },
+        {
+          "off": 14,
+          "on": 15,
+          "gains": 26,
+          "losses": 0
+        }
+      ],
+      "speed": {
+        "3": {
+          "ratio": 1.3316440088630903,
+          "passes": [
+            {
+              "pass": 1,
+              "medianOffOverFull": 1.329419178078135
+            },
+            {
+              "pass": 2,
+              "medianOffOverFull": 1.3468470148466976
+            },
+            {
+              "pass": 3,
+              "medianOffOverFull": 1.3314736868308636
+            }
+          ],
+          "files": [
+            {
+              "file": "A",
+              "fullMs": 5.125500000000102,
+              "offMs": 6.848917000002984,
+              "ratio": 1.3316440088630903
+            },
+            {
+              "file": "B",
+              "fullMs": 5.18854100000317,
+              "offMs": 6.933625000001484,
+              "ratio": 1.3468470148466976
+            },
+            {
+              "file": "C",
+              "fullMs": 5.0833329999950365,
+              "offMs": 6.815207999999984,
+              "ratio": 1.329419178078135
+            },
+            {
+              "file": "D",
+              "fullMs": 5.032666999999492,
+              "offMs": 6.682499999995343,
+              "ratio": 1.3314736868308636
+            }
+          ]
+        },
+        "30": {
+          "ratio": 1.4466067220781402,
+          "passes": [
+            {
+              "pass": 1,
+              "medianOffOverFull": 1.4400756642865535
+            },
+            {
+              "pass": 2,
+              "medianOffOverFull": 1.4370136031172427
+            },
+            {
+              "pass": 3,
+              "medianOffOverFull": 1.4613057664199387
+            }
+          ],
+          "files": [
+            {
+              "file": "A",
+              "fullMs": 10.54766699999891,
+              "offMs": 15.209125000001222,
+              "ratio": 1.4362599785251653
+            },
+            {
+              "file": "B",
+              "fullMs": 10.678750000000036,
+              "offMs": 15.461709000002884,
+              "ratio": 1.4400756642865535
+            },
+            {
+              "file": "C",
+              "fullMs": 10.60450000000128,
+              "offMs": 15.42462499999965,
+              "ratio": 1.4466067220781402
+            },
+            {
+              "file": "D",
+              "fullMs": 10.70666700000038,
+              "offMs": 15.225082999999358,
+              "ratio": 1.4475059972167477
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "partialWhitening",
+      "changes": 0,
+      "edges": [
+        {
+          "off": 0,
+          "on": 2,
+          "gains": 0,
+          "losses": 0
+        },
+        {
+          "off": 1,
+          "on": 3,
+          "gains": 0,
+          "losses": 0
+        },
+        {
+          "off": 4,
+          "on": 6,
+          "gains": 0,
+          "losses": 0
+        },
+        {
+          "off": 5,
+          "on": 7,
+          "gains": 0,
+          "losses": 0
+        },
+        {
+          "off": 8,
+          "on": 10,
+          "gains": 0,
+          "losses": 0
+        },
+        {
+          "off": 9,
+          "on": 11,
+          "gains": 0,
+          "losses": 0
+        },
+        {
+          "off": 12,
+          "on": 14,
+          "gains": 0,
+          "losses": 0
+        },
+        {
+          "off": 13,
+          "on": 15,
+          "gains": 0,
+          "losses": 0
+        }
+      ],
+      "speed": {
+        "3": {
+          "ratio": 1.3535571218634403,
+          "passes": [
+            {
+              "pass": 1,
+              "medianOffOverFull": 1.3517227492151072
+            },
+            {
+              "pass": 2,
+              "medianOffOverFull": 1.3544720085406985
+            },
+            {
+              "pass": 3,
+              "medianOffOverFull": 1.3542503637709375
+            }
+          ],
+          "files": [
+            {
+              "file": "A",
+              "fullMs": 5.125500000000102,
+              "offMs": 6.993291999999201,
+              "ratio": 1.35578616892675
+            },
+            {
+              "file": "B",
+              "fullMs": 5.18854100000317,
+              "offMs": 4.740040999997291,
+              "ratio": 0.9207463730870848
+            },
+            {
+              "file": "C",
+              "fullMs": 5.0833329999950365,
+              "offMs": 6.903166999996756,
+              "ratio": 1.3544720085406985
+            },
+            {
+              "file": "D",
+              "fullMs": 5.032666999999492,
+              "offMs": 6.793333999994502,
+              "ratio": 1.350356412767401
+            }
+          ]
+        },
+        "30": {
+          "ratio": 0.9136479598907828,
+          "passes": [
+            {
+              "pass": 1,
+              "medianOffOverFull": 0.9047750340979163
+            },
+            {
+              "pass": 2,
+              "medianOffOverFull": 0.9141529338972614
+            },
+            {
+              "pass": 3,
+              "medianOffOverFull": 0.9188238012158997
+            }
+          ],
+          "files": [
+            {
+              "file": "A",
+              "fullMs": 10.54766699999891,
+              "offMs": 11.84412500000326,
+              "ratio": 1.122703145097094
+            },
+            {
+              "file": "B",
+              "fullMs": 10.678750000000036,
+              "offMs": 9.731417000002693,
+              "ratio": 0.9070196374655877
+            },
+            {
+              "file": "C",
+              "fullMs": 10.60450000000128,
+              "offMs": 9.65729199999987,
+              "ratio": 0.9113625935706661
+            },
+            {
+              "file": "D",
+              "fullMs": 10.70666700000038,
+              "offMs": 9.687125000000378,
+              "ratio": 0.9059704583126226
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "multiCandidate",
+      "changes": 22,
+      "edges": [
+        {
+          "off": 0,
+          "on": 4,
+          "gains": 22,
+          "losses": 0
+        },
+        {
+          "off": 1,
+          "on": 5,
+          "gains": 22,
+          "losses": 0
+        },
+        {
+          "off": 2,
+          "on": 6,
+          "gains": 22,
+          "losses": 0
+        },
+        {
+          "off": 3,
+          "on": 7,
+          "gains": 22,
+          "losses": 0
+        },
+        {
+          "off": 8,
+          "on": 12,
+          "gains": 22,
+          "losses": 0
+        },
+        {
+          "off": 9,
+          "on": 13,
+          "gains": 22,
+          "losses": 0
+        },
+        {
+          "off": 10,
+          "on": 14,
+          "gains": 22,
+          "losses": 0
+        },
+        {
+          "off": 11,
+          "on": 15,
+          "gains": 22,
+          "losses": 0
+        }
+      ],
+      "speed": {
+        "3": {
+          "ratio": 1.0049969717677714,
+          "passes": [
+            {
+              "pass": 1,
+              "medianOffOverFull": 0.9982968514881374
+            },
+            {
+              "pass": 2,
+              "medianOffOverFull": 1.0086116236047231
+            },
+            {
+              "pass": 3,
+              "medianOffOverFull": 0.9974179472491986
+            }
+          ],
+          "files": [
+            {
+              "file": "A",
+              "fullMs": 5.125500000000102,
+              "offMs": 5.127707999999984,
+              "ratio": 0.9982968514881374
+            },
+            {
+              "file": "B",
+              "fullMs": 5.18854100000317,
+              "offMs": 5.192500000000109,
+              "ratio": 1.0086116236047231
+            },
+            {
+              "file": "C",
+              "fullMs": 5.0833329999950365,
+              "offMs": 5.114792000000307,
+              "ratio": 1.0049969717677714
+            },
+            {
+              "file": "D",
+              "fullMs": 5.032666999999492,
+              "offMs": 5.0112910000007105,
+              "ratio": 0.9974179472491986
+            }
+          ]
+        },
+        "30": {
+          "ratio": 0.9965030883112933,
+          "passes": [
+            {
+              "pass": 1,
+              "medianOffOverFull": 0.9975888676567572
+            },
+            {
+              "pass": 2,
+              "medianOffOverFull": 0.9975537209614042
+            },
+            {
+              "pass": 3,
+              "medianOffOverFull": 0.9965030883112933
+            }
+          ],
+          "files": [
+            {
+              "file": "A",
+              "fullMs": 10.54766699999891,
+              "offMs": 10.50129200000083,
+              "ratio": 1.0009480769540826
+            },
+            {
+              "file": "B",
+              "fullMs": 10.678750000000036,
+              "offMs": 10.537459000000126,
+              "ratio": 0.9858856780671862
+            },
+            {
+              "file": "C",
+              "fullMs": 10.60450000000128,
+              "offMs": 10.617833000000246,
+              "ratio": 0.9975888676567572
+            },
+            {
+              "file": "D",
+              "fullMs": 10.70666700000038,
+              "offMs": 10.525332999999591,
+              "ratio": 0.9924920248086321
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "shortWindow",
+      "changes": 0,
+      "edges": [
+        {
+          "off": 0,
+          "on": 8,
+          "gains": 0,
+          "losses": 0
+        },
+        {
+          "off": 1,
+          "on": 9,
+          "gains": 0,
+          "losses": 0
+        },
+        {
+          "off": 2,
+          "on": 10,
+          "gains": 0,
+          "losses": 0
+        },
+        {
+          "off": 3,
+          "on": 11,
+          "gains": 0,
+          "losses": 0
+        },
+        {
+          "off": 4,
+          "on": 12,
+          "gains": 0,
+          "losses": 0
+        },
+        {
+          "off": 5,
+          "on": 13,
+          "gains": 0,
+          "losses": 0
+        },
+        {
+          "off": 6,
+          "on": 14,
+          "gains": 0,
+          "losses": 0
+        },
+        {
+          "off": 7,
+          "on": 15,
+          "gains": 0,
+          "losses": 0
+        }
+      ],
+      "speed": {
+        "3": {
+          "ratio": 0.9983147617735286,
+          "passes": [
+            {
+              "pass": 1,
+              "medianOffOverFull": 0.9955303816213051
+            },
+            {
+              "pass": 2,
+              "medianOffOverFull": 1.0020079992197533
+            },
+            {
+              "pass": 3,
+              "medianOffOverFull": 1.0008443279252184
+            }
+          ],
+          "files": [
+            {
+              "file": "A",
+              "fullMs": 5.125500000000102,
+              "offMs": 5.135792000000947,
+              "ratio": 0.9968291763793315
+            },
+            {
+              "file": "B",
+              "fullMs": 5.18854100000317,
+              "offMs": 5.172041999999237,
+              "ratio": 1.0002509692043051
+            },
+            {
+              "file": "C",
+              "fullMs": 5.0833329999950365,
+              "offMs": 5.093375000000378,
+              "ratio": 1.0008443279252184
+            },
+            {
+              "file": "D",
+              "fullMs": 5.032666999999492,
+              "offMs": 5.015290999999706,
+              "ratio": 0.9976497755963171
+            }
+          ]
+        },
+        "30": {
+          "ratio": 3.4720843265361405,
+          "passes": [
+            {
+              "pass": 1,
+              "medianOffOverFull": 3.475831656520062
+            },
+            {
+              "pass": 2,
+              "medianOffOverFull": 3.4646726859755614
+            },
+            {
+              "pass": 3,
+              "medianOffOverFull": 3.4822127398743477
+            }
+          ],
+          "files": [
+            {
+              "file": "A",
+              "fullMs": 10.54766699999891,
+              "offMs": 36.82875000000058,
+              "ratio": 3.475831656520062
+            },
+            {
+              "file": "B",
+              "fullMs": 10.678750000000036,
+              "offMs": 37.01408300000003,
+              "ratio": 3.4661437902376124
+            },
+            {
+              "file": "C",
+              "fullMs": 10.60450000000128,
+              "offMs": 36.92712500000198,
+              "ratio": 3.4761374427025817
+            },
+            {
+              "file": "D",
+              "fullMs": 10.70666700000038,
+              "offMs": 37.09508300000016,
+              "ratio": 3.464671405209375
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

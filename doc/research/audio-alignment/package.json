@@ -1,0 +1,13 @@
+{
+  "name": "ear-alignment-dsp-lab",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "prepare:audio": "node prepare-audio.mjs",
+    "test": "node --test operator.test.mjs review-regressions.test.mjs && node upstream-tests.mjs",
+    "evaluate": "node evaluate.mjs dev && node evaluate.mjs heldout && node evaluate.mjs real && node confirm.mjs",
+    "bench": "node --expose-gc timing.mjs",
+    "verify": "node verify.mjs"
+  },
+  "engines": { "node": ">=24" }
+}

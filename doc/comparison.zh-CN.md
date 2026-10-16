@@ -2,7 +2,7 @@
 
 [English](comparison.md) · [中文 README](../README.zh-CN.md) · [English README](../README.md)
 
-核对日期：**2026-10-16**。只比较编辑器内的音频插件，不纳入独立 App。表内竞品均为 VS Code 插件；本轮没有逐个安装到 Cursor 验证兼容性。EAR 使用本地 **0.6.0 发布候选构建**，其他插件使用表中的已发布版本。
+核对日期：**2026-10-16**。只比较编辑器内的音频插件，不纳入独立 App。表内竞品均为 VS Code 插件；本轮没有逐个安装到 Cursor 验证兼容性。下列 EAR 实测数据来自当日记录的 **0.6.0 测试构建**，其他插件使用表中的已发布版本。
 
 EAR 的自动对齐需用户确认应用，仅支持同采样率整数固定延迟，可重置，不处理时钟漂移。应用后分析与导出使用会话副本；监听设置仍独立。[范围与验证](audio-alignment.md)。
 
@@ -10,7 +10,7 @@ EAR 的自动对齐需用户确认应用，仅支持同采样率整数固定延�
 
 | 插件 / 版本 | 比较方式 | 分析与监听 | 主要场景 |
 | --- | --- | --- | --- |
-| **EAR 0.6.0（本地待发布）** | 最多八文件并行播放；STFT 时间 / 频率联动缩放 | Live FFT/CQT 叠加、立体声场与相位相关度；LUFS/F0/起音；AutoEq 监听 | 比较渲染结果，定位频谱、声像与响度差异 |
+| **EAR 0.6.0（历史测试构建）** | 最多八文件并行播放；STFT 时间 / 频率联动缩放 | Live FFT/CQT 叠加、立体声场与相位相关度；LUFS/F0/起音；AutoEq 监听 | 比较渲染结果，定位频谱、声像与响度差异 |
 | [audio-preview 2.6.0](https://marketplace.visualstudio.com/items?itemName=sukumo28.wav-preview) | 单文件波形、频谱与拖选缩放 | 编辑器内播放、文件信息 | 基础试听与查看 |
 | [Audio Player 0.1.4](https://marketplace.visualstudio.com/items?itemName=huachao.audio-player) | 多文件波形，共用播放时钟 | Raw PCM 参数；中英文界面 | 试听与波形比较 |
 | [WaveExplorer 0.1.4](https://marketplace.visualstudio.com/items?itemName=jojonki.wave-explorer) | 单文件内波形与频谱联动 | Worker 计算线性 / Mel STFT；选区循环 | 波形与 Mel 频谱检查 |
@@ -147,7 +147,7 @@ RAF p95 只衡量呈现帧间隔，不证明无音频卡顿、引擎精度或仪
 | audioscope 1.1.7 | 4.56 MiB | 10.74 MiB | 65 |
 | AudioLens 1.10.0 | 0.24 MiB | 0.71 MiB | 28 |
 
-现在使用完整 VSIX 的实际字节数，**逐文件 CRC 校验并保留 SHA-256**，不再只看 HEAD 响应。EAR 是本地未提交 0.6.0 构建，其余是已发布包；1 MiB = 1,048,576 字节。解包总量包含包内所有条目，不等于编辑器运行内存或额外按需下载。SpecView 的首次分类模型另行下载。多个插件小于 EAR，因此不写“同类最小”。[实际包哈希与 JS/WASM gzip 结果](metrics/downloaded-packages-postfix.json) · [发布者版本快照](metrics/plugin-catalog.json)。
+现在使用完整 VSIX 的实际字节数，**逐文件 CRC 校验并保留 SHA-256**，不再只看 HEAD 响应。EAR 体积对应记录中的历史 0.6.0 测试包，不代表重新测量了最终发布包；其余是固定版本的已发布包；1 MiB = 1,048,576 字节。解包总量包含包内所有条目，不等于编辑器运行内存或额外按需下载。SpecView 的首次分类模型另行下载。多个插件小于 EAR，因此不写“同类最小”。[实际包哈希与 JS/WASM gzip 结果](metrics/downloaded-packages-postfix.json) · [发布者版本快照](metrics/plugin-catalog.json)。
 
 ## 复现
 

@@ -1,6 +1,6 @@
 const fs=require('fs'),http=require('http'),path=require('path');
-const{chromium}=require('/Users/lertoon/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright');
-const root='/tmp/ear-refine-fixes-20261016',repo='/Users/lertoon/vscProjects/EAR-Audio-Preview';
+const{chromium}=require(process.env.EAR_PLAYWRIGHT_MODULE || 'playwright');
+const root='/tmp/ear-refine-fixes-20261016',repo=require('node:path').resolve(__dirname, '../..');
 const server=http.createServer((req,res)=>{if(req.url==='/')return res.end('<!doctype html><script src="/test.js"></script>');const p=path.join(req.url==='/loudness.worklet.js'?repo+'/dist':root+'/audio-browser-dist',path.basename(req.url));if(!fs.existsSync(p))return res.writeHead(404).end();res.setHeader('Content-Type','text/javascript');fs.createReadStream(p).pipe(res);});
 (async()=>{await new Promise(r=>server.listen(0,'127.0.0.1',r));const browser=await chromium.launch({executablePath:'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',headless:true,args:['--autoplay-policy=no-user-gesture-required','--mute-audio']});try{const page=await browser.newPage();const errors=[];page.on('pageerror',e=>errors.push(String(e)));await page.goto('http://127.0.0.1:'+server.address().port);await page.waitForFunction(()=>window.audioReviewApi);const result=await page.evaluate(async()=>{
 const a=window.audioReviewApi;a.setLoudnessWorkletModuleUrl('/loudness.worklet.js');a.setBaselineWorkletUrl('/loudness.worklet.js');

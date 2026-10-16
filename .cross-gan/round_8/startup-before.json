@@ -1,7 +1,7 @@
 {
   "passed": false,
   "browser": "155.0.8059.82",
-  "sourceRoot": "/Users/lertoon/vscProjects/EAR-Audio-Preview",
+  "sourceRoot": "<workspace>",
   "playerFile": "/tmp/ear-final-acceptance-20261017/playerService.before.ts",
   "playerSha256": "a7835382494e871802cadfe33130dc26aca190ccd9312609e24e33522a7bfd09",
   "scope": "Actual PlayerService; real AudioContext + output-capture Worklet and OfflineAudioContext. Every frame, including the initial 128, is checked. Hardware output is muted; no subjective listening claim.",

@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "baseline": "audioscope v1.1.8 / 0cf177499eb3d80a06e37be6efa13ed4ac10c25e",
+  "rangeSeconds": 2,
+  "integerToleranceSamples": 1,
+  "rates": [44100, 48000],
+  "developmentSeeds": [7, 19, 31],
+  "heldoutSeeds": [104729, 130363, 155921, 196613],
+  "positiveFamilies": ["copy", "negative-delay", "gain-dc-noise", "polarity", "side-only", "unequal-stereo", "lowpass", "leading-silence", "edge-delay"],
+  "negativeFamilies": ["unrelated", "silence", "constant", "periodic-ambiguous"],
+  "timing": {"warmups": 2, "repeats": 7, "order": "alternating", "includes": "downmix/channel preparation and offset estimation; equal-rate decoded PCM", "excludes": "decode, IPC, rendering, resampling, gain/residual calculation"},
+  "gates": {"positiveAcceptedWithin1Sample": 0.95, "unrelatedFalseAccept": 0, "degenerateFalseAccept": 0, "medianSpeedupLongInputs": 1.2},
+  "constraints": "No UI/product integration. Integer constant delay only. Do not alter upstream or evaluation thresholds after first run. Real recordings transformed with known delay; not independent field ground truth. Holdout seed inputs first evaluated after implementation."
+}

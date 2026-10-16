@@ -1,0 +1,14 @@
+✔ FFT agrees with direct DFT, and inverts without mutation error (1.300125ms)
+✔ invalid inputs and limits fail explicitly (0.305583ms)
+✔ no-overlap and sub-100ms recordings are explicit non-results (0.086167ms)
+✔ stereo Side survives, signed least-squares preserves the stereo ratio, PCM stays unchanged (17.737042ms)
+✔ gain uses all channel energy rather than a cancellable mono downmix (0.087417ms)
+✔ zero-width search never moves the source and silence is not accepted (3.84325ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 6
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 59.803417

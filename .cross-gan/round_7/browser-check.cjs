@@ -1,9 +1,9 @@
 const fs = require('node:fs');
 const http = require('node:http');
 const path = require('node:path');
-const { chromium } = require('/Users/lertoon/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright');
+const { chromium } = require(process.env.EAR_PLAYWRIGHT_MODULE || 'playwright');
 const dir = '/tmp/ear-refine-fixes-20261016';
-const repo = '/Users/lertoon/vscProjects/EAR-Audio-Preview';
+const repo = require('node:path').resolve(__dirname, '../..');
 const server = http.createServer((req, res) => {
   if (req.url === '/') return res.end('<!doctype html><script src="/test.js"></script>');
   const base = req.url === '/loudness.worklet.js' ? repo + '/dist' : dir + '/browser-dist';

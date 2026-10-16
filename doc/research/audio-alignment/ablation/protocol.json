@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "date": "2026-10-17",
+  "baseCommit": "283645bfb2a9177b83d10c2dae414ad9a8d7d3ad",
+  "factors": ["channelSelection", "partialWhitening", "multiCandidate", "shortWindow"],
+  "factorialMasks": [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15],
+  "historicalSeeds": [7,19,31,104729,130363,155921,196613,32452843,49979687],
+  "newSeeds": [86028121,104395301],
+  "diagnosticSeeds": [67867967,86028157],
+  "diagnosticFamilies": ["dominant-tone", "sparse-leading", "quiet-tail", "opposite-stereo"],
+  "diagnosticRates": [44100,48000],
+  "positiveTolerance": "existing per-family tolerances; diagnostic 1 sample",
+  "speed": {
+    "files": ["A","B","C","D"], "seconds": [3,30], "rate": 48000,
+    "lag": 523, "gain": 0.7, "warmups": 4, "repeats": 21, "passes": 3,
+    "masks": [15,14,13,11,7], "includeAudioscope": true,
+    "order": "rotating and reversing order each block, one sample per variant per block",
+    "gc": "once before each whole block; outside measured intervals",
+    "includes": "validation, channel preparation, delay estimate",
+    "excludes": "file decode, IPC, gain/residual, rendering"
+  },
+  "definitions": {
+    "channelSelectionOff": "Float32 arithmetic-mean downmix for each input, then same sparse/full silence fallback; retain all original PCM validation",
+    "partialWhiteningOff": "ordinary conj(A)*B with no spectral weight; remove now-unused magnitude-floor pass",
+    "multiCandidateOff": "top one coarse peak; no alternative refinement means no candidate-score ambiguity rejection",
+    "shortWindowOff": "use all available PCM up to first 60 seconds at same approx 2kHz rate; omit unnecessary anchor search; retain same 16384-sample refinement policy",
+    "polarityControl": "full configuration but coarse and fine search maximize signed positive correlation; report polarity1"
+  },
+  "constraints": "No production edits, threshold tuning, corpus edits or competitor edits. New data definitions fixed before observing variants. New synthetic cases are additional validation, not representative field ground truth. Timing contributions are conditional leave-one-out effects, not additive shares of total audioscope gap."
+}

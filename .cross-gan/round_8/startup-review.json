@@ -234,8 +234,8 @@
   ],
   "sideEffects": "Each analyser receives a single splitter output. Explicit mono preserves that existing branch contract; all tested non-cancelling modes retain exact expected PCM from frame zero. No blocker found.",
   "harness": [
-    "/Users/lertoon/vscProjects/EAR-Audio-Preview/bench/monitorStartupValidation.mjs",
-    "/Users/lertoon/vscProjects/EAR-Audio-Preview/bench/monitorStartupValidationEntry.ts"
+    "<workspace>/bench/monitorStartupValidation.mjs",
+    "<workspace>/bench/monitorStartupValidationEntry.ts"
   ],
   "repeatedObservations": {
     "initialBeforeFailures": 15,

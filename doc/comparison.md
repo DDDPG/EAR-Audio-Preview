@@ -2,7 +2,7 @@
 
 [简体中文](comparison.zh-CN.md) · [English README](../README.md) · [中文 README](../README.zh-CN.md)
 
-Checked **2026-10-16**. Only VS Code audio extensions are compared. These are relevant to Cursor users, but this pass did not install and certify every extension in Cursor. EAR is the local **v0.6.0 release candidate**; competitors are the published versions listed below.
+Checked **2026-10-16**. Only VS Code audio extensions are compared. These are relevant to Cursor users, but this pass did not install and certify every extension in Cursor. EAR measurements below use the **v0.6.0 test build recorded on that date**; competitors are the published versions listed below.
 
 EAR alignment is an opt-in same-rate integer-delay estimate with explicit apply/reset, not drift correction. Applying it changes the session buffers used by analysis and export; monitoring controls remain independent. [Scope and validation](audio-alignment.md).
 
@@ -10,7 +10,7 @@ EAR alignment is an opt-in same-rate integer-delay estimate with explicit apply/
 
 | Extension / version | Comparison workflow | Analysis / monitoring | Primary fit |
 | --- | --- | --- | --- |
-| **EAR 0.6.0（local unreleased）** | Up to eight files; parallel playback; linked time/frequency STFT zoom | Live FFT/CQT overlays, stereo field and phase correlation; LUFS/F0/onset; AutoEq monitoring | Compare renders and investigate stereo / frequency / loudness differences |
+| **EAR 0.6.0 (recorded test build)** | Up to eight files; parallel playback; linked time/frequency STFT zoom | Live FFT/CQT overlays, stereo field and phase correlation; LUFS/F0/onset; AutoEq monitoring | Compare renders and investigate stereo / frequency / loudness differences |
 | [audio-preview 2.6.0](https://marketplace.visualstudio.com/items?itemName=sukumo28.wav-preview) | Single-file waveform / spectrogram; drag zoom | In-editor playback and file information | Basic audio preview |
 | [Audio Player 0.1.4](https://marketplace.visualstudio.com/items?itemName=huachao.audio-player) | Multiple waveforms with synchronized playback | Raw PCM settings; Chinese/English UI | Lightweight listening and waveform comparison |
 | [WaveExplorer 0.1.4](https://marketplace.visualstudio.com/items?itemName=jojonki.wave-explorer) | Linked waveform / spectrogram within a file | Linear / mel STFT in a Worker; region looping | Waveform and mel inspection |
@@ -147,7 +147,7 @@ The cause is late async handlers accessing the disposed panel's webview getter; 
 | audioscope 1.1.7 | 4.56 MiB | 10.74 MiB | 65 |
 | AudioLens 1.10.0 | 0.24 MiB | 0.71 MiB | 28 |
 
-All archive bytes are now measured from complete downloaded files, with **every ZIP entry CRC checked and SHA-256 retained**, rather than HEAD-only estimates. EAR remains the local uncommitted v0.6.0 build; the others are published packages. 1 MiB = 1,048,576 bytes. Uncompressed entry size includes everything in the archive, not editor RSS or optional downloads. SpecView's optional first-use model is separate. Several plugins are smaller than EAR; no smallest-package claim is made. [Archive hashes and code/WASM gzip measurements](metrics/downloaded-packages-postfix.json) · [publisher/version snapshots](metrics/plugin-catalog.json).
+All archive bytes are now measured from complete downloaded files, with **every ZIP entry CRC checked and SHA-256 retained**, rather than HEAD-only estimates. EAR package figures describe the historical v0.6.0 test build saved with these results, not a newly measured release archive; the others are the pinned published packages. 1 MiB = 1,048,576 bytes. Uncompressed entry size includes everything in the archive, not editor RSS or optional downloads. SpecView's optional first-use model is separate. Several plugins are smaller than EAR; no smallest-package claim is made. [Archive hashes and code/WASM gzip measurements](metrics/downloaded-packages-postfix.json) · [publisher/version snapshots](metrics/plugin-catalog.json).
 
 ## Reproduce
 

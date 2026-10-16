@@ -13,13 +13,13 @@
     <a href="https://github.com/Eps-Acoustic-Revolution-Lab/EAR-Audio-Preview/actions/workflows/ci.yml">
       <img src="https://img.shields.io/github/actions/workflow/status/Eps-Acoustic-Revolution-Lab/EAR-Audio-Preview/ci.yml?style=for-the-badge&label=CI%20Build&logo=github" alt="CI" />
     </a>
-    <a href="LICENSE">
+    <a href="https://github.com/Eps-Acoustic-Revolution-Lab/EAR-Audio-Preview/blob/main/LICENSE">
       <img src="https://img.shields.io/badge/License-MIT-F59E0B.svg?style=for-the-badge" alt="License: MIT" />
     </a>
   </p>
 
   <p>
-    <a href="README.md">English</a> · <strong>简体中文</strong>
+    <a href="https://github.com/Eps-Acoustic-Revolution-Lab/EAR-Audio-Preview/blob/main/README.md">English</a> · <strong>简体中文</strong>
   </p>
 
   <p>
@@ -35,7 +35,7 @@
 <br>
 
 > [!TIP]
-> **工程技术手记：** 我们在 [技术博客](doc/blog/) 中记录了 EAR 背后的核心算法与架构设计，涵盖从 CQT 频谱设计到 WebGL2 各向异性时频谱图渲染的完整实现。
+> **工程技术手记：** 我们在 [技术博客](https://github.com/Eps-Acoustic-Revolution-Lab/EAR-Audio-Preview/blob/main/doc/blog/) 中记录了 EAR 背后的核心算法与架构设计，涵盖从 CQT 频谱设计到 WebGL2 各向异性时频谱图渲染的完整实现。
 
 ---
 
@@ -47,7 +47,7 @@
 
 <div align="center">
 
-`🎛️ 8 轨并行对比` · `🌈 FFT + CQT 双模频谱` · `📊 LUFS / LRA / 真峰值` · `🎧 AutoEq 耳机校准` · `🔒 100% 本地处理`
+`🎛️ 8 轨并行对比` · `🌈 FFT + CQT 双模频谱` · `📊 LUFS / LRA / 真峰值` · `🎧 AutoEq 耳机校准` · `🔒 音频本地处理`
 
 </div>
 
@@ -67,12 +67,12 @@ code --install-extension Eps-Acoustic-Revolution-Lab.ear-audio-preview
 
 1. **打开与试听：** 点击音频文件并按 Space 即可播放。（若被其他编辑器接管，右键选择 **使用…重新打开编辑器 → Audio Preview**）。
 2. **深度检视：** 在 **STFT** 视图中拖拽即可框选放大局部细节；切换至 **Live Spec** 观察实时频谱与立体声场；或打开 **Loudness** 计算响度、基频（$F_0$）与起音点（Onsets）时间线。
-3. **多版本对比：** 在资源管理器中选中 **2–8 个单声道/立体声文件**，右键选择 **EAR Audio: Compare Files**。点击播放即可同步试听，配合单轨静音/聚焦控件快速进行盲听与细节比对。
+3. **多版本对比：** 在资源管理器中选中 **2–8 个单声道/立体声文件**，右键选择 **EAR Audio: Compare Files**。点击播放即可同步试听，配合单轨静音/聚焦控件快速进行试听与细节比对。
 
 > [!NOTE]
 > **快捷交互与支持格式：** 首次打开时内置引导将带你熟悉控件（随时点击工具栏的 `?` 重新查看）。在对比视图中，Ctrl/Cmd+拖拽 缩放时间轴，Shift+拖拽 缩放频率轴，**双击**重置视图；右键点击图表可切换布局与全屏模式。
 > **支持格式：** `WAV` · `MP3` · `AAC` · `OGG` · `FLAC` · `OPUS` · `M4A` · `SPH`
-> 📖 [完整用户指南](doc/usage.md) · ⚙️ [配置项参考](doc/configuration.md)
+> 📖 [完整用户指南](https://github.com/Eps-Acoustic-Revolution-Lab/EAR-Audio-Preview/blob/main/doc/usage.md) · ⚙️ [配置项参考](https://github.com/Eps-Acoustic-Revolution-Lab/EAR-Audio-Preview/blob/main/doc/configuration.md)
 
 ---
 
@@ -82,13 +82,13 @@ code --install-extension Eps-Acoustic-Revolution-Lab.ear-audio-preview
 
 在共享时间轴上加载最多 **8 条音频轨**。单次拖拽即可在所有时频谱图上同步锁定同一时频区域；切换至 **Live Spec** 即可叠加显示不同颜色编码的频谱、立体声场与相位相关性曲线。支持将参考轨静音，同时在分析视图中保留其频谱曲线，方便边听边比对。
 
-![](assets/demos/multi-audio-workflow.gif)
+![](https://github.com/Eps-Acoustic-Revolution-Lab/EAR-Audio-Preview/raw/main/assets/demos/multi-audio-workflow.gif)
 
 ### 动态范围核查与监听环境校准
 
 从常规回放无缝切换至 LUFS、真峰值（True Peak）、基频与起音点分析。打开独立的 **Monitor（监听）** 面板，单独审听 `L / R / M / S` 通道或特定频段；加载 **AutoEq 耳机频响校准配置**并随时切换 Bypass，还原平直的参考级听感。
 
-![](assets/demos/single-audio-workflow.gif)
+![](https://github.com/Eps-Acoustic-Revolution-Lab/EAR-Audio-Preview/raw/main/assets/demos/single-audio-workflow.gif)
 
 ### 覆盖全流程的声学检视工具
 
@@ -119,7 +119,7 @@ code --install-extension Eps-Acoustic-Revolution-Lab.ear-audio-preview
 技术博客：[音频对齐为什么会失败](https://github.com/Eps-Acoustic-Revolution-Lab/EAR-Audio-Preview/blob/main/doc/blog/audio-alignment-dsp.md)（[English](https://github.com/Eps-Acoustic-Revolution-Lab/EAR-Audio-Preview/blob/main/doc/blog/audio-alignment-dsp.en.md)）。
 <!-- release:zh:end -->
 
-📜 [查看完整版本历史 (CHANGELOG)](CHANGELOG.md)
+📜 [查看完整版本历史 (CHANGELOG)](https://github.com/Eps-Acoustic-Revolution-Lab/EAR-Audio-Preview/blob/main/CHANGELOG.md)
 
 ---
 
@@ -140,7 +140,7 @@ code --install-extension Eps-Acoustic-Revolution-Lab.ear-audio-preview
 | **选区裁剪与多轨混音导出**<br><sub>支持重采样、多规格位深、混音并轨及写入耳机 EQ</sub> | **✅ 单轨 / 混音 / 写入 EQ** | 仅单文件选区 | — | 仅单文件选区 |
 | **分析与监听链路分离**<br><sub>频段 Solo 或加载校准 EQ 不会影响底层客观测量数据</sub> | **✅ 独立 DSP 链路** | — | — | — |
 
-✅ 支持 · — 对比版本未提供。详见 [版本与特性说明](doc/comparison.md#capabilities)。
+✅ 支持 · — 对比版本未提供。详见 [版本与特性说明](https://github.com/Eps-Acoustic-Revolution-Lab/EAR-Audio-Preview/blob/main/doc/comparison.zh-CN.md#能力对比)。
 
 > **分析与监听分离：** 你可以将参考轨静音，同时在分析视图中保留其频谱曲线。通道切换、频段 Solo 和耳机 EQ 仅改变你的*听感*，不会影响底层的客观*测量数据*。应用“对齐（Align）”后，所有测量将自动基于对齐后的会话副本进行计算。
 
@@ -150,7 +150,7 @@ code --install-extension Eps-Acoustic-Revolution-Lab.ear-audio-preview
 | --- | --- | --- |
 | 3 秒音频片段仅需约 **25 ms** 即可完成分析（对比 `audio-preview`）。 | 60 秒立体声文件仅需约 **0.25 s** 即可打开。 | 经打包优化后，下载体积由 **6.66 MiB 降至 3.44 MiB**。 |
 
-📊 [查看与 6 款音频插件的详细横评](doc/comparison.md) · 🔬 [性能基准测试详情](doc/comparison.md#repository-benchmark-suite)
+📊 [查看与 6 款音频插件的详细横评](https://github.com/Eps-Acoustic-Revolution-Lab/EAR-Audio-Preview/blob/main/doc/comparison.zh-CN.md) · 🔬 [性能基准测试详情](https://github.com/Eps-Acoustic-Revolution-Lab/EAR-Audio-Preview/blob/main/doc/comparison.zh-CN.md#仓库原有-benchmark-全套结果)
 
 ---
 
@@ -160,25 +160,25 @@ code --install-extension Eps-Acoustic-Revolution-Lab.ear-audio-preview
 
 传统的双线性插值会模糊音频的起音瞬态。EAR 的 **WebGL2 渲染器**对时间轴与频率轴采取差异化处理：在时间轴上保持锐利边界以还原瞬态起音（Attacks），在频率轴上进行平滑插值以呈现细腻的谐波线条。配合自适应 FFT 窗长与多种窗函数，兼顾短促瞬态与持续基音的清晰度。
 
-👉 [深入了解渲染器原理](doc/blog/anisotropic-spectrogram-rendering.en.md)
+👉 [深入了解渲染器原理](https://github.com/Eps-Acoustic-Revolution-Lab/EAR-Audio-Preview/blob/main/doc/blog/anisotropic-spectrogram-rendering.md)
 
 ### 🎹 契合人耳听感的频谱视图
 
 支持在标准 FFT 分析与受 PAZ 启发的 **恒定 Q 变换（CQT）** 视图之间随时切换。CQT 模式提供变 Q 值频带、高解析度低频细节、可调频谱倾斜度（Tilt）与峰值保持，配合可配置的释放时间（Release），让动态音频的频谱变化清晰易读。
 
-👉 [CQT 频谱仪设计手记](doc/blog/cqt-spectrum-analyzer.en.md)
+👉 [CQT 频谱仪设计手记](https://github.com/Eps-Acoustic-Revolution-Lab/EAR-Audio-Preview/blob/main/doc/blog/cqt-spectrum-analyzer.md)
 
-### ⏱️ 可逆的无损音频对齐
+### ⏱️ 可逆的音频对齐
 
 点击 **Align** 即可自动估算两个同采样率文件之间的整数样本延迟，确认后一键应用。算法默认在文件前 60 秒内搜索 `±2 秒` 的偏移窗口；应用后，回放、图表与导出均统一调用偏移后的会话副本，点击 **Reset** 即可随时还原至解码后的原始音频。（注：分数样本延迟与时钟漂移不在本功能处理范围内）。
 
-👉 [对齐算法设计、边界案例与消融实验](doc/blog/audio-alignment-dsp.en.md) · [使用说明](doc/audio-alignment.md)
+👉 [对齐算法设计、边界案例与消融实验](https://github.com/Eps-Acoustic-Revolution-Lab/EAR-Audio-Preview/blob/main/doc/blog/audio-alignment-dsp.md) · [使用说明](https://github.com/Eps-Acoustic-Revolution-Lab/EAR-Audio-Preview/blob/main/doc/audio-alignment.md)
 
 ### 🧭 共享时间轴与原采样率独立分析
 
 在多轨对比模式下，每条轨道均按其原始解码采样率独立计算，随后映射至统一的共享时间与频率坐标系，并采用统一的绝对 `dBFS` 色阶以便直接比对 STFT 能量。**音源分析**、**实时监听**与**音频导出**采用三条相互独立的 DSP 链路，调整监听方式不会影响客观测量结果；而应用时间对齐则会同步更新三条链路的会话音频源。
 
-📚 [文档索引](doc/README.md) · 🏗️ [系统架构](doc/knowledge-base/architecture.md) · 🎛️ [音频 DSP 链路](doc/knowledge-base/audio-dsp-chain.md) · 🔊 [实时监听实现](doc/live-monitoring.md)
+📚 [文档索引](https://github.com/Eps-Acoustic-Revolution-Lab/EAR-Audio-Preview/blob/main/doc/README.md) · 🏗️ [系统架构](https://github.com/Eps-Acoustic-Revolution-Lab/EAR-Audio-Preview/blob/main/doc/knowledge-base/architecture.md) · 🎛️ [音频 DSP 链路](https://github.com/Eps-Acoustic-Revolution-Lab/EAR-Audio-Preview/blob/main/doc/knowledge-base/audio-dsp-chain.md) · 🔊 [实时监听实现](https://github.com/Eps-Acoustic-Revolution-Lab/EAR-Audio-Preview/blob/main/doc/live-monitoring.md)
 
 ---
 
@@ -203,7 +203,7 @@ code --install-extension Eps-Acoustic-Revolution-Lab.ear-audio-preview
 - [ ] `A / B / C` 计权 RMS 测量。
 - [ ] 基于 Web Worker 的长音频文件后台 $F_0$ 与起音点分析。
 
-📋 [版本历史](CHANGELOG.md) · 💡 [提交功能建议](https://github.com/Eps-Acoustic-Revolution-Lab/EAR-Audio-Preview/issues)
+📋 [版本历史](https://github.com/Eps-Acoustic-Revolution-Lab/EAR-Audio-Preview/blob/main/CHANGELOG.md) · 💡 [提交功能建议](https://github.com/Eps-Acoustic-Revolution-Lab/EAR-Audio-Preview/issues)
 
 ---
 
@@ -212,7 +212,7 @@ code --install-extension Eps-Acoustic-Revolution-Lab.ear-audio-preview
 仅需几步即可在本地启动开发环境：
 
 ```sh
-git clone [https://github.com/Eps-Acoustic-Revolution-Lab/EAR-Audio-Preview.git](https://github.com/Eps-Acoustic-Revolution-Lab/EAR-Audio-Preview.git)
+git clone https://github.com/Eps-Acoustic-Revolution-Lab/EAR-Audio-Preview.git
 cd EAR-Audio-Preview
 npm ci
 npm run webpack-dev
@@ -222,7 +222,7 @@ npm run webpack-dev
 
 欢迎提交 Bug 报告、功能建议与 Pull Request！
 
-🐛 [提交 Issue](https://github.com/Eps-Acoustic-Revolution-Lab/EAR-Audio-Preview/issues) · 🛠️ [开发与发布指南](doc/development.md) · 🧪 [测试架构与指南](doc/testing.md)
+🐛 [提交 Issue](https://github.com/Eps-Acoustic-Revolution-Lab/EAR-Audio-Preview/issues) · 🛠️ [开发与发布指南](https://github.com/Eps-Acoustic-Revolution-Lab/EAR-Audio-Preview/blob/main/doc/development.md) · 🧪 [测试架构与指南](https://github.com/Eps-Acoustic-Revolution-Lab/EAR-Audio-Preview/blob/main/doc/testing.md)
 
 ---
 
@@ -234,4 +234,4 @@ npm run webpack-dev
 
 `Ooura` · `Essentia.js` · `twgl.js` · `wasm-audio-decoders` · `loudness-worklet` · `ebur128-wasm`
 
-本项目基于 **[MIT 协议](LICENSE)** 开源，第三方依赖库各自保留其原有开源协议。
+本项目基于 **[MIT 协议](https://github.com/Eps-Acoustic-Revolution-Lab/EAR-Audio-Preview/blob/main/LICENSE)** 开源，第三方依赖库各自保留其原有开源协议。

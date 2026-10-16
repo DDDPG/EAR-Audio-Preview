@@ -1,5 +1,5 @@
 const fs=require('node:fs'),path=require('node:path'),assert=require('node:assert/strict');
-const root='/Users/lertoon/vscProjects/EAR-Audio-Preview',req=require('node:module').createRequire(root+'/package.json'),ts=req('typescript');
+const root=require('node:path').resolve(__dirname, '../..'),req=require('node:module').createRequire(root+'/package.json'),ts=req('typescript');
 global.CustomEvent=class extends Event{constructor(type,opts={}){super(type);this.detail=opts.detail;}};
 global.requestAnimationFrame=()=>1;global.cancelAnimationFrame=()=>{};
 const all=[],worklets=[];

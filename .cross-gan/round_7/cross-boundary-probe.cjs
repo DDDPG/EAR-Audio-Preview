@@ -1,7 +1,7 @@
 const fs = require('fs');
 const vm = require('vm');
-const ts = require('/Users/lertoon/vscProjects/EAR-Audio-Preview/node_modules/typescript');
-const file='/Users/lertoon/vscProjects/EAR-Audio-Preview/src/webview/comparison/comparisonMeasurements.ts';
+const ts = require(require('node:path').resolve(__dirname, '../../node_modules/typescript'));
+const file=require('node:path').resolve(__dirname, '../../src/webview/comparison/comparisonMeasurements.ts');
 const code=ts.transpileModule(fs.readFileSync(file,'utf8'), {compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2020}}).outputText + '\nexports.probeSamplePosition=samplePosition;';
 const sandbox={exports:{},performance:{now:()=>0},setTimeout};
 vm.runInNewContext(code,sandbox,{filename:file});

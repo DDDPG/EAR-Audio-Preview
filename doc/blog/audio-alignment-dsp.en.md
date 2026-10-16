@@ -51,7 +51,7 @@ For a repeatable comparison, we pinned `audioscope v1.1.8` at commit `0cf17749` 
 3. Compute ordinary cross-correlation and use its largest positive peak as the coarse offset.
 4. Return to the original sample rate and search around that peak, using up to 65,536 samples. Again, choose the largest positive value.
 
-Our algorithm keeps mean removal and the coarse-to-fine structure. We changed channel preparation, window length, downsampling filters, spectral weighting, and peak selection. The research implementation is in `dsp-lab/operator.mjs` and `dsp-lab/fft.mjs`, available through the same [source guide](audio-alignment-research.md).
+Our algorithm keeps mean removal and the coarse-to-fine structure. We changed channel preparation, window length, downsampling filters, spectral weighting, and peak selection. The research implementation is in [operator.mjs](../research/audio-alignment/operator.mjs) and [fft.mjs](../research/audio-alignment/fft.mjs), available through the same [source guide](audio-alignment-research.md).
 
 ---
 
@@ -150,12 +150,12 @@ We also use an early-exit rule to avoid extra refinement. If the first candidate
 
 **The tests cover synthetic edge cases, unrelated signals with shared tonal structure, and transformed real audio. Development tests led to a correlation threshold of 0.75, after which the prototype passed every case in the held-out set.**
 
-The generator is `dsp-lab/corpus.mjs`; see [research sources](audio-alignment-research.md). Its base signal mixes enveloped filtered noise, a swept sine, and a fixed-frequency sine.
+The generator is [corpus.mjs](../research/audio-alignment/corpus.mjs); see [research sources](audio-alignment-research.md). Its base signal mixes enveloped filtered noise, a swept sine, and a fixed-frequency sine.
 
 - **Positive cases:** positive and negative integer delays, search boundaries, gain changes, DC offsets, added noise, polarity inversion, Side-only stereo, unequal channel energy, leading silence, and first-order low-pass filtering. Because low-pass filtering changes group delay and waveform shape, those cases allow a two-sample error; the other positive cases require an error of at most one sample.
 - **Negative cases:** silence, constant signals, periodic pure tones, and synthetic signals with different random noise but shared tonal structure or envelopes.
 
-In an early development run, **5 of 24 negative cases with shared tonal structure were accepted**, with correlations around `0.49–0.52` (`dsp-lab/results/dev-round-1.json`). Independent audio with similar spectral envelopes could still produce a moderate correlation. We raised the final acceptance threshold to `0.75`.
+In an early development run, **5 of 24 negative cases with shared tonal structure were accepted**, with correlations around `0.49–0.52` ([results/dev-round-1.json](../research/audio-alignment/results/dev-round-1.json)). Independent audio with similar spectral envelopes could still produce a moderate correlation. We raised the final acceptance threshold to `0.75`.
 
 After fixing the threshold, we tested 104 validation cases—72 positives and 32 negatives—and 16 real-audio variants. The latter came from four 48 kHz stereo recordings with added delay, gain changes, noise, or polarity inversion:
 
@@ -198,14 +198,14 @@ We define speedup as `baseline time / prototype time`; values above 1 mean the p
 
 ## 9. Five review rounds: edge cases and expensive loops
 
-**Five rounds of independently built counterexamples and fix checks found four edge-case bugs: missed sparse signals, gaps in window coverage, and failures caused by very quiet background noise. Loop unrolling also cut total runtime for long inputs by about 25%.** Full records are in `dsp-lab/.cross-gan/`; see [research source access](audio-alignment-research.md).
+**Five rounds of independently built counterexamples and fix checks found four edge-case bugs: missed sparse signals, gaps in window coverage, and failures caused by very quiet background noise. Loop unrolling also cut total runtime for long inputs by about 25%.** Full records are in [.cross-gan/](../research/audio-alignment/.cross-gan/); see [research source access](audio-alignment-research.md).
 
 ### Round 1: a spaced sampling probe missed sparse signals
 
 To detect silence quickly, the first version checked every 32nd sample. If a signal had nonzero values only at `i % 32 === 1`, the probe saw only zeros. Two identical, valid signals were rejected as silence:
 
 ```js
-import { estimateAlignment } from './dsp-lab/operator.mjs';
+import { estimateAlignment } from './doc/research/audio-alignment/operator.mjs';
 
 const x = new Float32Array(48000);
 let state = 7;
@@ -290,7 +290,7 @@ We used 3- and 30-second excerpts from four real recordings, rotating test order
 
 **Partial whitening adds frequency-domain work, but it can lower secondary peaks enough to trigger an early exit after the first candidate. That saves refinement of the other two candidates.**
 
-Removing whitening avoids square roots and division, so it seems as though it should always be faster. To explain the opposite results, we counted internal operations separately from the timing runs. The counters are in `dsp-lab/ablation/work-counts.mjs`; see [research sources](audio-alignment-research.md).
+Removing whitening avoids square roots and division, so it seems as though it should always be faster. To explain the opposite results, we counted internal operations separately from the timing runs. The counters are in [ablation/work-counts.mjs](../research/audio-alignment/ablation/work-counts.mjs); see [research sources](audio-alignment-research.md).
 
 1. **Work saved by the short window:** on 30-second inputs, the 4.5-second window uses a 32,768-point FFT and about 3.47 million FIR multiply-adds across both inputs. Full-length analysis raises those figures to a 131,072-point FFT and about 23.16 million multiply-adds.
 2. **Whitening and refinement counts:** with the full configuration, all eight recording/length combinations met the early-exit conditions after the first candidate: $\vert{}\rho_1\vert{} > 0.999$, with the second coarse peak below half the first. Each estimate needed only **97** time-domain correlation evaluations. Without whitening, 3-second A/C/D and 30-second A did not stop early. Searching all three candidates raised the count to **291**. These were exactly the combinations that became slower.
@@ -301,14 +301,14 @@ We then fixed the candidate count at one to remove the difference in early-exit 
 
 ## 13. Reproduce the experiments and find the code
 
-The research project has no external npm dependencies and requires Node.js 24 or later. The `dsp-lab/` files live in the fixed research snapshot; follow the [source access guide](audio-alignment-research.md) before running the commands below.
+The research project has no external npm dependencies and requires Node.js 24 or later. The complete research snapshot is included under `doc/research/audio-alignment/`. Run the commands below from the repository root; see the [source guide](audio-alignment-research.md) for input requirements.
 
 ### Reproduction steps
 
 Synthetic tests can run without local recordings. Real-audio timing needs four local files, `A.mp3` through `D.mp3`, converted by the preparation script into the test PCM format. The frozen ablation checks also require the original input hashes; replacement audio does not reproduce those recorded results.
 
 ```sh
-cd dsp-lab
+cd doc/research/audio-alignment
 
 # 1. Prepare local audio, then run the basic tests and evaluation.
 node prepare-audio.mjs /path/to/audio-directory
@@ -331,9 +331,9 @@ node ablation/run.mjs report > ablation/report.log
 
 ### Code and experiment records
 
-All paths below refer to the [frozen research snapshot](audio-alignment-research.md):
+The following links open files in the [frozen research snapshot](audio-alignment-research.md):
 
-- **Core implementation:** `dsp-lab/operator.mjs` and `dsp-lab/fft.mjs`.
-- **Tests:** `dsp-lab/operator.test.mjs`, `dsp-lab/review-regressions.test.mjs`, and `dsp-lab/corpus.mjs`.
-- **Development records:** `dsp-lab/results/dev-round-1.json`, `dsp-lab/results/final-verification.json`, and `dsp-lab/.cross-gan/`.
-- **Ablation data:** `dsp-lab/ablation/README.md`, `accuracy.json`, `timing.json`, and `summary.json` in that directory.
+- **Core implementation:** [operator.mjs](../research/audio-alignment/operator.mjs) and [fft.mjs](../research/audio-alignment/fft.mjs).
+- **Tests:** [operator.test.mjs](../research/audio-alignment/operator.test.mjs), [review-regressions.test.mjs](../research/audio-alignment/review-regressions.test.mjs), and [corpus.mjs](../research/audio-alignment/corpus.mjs).
+- **Development records:** [results/dev-round-1.json](../research/audio-alignment/results/dev-round-1.json), [results/final-verification.json](../research/audio-alignment/results/final-verification.json), and [.cross-gan/](../research/audio-alignment/.cross-gan/).
+- **Ablation data:** [ablation/README.md](../research/audio-alignment/ablation/README.md), [accuracy.json](../research/audio-alignment/ablation/accuracy.json), [timing.json](../research/audio-alignment/ablation/timing.json), and [summary.json](../research/audio-alignment/ablation/summary.json).

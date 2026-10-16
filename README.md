@@ -14,13 +14,13 @@
     <a href="https://github.com/Eps-Acoustic-Revolution-Lab/EAR-Audio-Preview/actions/workflows/ci.yml">
       <img src="https://img.shields.io/github/actions/workflow/status/Eps-Acoustic-Revolution-Lab/EAR-Audio-Preview/ci.yml?style=for-the-badge&label=CI%20Build&logo=github" alt="CI" />
     </a>
-    <a href="LICENSE">
+    <a href="https://github.com/Eps-Acoustic-Revolution-Lab/EAR-Audio-Preview/blob/main/LICENSE">
       <img src="https://img.shields.io/badge/License-MIT-F59E0B.svg?style=for-the-badge" alt="License: MIT" />
     </a>
   </p>
 
   <p>
-    <strong>English</strong> · <a href="README.zh-CN.md">简体中文</a>
+    <strong>English</strong> · <a href="https://github.com/Eps-Acoustic-Revolution-Lab/EAR-Audio-Preview/blob/main/README.zh-CN.md">简体中文</a>
   </p>
 
   <p>
@@ -36,7 +36,7 @@
 <br>
 
 > [!TIP]
-> **Engineering Deep Dives:** Curious about how we achieve real-time DSP inside an editor? Explore our [Technical Blog](doc/blog/), covering everything from PAZ-inspired CQT spectrum design to anisotropic WebGL2 spectrogram rendering.
+> **Engineering Deep Dives:** Curious about how we achieve real-time DSP inside an editor? Explore our [Technical Blog](https://github.com/Eps-Acoustic-Revolution-Lab/EAR-Audio-Preview/blob/main/doc/blog/), covering everything from PAZ-inspired CQT spectrum design to anisotropic WebGL2 spectrogram rendering.
 
 ---
 
@@ -48,7 +48,7 @@
 
 <div align="center">
 
-`🎛️ 8-Track Parallel A/B/X` · `🌈 WebGL2 STFT + CQT` · `📊 LUFS / LRA / True Peak` · `🎧 AutoEq Headphone Calibration` · `🔒 100% Local & Private`
+`🎛️ 8-Track Parallel Comparison` · `🌈 WebGL2 STFT + CQT` · `📊 LUFS / LRA / True Peak` · `🎧 AutoEq Headphone Calibration` · `🔒 Local Audio Processing`
 
 </div>
 
@@ -69,12 +69,12 @@ code --install-extension Eps-Acoustic-Revolution-Lab.ear-audio-preview
 
 1. **Open & Audition:** Click any audio file and press Space to play. *(If another extension takes over, right-click the tab and select **Reopen Editor With… → Audio Preview**).*
 2. **Inspect the Details:** Drag across the **STFT** plot to zoom into micro-transients. Switch to **Live Spec** for real-time frequency & stereo-field telemetry, or open **Loudness** to compute LUFS, pitch ($F_0$), and onset timelines.
-3. **Multi-Track Comparison:** Select **2 to 8 mono/stereo files** in the Explorer, right-click, and choose **EAR Audio: Compare Files**. Play them in lockstep and toggle per-track mute/focus to A/B test with zero latency.
+3. **Multi-Track Comparison:** Select **2 to 8 mono/stereo files** in the Explorer, right-click, and choose **EAR Audio: Compare Files**. Play them in lockstep and toggle per-track mute/focus to compare what you hear.
 
 > [!NOTE]
 > **Pro Controls & Formats:** An interactive onboarding guide greets you on first launch (replay anytime via ? in the toolbar). In comparison view, use Ctrl/Cmd+Drag to zoom time, Shift+Drag to zoom frequency, and **Double-Click** to reset. Right-click any plot for layout and fullscreen toggles.
 > **Supported Formats:** `WAV` · `MP3` · `AAC` · `OGG` · `FLAC` · `OPUS` · `M4A` · `SPH`
-> 📖 [Full User Guide](https://www.google.com/search?q=doc/usage.md) · ⚙️ [Settings Reference](https://www.google.com/search?q=doc/configuration.md)
+> 📖 [Full User Guide](https://github.com/Eps-Acoustic-Revolution-Lab/EAR-Audio-Preview/blob/main/doc/usage.md) · ⚙️ [Settings Reference](https://github.com/Eps-Acoustic-Revolution-Lab/EAR-Audio-Preview/blob/main/doc/configuration.md)
 
 ---
 
@@ -84,14 +84,14 @@ code --install-extension Eps-Acoustic-Revolution-Lab.ear-audio-preview
 
 Load up to **eight recordings** on a unified timeline. Drag once to inspect the exact same time-frequency region across every spectrogram simultaneously. Switch to **Live Spec** for color-coded spectrum overlays, goniometer stereo fields, and phase-correlation telemetry. Need a visual baseline? Keep your reference track visible in analysis while muting it during playback.
 
-![](assets/demos/multi-audio-workflow.gif)
+![](https://github.com/Eps-Acoustic-Revolution-Lab/EAR-Audio-Preview/raw/main/assets/demos/multi-audio-workflow.gif)
 
 
 ### Check Dynamics & Calibrate Your Listening
 
 Seamlessly transition from casual playback to rigorous broadcast-grade diagnostics—measuring integrated LUFS, True Peak, fundamental frequency ($F_0$), and onset curves. Open the floating **Monitor** panel to isolate `L / R / M / S` channels or solo specific frequency bands, then apply an **AutoEq headphone correction profile** and toggle bypass to hear your audio on a flat reference response.
 
-![](assets/demos/single-audio-workflow.gif)
+![](https://github.com/Eps-Acoustic-Revolution-Lab/EAR-Audio-Preview/raw/main/assets/demos/single-audio-workflow.gif)
 
 ### A Complete Acoustic Inspection Suite
 
@@ -123,7 +123,7 @@ Seamlessly transition from casual playback to rigorous broadcast-grade diagnosti
 Read the technical blog: [Why Audio Alignment Fails](https://github.com/Eps-Acoustic-Revolution-Lab/EAR-Audio-Preview/blob/main/doc/blog/audio-alignment-dsp.en.md) ([中文](https://github.com/Eps-Acoustic-Revolution-Lab/EAR-Audio-Preview/blob/main/doc/blog/audio-alignment-dsp.md)).
 <!-- release:en:end -->
 
-📜 [Explore Full Release History (CHANGELOG)](CHANGELOG.md)
+📜 [Explore Full Release History (CHANGELOG)](https://github.com/Eps-Acoustic-Revolution-Lab/EAR-Audio-Preview/blob/main/CHANGELOG.md)
 
 ---
 
@@ -153,7 +153,7 @@ Most editor plugins stop at basic waveform playback. **EAR Audio Preview** is bu
 | --- | --- | --- |
 | Analyzes a 3-second clip in **~25 ms** vs. `audio-preview`. | Opens a 60-second stereo file in **~0.25 s** (6.5× speedup). | Optimized bundle shrunk from **6.66 MiB → 3.44 MiB**. |
 
-📊 [Full Benchmark against 6 Audio Extensions](https://www.google.com/search?q=doc/comparison.md) · 🔬 [Benchmark Methodology & Suite](https://www.google.com/search?q=doc/comparison.md%23repository-benchmark-suite)
+📊 [Full Benchmark against 6 Audio Extensions](https://github.com/Eps-Acoustic-Revolution-Lab/EAR-Audio-Preview/blob/main/doc/comparison.md) · 🔬 [Benchmark Methodology & Suite](https://github.com/Eps-Acoustic-Revolution-Lab/EAR-Audio-Preview/blob/main/doc/comparison.md#repository-benchmark-suite)
 
 ---
 
@@ -163,25 +163,25 @@ Most editor plugins stop at basic waveform playback. **EAR Audio Preview** is bu
 
 Standard bilinear filtering blurs sharp percussive attacks. EAR's custom **WebGL2 renderer** decouples the axes: preserving crisp, unblurred temporal transients along the X-axis while applying smooth interpolation along the frequency Y-axis to keep harmonic contours clean. Combined with adaptive FFT sizing and multiple window functions, you get uncompromising clarity for both micro-events and sustained tones.
 
-👉 [Read: How the Anisotropic Renderer Works](https://www.google.com/search?q=doc/blog/anisotropic-spectrogram-rendering.en.md)
+👉 [Read: How the Anisotropic Renderer Works](https://github.com/Eps-Acoustic-Revolution-Lab/EAR-Audio-Preview/blob/main/doc/blog/anisotropic-spectrogram-rendering.en.md)
 
 ### 🎹 A Spectrum Analyzer Tuned for Human Hearing
 
 Switch effortlessly between standard linear/log FFT and a **PAZ-inspired Constant-Q Transform (CQT)** analyzer featuring variable-Q filter banks, deep low-frequency resolution, adjustable spectral tilt, and configurable ballistic release—ensuring the visual display stays musical and readable in real time.
 
-👉 [Read: CQT Spectrum Analyzer Design Notes](https://www.google.com/search?q=doc/blog/cqt-spectrum-analyzer.en.md)
+👉 [Read: CQT Spectrum Analyzer Design Notes](https://github.com/Eps-Acoustic-Revolution-Lab/EAR-Audio-Preview/blob/main/doc/blog/cqt-spectrum-analyzer.en.md)
 
-### ⏱️ Non-Destructive, Reversible Audio Alignment
+### ⏱️ Reversible Audio Alignment
 
 Click **Align** to automatically estimate integer-sample delay and polarity flips between two same-rate recordings (searching a `±2s` window across the first `60s`). Once applied, playback, visual plots, and exports all reference the shifted session buffer—while a single click on **Reset** restores the bit-exact original. *(Note: Fractional subsample delays and clock drift are intentionally out of scope).*
 
-👉 [Read: Alignment DSP, Edge Cases & Ablation](https://www.google.com/search?q=doc/blog/audio-alignment-dsp.en.md) · [Usage Guide](https://www.google.com/search?q=doc/audio-alignment.md)
+👉 [Read: Alignment DSP, Edge Cases & Ablation](https://github.com/Eps-Acoustic-Revolution-Lab/EAR-Audio-Preview/blob/main/doc/blog/audio-alignment-dsp.en.md) · [Usage Guide](https://github.com/Eps-Acoustic-Revolution-Lab/EAR-Audio-Preview/blob/main/doc/audio-alignment.md)
 
 ### 🧭 Shared Timeline, Source-Aware DSP Architecture
 
 In multi-file comparison, each track is analyzed natively at its decoded sample rate and projected onto unified time and frequency coordinates with a shared absolute `dBFS` color scale. Because **Source Analysis**, **Live Monitoring**, and **Export** run on isolated DSP buses, tweaking your monitoring EQ or soloing a frequency band never alters your objective meters.
 
-📚 [Documentation Index](https://www.google.com/search?q=doc/README.md) · 🏗️ [System Architecture](https://www.google.com/search?q=doc/knowledge-base/architecture.md) · 🎛️ [Audio DSP Chain](https://www.google.com/search?q=doc/knowledge-base/audio-dsp-chain.md) · 🔊 [Live Monitoring Internals](https://www.google.com/search?q=doc/live-monitoring.md)
+📚 [Documentation Index](https://github.com/Eps-Acoustic-Revolution-Lab/EAR-Audio-Preview/blob/main/doc/README.md) · 🏗️ [System Architecture](https://github.com/Eps-Acoustic-Revolution-Lab/EAR-Audio-Preview/blob/main/doc/knowledge-base/architecture.md) · 🎛️ [Audio DSP Chain](https://github.com/Eps-Acoustic-Revolution-Lab/EAR-Audio-Preview/blob/main/doc/knowledge-base/audio-dsp-chain.md) · 🔊 [Live Monitoring Internals](https://github.com/Eps-Acoustic-Revolution-Lab/EAR-Audio-Preview/blob/main/doc/live-monitoring.md)
 
 ---
 
@@ -206,7 +206,7 @@ In multi-file comparison, each track is analyzed natively at its decoded sample 
 * [ ] **Weighted Metering:** Standard `A / B / C` frequency-weighted RMS measurements.
 * [ ] **Background Worker Pipeline:** Off-thread Web Worker $F_0$ and onset computation for long-form recordings.
 
-📋 [Release History](CHANGELOG.md) · 💡 [Request a Feature](https://github.com/Eps-Acoustic-Revolution-Lab/EAR-Audio-Preview/issues)
+📋 [Release History](https://github.com/Eps-Acoustic-Revolution-Lab/EAR-Audio-Preview/blob/main/CHANGELOG.md) · 💡 [Request a Feature](https://github.com/Eps-Acoustic-Revolution-Lab/EAR-Audio-Preview/issues)
 
 ---
 
@@ -215,7 +215,7 @@ In multi-file comparison, each track is analyzed natively at its decoded sample 
 Get a local development build running in seconds:
 
 ```sh
-git clone [https://github.com/Eps-Acoustic-Revolution-Lab/EAR-Audio-Preview.git](https://github.com/Eps-Acoustic-Revolution-Lab/EAR-Audio-Preview.git)
+git clone https://github.com/Eps-Acoustic-Revolution-Lab/EAR-Audio-Preview.git
 cd EAR-Audio-Preview
 npm ci
 npm run webpack-dev
@@ -228,7 +228,7 @@ npm run webpack-dev
 
 We warmly welcome bug reports, DSP discussions, and Pull Requests!
 
-🐛 [Open an Issue](https://github.com/Eps-Acoustic-Revolution-Lab/EAR-Audio-Preview/issues) · 🛠️ [Development & Release Guide](https://www.google.com/search?q=doc/development.md) · 🧪 [Test Architecture & Guide](https://www.google.com/search?q=doc/testing.md)
+🐛 [Open an Issue](https://github.com/Eps-Acoustic-Revolution-Lab/EAR-Audio-Preview/issues) · 🛠️ [Development & Release Guide](https://github.com/Eps-Acoustic-Revolution-Lab/EAR-Audio-Preview/blob/main/doc/development.md) · 🧪 [Test Architecture & Guide](https://github.com/Eps-Acoustic-Revolution-Lab/EAR-Audio-Preview/blob/main/doc/testing.md)
 
 ---
 
@@ -240,4 +240,4 @@ Crafted with passion by **[Eps Acoustic Revolution Lab](https://github.com/Eps-A
 
 Powered by `Ooura` · `Essentia.js` · `twgl.js` · `wasm-audio-decoders` · `loudness-worklet` · `ebur128-wasm`.
 
-Released under the **[MIT License](https://www.google.com/search?q=LICENSE)**. All third-party libraries retain their respective licenses.
+Released under the **[MIT License](https://github.com/Eps-Acoustic-Revolution-Lab/EAR-Audio-Preview/blob/main/LICENSE)**. All third-party libraries retain their respective licenses.

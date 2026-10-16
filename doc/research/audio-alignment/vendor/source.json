@@ -1,0 +1,10 @@
+{
+  "repository": "https://github.com/yongsooim/audioscope-vsix",
+  "commit": "0cf177499eb3d80a06e37be6efa13ed4ac10c25e",
+  "version": "1.1.8",
+  "files": {
+    "audioscope-compareMath.ts": "c1a0c69e6a47d48b4d2d479a4681bab865cd375ba3ee1daf29820d1dafec5796",
+    "audioscope-compare-math.test.mts": "5a8ae96ee41236aac2936bc164a14bccaa7555bc32b0bbee40fc24fb8811cf1a",
+    "audioscope-LICENSE": "1a7fe9300efa66ceb3cb302bc437a37c3051604086c9c4e2a7c91d30390f8422"
+  }
+}

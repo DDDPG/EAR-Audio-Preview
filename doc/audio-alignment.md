@@ -38,8 +38,8 @@ npm test -- --maxWorkers=2 --workerIdleMemoryLimit=512MB
 npx tsc --noEmit
 npx webpack --mode production --devtool hidden-source-map
 
-# The frozen research checkout and original local PCM must be available.
-node bench/alignmentParity.mjs /path/to/research/dsp-lab /tmp/alignment-parity.json
+# The original local PCM must be available for the frozen real-audio cases.
+node bench/alignmentParity.mjs doc/research/audio-alignment /tmp/alignment-parity.json
 
 # Set this variable if Playwright is installed outside this repository.
 EAR_PLAYWRIGHT_MODULE=/path/to/playwright node bench/alignmentBrowserAcceptance.mjs /tmp/alignment-acceptance

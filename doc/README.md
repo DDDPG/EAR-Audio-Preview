@@ -30,6 +30,6 @@
 - [Module map / 模块目录](knowledge-base/module-map.md)
 - [Package audit / 安装包审计](package-audit.md)
 
-`metrics/` contains recorded verification results, not fresh measurements of every later revision. `releases/` is the canonical source for README release highlights. Research experiment sources remain in their pinned research commit; see [access instructions](blog/audio-alignment-research.md).
+`metrics/` contains recorded verification results, not fresh measurements of every later revision. `releases/` is the canonical source for README release highlights. The complete pinned research snapshot is included under `research/audio-alignment/`; see [access instructions](blog/audio-alignment-research.md).
 
-`metrics/` 保存历史验证结果，不表示之后每次修改都重新实测；`releases/` 是 README 更新摘要的统一来源。研究实验源码保留在固定研究提交中，参见[获取说明](blog/audio-alignment-research.md)。
+`metrics/` 保存历史验证结果，不表示之后每次修改都重新实测；`releases/` 是 README 更新摘要的统一来源。完整研究快照保存在 `research/audio-alignment/`，参见[获取说明](blog/audio-alignment-research.md)。

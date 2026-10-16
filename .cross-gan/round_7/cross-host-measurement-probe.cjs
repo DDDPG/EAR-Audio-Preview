@@ -1,5 +1,5 @@
 const fs=require('node:fs'),assert=require('node:assert/strict'),path=require('node:path');
-const root='/Users/lertoon/vscProjects/EAR-Audio-Preview',req=require('node:module').createRequire(root+'/package.json'),ts=req('typescript');
+const root=require('node:path').resolve(__dirname, '../..'),req=require('node:module').createRequire(root+'/package.json'),ts=req('typescript');
 function compile(file,imports=()=>({}),extra=''){const m={exports:{}};const code=ts.transpileModule(fs.readFileSync(file,'utf8')+extra,{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2020,esModuleInterop:true}}).outputText;new Function('require','module','exports',code)(imports,m,m.exports);return m.exports;}
 const measurements=compile(root+'/src/webview/comparison/comparisonMeasurements.ts',undefined,'\nexports.probeSamplePosition = samplePosition;');
 let seed=59,integerCases=0,fractionCases=0;

@@ -1,0 +1,10 @@
+A 3 1.06 7.17 6.76 true
+A 30 1.83 30.12 16.45 true
+B 3 1.03 6.88 6.71 true
+B 30 1.86 30.02 16.11 true
+C 3 1.02 6.98 6.84 true
+C 30 1.85 30.02 16.21 true
+D 3 1.05 6.85 6.50 true
+D 30 1.88 29.89 15.92 true
+(node:18153) ExperimentalWarning: stripTypeScriptTypes is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)

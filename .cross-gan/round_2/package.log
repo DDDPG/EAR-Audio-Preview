@@ -105,4 +105,4 @@ ear-audio-preview-0.6.0.vsix
          ├─ extension.js [2.53 MB]
          └─ extension.js.LICENSE.txt [1.69 KB]
 
- DONE  Packaged: /Users/lertoon/vscProjects/EAR-Audio-Preview/ear-audio-preview-0.6.0.vsix (21 files, 6.66 MB)
+ DONE  Packaged: <workspace>/ear-audio-preview-0.6.0.vsix (21 files, 6.66 MB)

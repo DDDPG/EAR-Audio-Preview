@@ -2,7 +2,7 @@
 
 [English overview](../README.md) · [中文概览](../README.zh-CN.md)
 
-Measured on **2026-10-16**, against the local production VSIX before and after this packaging pass. Both contain the four-file comparison implementation. The working tree is uncommitted; this is not a statement about the current Marketplace download.
+Measured on **2026-10-16**, against the local production VSIX before and after this packaging pass. These are historical packaging measurements from the comparison implementation at that time, not measurements of the current release archive or Marketplace download.
 
 ## Result
 

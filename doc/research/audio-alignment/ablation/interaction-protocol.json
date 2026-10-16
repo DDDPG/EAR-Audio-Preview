@@ -1,0 +1,8 @@
+{
+  "postHoc": true,
+  "reason": "Main timing showed mixed whitening cost. Counters showed whitening changes early-exit/candidate count. Quantify whitening x multiCandidate speed interaction without changing source or accuracy definitions.",
+  "masks": [15,13,11,9], "files": ["A","B","C","D"], "seconds": [3,30],
+  "warmups": 4, "repeats": 21, "passes": 2,
+  "order": "rotate and reverse per block; GC once before whole block, outside all measurements",
+  "constraints": "Exploratory timing follow-up; no thresholds or sources tuned. Same audio/delay/gain as main timing."
+}

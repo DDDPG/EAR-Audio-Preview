@@ -24,17 +24,15 @@ beforeEach(() => {
     .mockResolvedValue({ ok: true, text: async () => "worker" });
   URL.createObjectURL = jest.fn(() => "blob:alignment");
   URL.revokeObjectURL = jest.fn();
-  globalThis.Worker = jest
-    .fn()
-    .mockImplementation(
-      () =>
-        (worker = {
-          onmessage: undefined,
-          onerror: undefined,
-          postMessage: jest.fn(),
-          terminate: jest.fn(),
-        }),
-    );
+  globalThis.Worker = jest.fn().mockImplementation(
+    () =>
+      (worker = {
+        onmessage: undefined,
+        onerror: undefined,
+        postMessage: jest.fn(),
+        terminate: jest.fn(),
+      }),
+  );
 });
 afterEach(() => {
   globalThis.AudioBuffer = nativeBuffer;

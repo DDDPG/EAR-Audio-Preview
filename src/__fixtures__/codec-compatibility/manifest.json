@@ -1,0 +1,95 @@
+{
+  "description": "Self-generated codec fixtures; no external audio or copyrighted recordings.",
+  "source": {
+    "sampleRate": 48000,
+    "samplesPerChannel": 10000,
+    "format": "signed 16-bit PCM",
+    "formula": "round(10000 * sin(2 * pi * frequency * sample / 48000))",
+    "leftFrequencyHz": 440,
+    "rightFrequencyHz": 880
+  },
+  "encoder": {
+    "package": "@ffmpeg-installer/darwin-arm64@4.1.5",
+    "version": "FFmpeg 4.4",
+    "vorbis": "-c:a libvorbis -b:a 96k",
+    "opus": "-c:a libopus -b:a 96k",
+    "note": "Encoder is a temporary fixture-generation tool, not a project dependency. The Opus-container .ogg files are byte-for-byte copies of the .opus files."
+  },
+  "files": [
+    {
+      "name": "reference-mono-48000.ogg",
+      "codec": "vorbis",
+      "channels": 1
+    },
+    {
+      "name": "reference-stereo-48000.ogg",
+      "codec": "vorbis",
+      "channels": 2
+    },
+    {
+      "name": "reference-mono-48000.opus",
+      "codec": "opus",
+      "channels": 1
+    },
+    {
+      "name": "reference-stereo-48000.opus",
+      "codec": "opus",
+      "channels": 2
+    },
+    {
+      "name": "reference-mono-48000-opus-container.ogg",
+      "codec": "opus",
+      "channels": 1
+    },
+    {
+      "name": "reference-stereo-48000-opus-container.ogg",
+      "codec": "opus",
+      "channels": 2
+    },
+    {
+      "name": "reference-stereo-48000-12s.ogg",
+      "codec": "vorbis",
+      "channels": 2,
+      "samplesPerChannel": 576000
+    },
+    {
+      "name": "reference-stereo-48000-12s.opus",
+      "codec": "opus",
+      "channels": 2,
+      "samplesPerChannel": 576000
+    },
+    {
+      "name": "reference-stereo-48000.m4a",
+      "codec": "aac-lc",
+      "channels": 2,
+      "sourceSamplesPerChannel": 10000,
+      "notes": "FFmpeg 4.4 AAC 128k. Presentation uses the container edit list; millisecond edit duration can be rounded."
+    },
+    {
+      "name": "reference-mono-48000.aac",
+      "codec": "aac-lc-adts",
+      "channels": 1,
+      "sourceSamplesPerChannel": 10000,
+      "notes": "FFmpeg 4.4 AAC 96k. ADTS contains no gapless priming or padding metadata."
+    },
+    {
+      "name": "pcm16-mono.sph",
+      "codec": "nist-pcm16-le",
+      "channels": 1,
+      "sampleRate": 16000,
+      "samplesPerChannel": 1600
+    }
+  ],
+  "chainedFixtures": [
+    {
+      "name": "reference-chained-mono-48000.opus",
+      "description": "Two mono source streams, second serial changed and Ogg CRCs recomputed",
+      "samplesPerChannel": 20000,
+      "channels": 1
+    },
+    {
+      "name": "reference-chained-format-change.opus",
+      "description": "Mono source followed by stereo source, second serial changed and Ogg CRCs recomputed; must be rejected"
+    }
+  ]
+}

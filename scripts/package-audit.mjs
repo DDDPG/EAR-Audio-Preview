@@ -62,9 +62,16 @@ for (const entry of [
   "dist/audioPreview.js",
   "dist/comparison.js",
   "dist/comparisonWorker.js",
+  "dist/aacDecoderWorker.js",
   "dist/comparisonLoudnessWorker.js",
   "dist/loudness.worklet.js",
   "dist/web/extension.js",
+  "third-party/aac/NOTICE.txt",
+  "third-party/aac/ics.js",
+  "third-party/aac/LGPL-3.0.txt",
+  "third-party/aac/GPL-3.0.txt",
+  "third-party/aac/aac-0.1.3.tgz",
+  "third-party/aac/av-0.4.9.tgz",
 ]) {
   assert.ok(
     files.some((f) => f.path === `extension/${entry}`),

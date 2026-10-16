@@ -1,3 +1,8 @@
+import {
+  sequentialOggOpusStreams,
+  singleOggOpusLength,
+  trimSingleOggOpus,
+} from "./oggOpusLength";
 import { IAudioDecoder } from "./audioDecoderInterface";
 import { parseFlacBitsPerSample } from "../utils/audioFileBitDepth";
 
@@ -31,6 +36,58 @@ async function decodeAndFree(
   }
 }
 
+async function decodeOggOpus(data: Uint8Array): Promise<WasmDecoderResult> {
+  const streams = sequentialOggOpusStreams(data) ?? [data];
+  // eslint-disable-next-line @typescript-eslint/naming-convention -- External codec export.
+  const { OggOpusDecoderWebWorker } = await import("ogg-opus-decoder");
+  const decoded: WasmDecoderResult[] = [];
+  for (const stream of streams) {
+    const decoder = new OggOpusDecoderWebWorker();
+    const result = trimSingleOggOpus(
+      stream,
+      await decodeAndFree(decoder as unknown as DecoderWorker, stream, () =>
+        decoder.decodeFile(stream),
+      ),
+    );
+    const expected = singleOggOpusLength(
+      stream,
+      result.sampleRate,
+      result.channelData.length,
+    );
+    if (expected !== null && result.samplesDecoded !== expected) {
+      throw new Error("Incomplete Ogg Opus stream");
+    }
+    if (
+      decoded.length &&
+      (result.sampleRate !== decoded[0].sampleRate ||
+        result.channelData.length !== decoded[0].channelData.length)
+    ) {
+      throw new Error(
+        "Chained Ogg Opus streams must have matching sample rates and channels",
+      );
+    }
+    decoded.push(result);
+  }
+  if (decoded.length === 1) {
+    return decoded[0];
+  }
+  const samplesDecoded = decoded.reduce(
+    (sum, result) => sum + result.samplesDecoded,
+    0,
+  );
+  const channelData = decoded[0].channelData.map(
+    () => new Float32Array(samplesDecoded),
+  );
+  let offset = 0;
+  for (const result of decoded) {
+    result.channelData.forEach((channel, index) =>
+      channelData[index].set(channel, offset),
+    );
+    offset += result.samplesDecoded;
+  }
+  return { sampleRate: decoded[0].sampleRate, samplesDecoded, channelData };
+}
+
 /* eslint-disable @typescript-eslint/naming-convention */
 async function decodeWithWasm(
   data: Uint8Array,
@@ -58,18 +115,15 @@ async function decodeWithWasm(
           "@wasm-audio-decoders/ogg-vorbis"
         );
         const decoder = new OggVorbisDecoderWebWorker();
-        return await decodeAndFree(decoder, data);
+        return await decodeAndFree(decoder, data, () =>
+          decoder.decodeFile(data),
+        );
       } catch {
-        const { OggOpusDecoderWebWorker } = await import("ogg-opus-decoder");
-        const decoder = new OggOpusDecoderWebWorker();
-        // ogg-opus-decoder's decode signature varies; cast to access it
-        return await decodeAndFree(decoder as unknown as DecoderWorker, data);
+        return await decodeOggOpus(data);
       }
     }
     if (lowerExt === "opus") {
-      const { OggOpusDecoderWebWorker } = await import("ogg-opus-decoder");
-      const decoder = new OggOpusDecoderWebWorker();
-      return await decodeAndFree(decoder as unknown as DecoderWorker, data);
+      return await decodeOggOpus(data);
     }
   } catch {
     return null;

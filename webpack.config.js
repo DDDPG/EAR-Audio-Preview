@@ -54,7 +54,7 @@ const extensionConfig = {
 const webviewConfig = {
   target: "web",
 
-  entry: {audioPreview: "./src/webview/index.ts", comparison: "./src/webview/comparison/index.ts", comparisonWorker: "./src/webview/comparison/analysisWorker.ts"},
+  entry: {audioPreview: "./src/webview/index.ts", comparison: "./src/webview/comparison/index.ts", comparisonWorker: "./src/webview/comparison/analysisWorker.ts", aacDecoderWorker: "./src/webview/decoders/aacDecoderWorker.ts"},
   output: {
     path: path.resolve(__dirname, "dist"),
     filename: "[name].js",
@@ -68,6 +68,10 @@ const webviewConfig = {
     },
     alias: {
       ...essentiaAlias,
+      "./ics$": path.resolve(__dirname, "third-party/aac/ics.js"),
+      "av$": path.resolve(__dirname, "scripts/aurora-runtime.cjs"),
+      "./sources/node/http$": path.resolve(__dirname, "scripts/aurora-local-source.cjs"),
+      "./sources/node/file$": path.resolve(__dirname, "scripts/aurora-local-source.cjs"),
       fs: false,
       crypto: false,
       "process/browser": require.resolve("process/browser.js"),

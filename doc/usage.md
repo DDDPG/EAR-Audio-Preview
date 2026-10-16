@@ -4,7 +4,7 @@
 
 ## Open audio
 
-Open WAV, MP3, AAC, OGG, FLAC, OPUS, M4A or SPH in VS Code. If a different editor opens, use **Reopen Editor With… → Audio Preview**. Format registration does not guarantee all codec variants; WASM decoders are preferred and browser fallback depends on the environment.
+Open WAV, MP3, AAC, OGG, FLAC, OPUS, M4A or SPH in VS Code. If a different editor opens, use **Reopen Editor With… → Audio Preview**. Local decoders handle MP3, FLAC, Ogg Vorbis/Opus, AAC-LC in ADTS or M4A, and uncompressed signed PCM in NIST SPHERE. Other AAC profiles and M4A codecs still depend on browser support; compressed SPHERE variants are not supported. No external conversion tool is required for the locally supported formats.
 
 Optional editor associations:
 

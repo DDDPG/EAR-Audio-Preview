@@ -43,6 +43,12 @@ test.each(["mp3", "flac", "ogg", "opus"])(
     await decoder.decodeAsync();
     expect(decoder.samples).toEqual(pcm.channelData);
     expect(decoder.sampleRate).toBe(48000);
+    if (ext === "mp3") {
+      expect(workers[ext].decode).toHaveBeenCalledTimes(1);
+    } else {
+      expect(workers[ext].decodeFile).toHaveBeenCalledTimes(1);
+      expect(workers[ext].decode).not.toHaveBeenCalled();
+    }
     expect(workers[ext].free).toHaveBeenCalledTimes(1);
     expect(workers[ext].terminate).not.toHaveBeenCalled();
   },
@@ -51,7 +57,7 @@ test.each(["mp3", "flac", "ogg", "opus"])(
 test.each(["mp3", "flac", "opus"])(
   "%s terminates a failed worker so native fallback can continue",
   async (ext) => {
-    workers[ext][ext === "flac" ? "decodeFile" : "decode"].mockRejectedValue(
+    workers[ext][ext === "mp3" ? "decode" : "decodeFile"].mockRejectedValue(
       new Error("invalid audio"),
     );
     // Cleanup must not wait for a broken worker to answer a free() message.
@@ -64,8 +70,8 @@ test.each(["mp3", "flac", "opus"])(
 );
 
 test("failed Vorbis worker terminates before Opus fallback", async () => {
-  workers.ogg.decode.mockRejectedValue(new Error("not Vorbis"));
-  workers.opus.decode.mockImplementation(async () => {
+  workers.ogg.decodeFile.mockRejectedValue(new Error("not Vorbis"));
+  workers.opus.decodeFile.mockImplementation(async () => {
     expect(workers.ogg.terminate).toHaveBeenCalledTimes(1);
     return pcm;
   });

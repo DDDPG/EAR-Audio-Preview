@@ -1,0 +1,37 @@
+AAC decoding components
+
+AAC.js 0.1.3 (https://github.com/audiocogs/aac.js)
+Copyright (c) 2012 Official.fm Labs; author Devon Govett.
+Licensed under LGPL-3.0-or-later. See LGPL-3.0.txt and GPL-3.0.txt.
+
+Aurora.js 0.4.9 (https://github.com/audiocogs/aurora.js)
+Author Devon Govett. The upstream package declares the MIT license.
+The exact unmodified npm sources are supplied as av-0.4.9.tgz.
+
+The unmodified corresponding library sources are included in this directory:
+  aac-0.1.3.tgz
+  av-0.4.9.tgz
+
+The extension's AAC integration code is in src/webview/decoders/ and
+scripts/aurora-runtime.cjs in the EAR Audio Preview source repository.
+The integration runs in the separate dist/aacDecoderWorker.js bundle.
+
+To rebuild or replace the linked libraries, check out the extension sources,
+run npm ci, replace the relevant pinned npm package (or unpack a modified
+source archive under node_modules/aac or node_modules/av), then run
+npm run vsix. Replacing dist/aacDecoderWorker.js in an unpacked local
+extension installation also replaces the AAC implementation independently
+of the UI bundles. Local installations can be repackaged with vsce.
+There is no signature or runtime check preventing library replacement.
+
+The extension itself retains its existing license.
+
+Local compatibility correction
+
+ics.js retains the upstream LGPL-3.0-or-later notice and contains the
+corresponding source for one PNS random-number generator correction.
+The generator now uses (Math.imul(state, 1664525) + 1013904223) | 0
+instead of multiplying state by the sum of those constants. The old
+expression collapses to zero and can produce non-finite PCM samples.
+The Webpack AAC worker resolves this module to the included patched source.
+All other AAC.js source modules remain unchanged.

@@ -331,7 +331,7 @@ node ablation/run.mjs report > ablation/report.log
 
 ### 源码与实验数据索引
 
-* **核心实现**：[suspicious link removed] ｜ [suspicious link removed]
-* **测试套件**：[suspicious link removed] ｜ [suspicious link removed] ｜ [suspicious link removed]
-* **迭代记录**：[suspicious link removed] ｜ [suspicious link removed] ｜ [suspicious link removed]
-* **消融数据**：[suspicious link removed] ｜ [suspicious link removed] ｜ [suspicious link removed] ｜ [suspicious link removed]
+* **核心实现**：[operator.mjs](../research/audio-alignment/operator.mjs) ｜ [fft.mjs](../research/audio-alignment/fft.mjs)
+* **测试套件**：[operator.test.mjs](../research/audio-alignment/operator.test.mjs) ｜ [review-regressions.test.mjs](../research/audio-alignment/review-regressions.test.mjs) ｜ [corpus.mjs](../research/audio-alignment/corpus.mjs)
+* **迭代记录**：[results/dev-round-1.json](../research/audio-alignment/results/dev-round-1.json) ｜ [.cross-gan/checkpoint.json](../research/audio-alignment/.cross-gan/checkpoint.json) ｜ [results/final-verification.json](../research/audio-alignment/results/final-verification.json)
+* **消融数据**：[ablation/accuracy.json](../research/audio-alignment/ablation/accuracy.json) ｜ [ablation/timing.json](../research/audio-alignment/ablation/timing.json) ｜ [ablation/summary.json](../research/audio-alignment/ablation/summary.json) ｜ [ablation/verification.json](../research/audio-alignment/ablation/verification.json)

@@ -1,0 +1,19 @@
+{
+  "sourceCommit": "e1d8526736c04f1932c62edeaa8a85a7ef7ba41e",
+  "sourceDirectory": "dsp-lab",
+  "scope": "Selected unchanged research files referenced by the Chinese blog index; not a standalone runnable research checkout.",
+  "sha256": {
+    ".cross-gan/checkpoint.json": "377f4da3807283e440b8c28bad4099b4227522e33978768b3c36b81d2d262e94",
+    "ablation/accuracy.json": "142b33b01e95d813b4130fa462b305beb91e464bcd4a52de70bc73a5d1ebbdae",
+    "ablation/summary.json": "67f6f94bf9d75c04a5478e5c1f8d28f92489bf7e644ca311f677660abf8ad4c3",
+    "ablation/timing.json": "af9801cf55f0169c5665b8d731a473d06d2d9beca0768ef47117ab088edc83f9",
+    "ablation/verification.json": "4b5f833ac766aaa64a6ba63c9c40f3107c46bcf9c410cd0ca4dfe2a5ae467288",
+    "corpus.mjs": "ff29f23ce67bfa26591f88e5480be541422f5a51a15766df75f9417710b3b78b",
+    "fft.mjs": "11a8302bc003500cdde9d0de27e0eb8947a9fa0b7bd1ad46af7fcf2addac81c9",
+    "operator.mjs": "64589229f83f940cdd8ede655ae81c4372891140cce7077775f321e3b2b7c0ed",
+    "operator.test.mjs": "fbb1db7014d23b788a941070bb6d63ed7099077ce04cebf231b39182e3dd6730",
+    "results/dev-round-1.json": "d8b51fcb12a743ee7e88840b07121da305307fc73b3613ea5348c8f1275df2e4",
+    "results/final-verification.json": "50458ee39f644535112f4f08181fed992ee79dc38801d235cd2edbb4686101ad",
+    "review-regressions.test.mjs": "d54e6e55a9e562532fa4f955c211e57be89f69b2f29898a9f0a684ad2259921a"
+  }
+}

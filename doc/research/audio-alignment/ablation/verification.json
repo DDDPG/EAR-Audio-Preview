@@ -1,0 +1,17 @@
+{
+  "passed": true,
+  "timestamp": "2026-10-16T16:08:40.125Z",
+  "accuracyCases": 318,
+  "variants": 18,
+  "fullEquivalentCases": 318,
+  "timingBlocks": 504,
+  "interactionRows": 16,
+  "postHocInstrumentedOutputsEqual": true,
+  "allFrozenSourcesAndAudioUnchanged": true,
+  "runnerSha256": "986b63b66430aafffaf6a5cfc54dbdec82ae0028af3b529a4a3dbca41d1fa21a",
+  "summarySha256": "67f6f94bf9d75c04a5478e5c1f8d28f92489bf7e644ca311f677660abf8ad4c3",
+  "accuracySha256": "142b33b01e95d813b4130fa462b305beb91e464bcd4a52de70bc73a5d1ebbdae",
+  "timingSha256": "af9801cf55f0169c5665b8d731a473d06d2d9beca0768ef47117ab088edc83f9",
+  "interactionSha256": "03dff4afcde4a2c7052f401e30f80e4df36f30ca3f1025ba1f47b5dfb35cf421",
+  "workCountsSha256": "e6cdf4b0a879fcf97c325a791982930d2dc8736a174b258dd491eb747ce6f0f4"
+}

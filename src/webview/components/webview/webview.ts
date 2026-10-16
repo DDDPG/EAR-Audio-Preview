@@ -446,7 +446,7 @@ export default class WebView extends Component {
           if (msg.data.loudnessWorkletUri) {
             setLoudnessWorkletModuleUrl(msg.data.loudnessWorkletUri);
           }
-          console.log(msg.data);
+
           this._postMessage({
             type: WebviewMessageType.DATA,
             data: { start: 0, end: 500000 },
@@ -458,7 +458,6 @@ export default class WebView extends Component {
         if (ExtMessageType.isDATA(msg)) {
           // init fileData after receiving first data
           if (!this._fileData) {
-            console.log("start receiving data");
             this._fileData = new Uint8Array(msg.data.wholeLength);
             this._visualLoadProgress = 0;
             this._primeLoadRingGeometry();
@@ -466,9 +465,6 @@ export default class WebView extends Component {
           }
 
           // set fileData
-          console.log(
-            `received data: ${msg.data.start} ~ ${msg.data.end} / ${msg.data.wholeLength}`,
-          );
           const samples = new Uint8Array(msg.data.samples);
           this._fileData.set(samples, msg.data.start);
 
@@ -483,7 +479,6 @@ export default class WebView extends Component {
             break;
           }
 
-          console.log("finish receiving data");
           this._setReceiveLoadProgress(
             msg.data.wholeLength,
             msg.data.wholeLength,
@@ -539,7 +534,6 @@ export default class WebView extends Component {
     const sourceBitDepth = decoder.bitDepth;
 
     // Phase 1: show header info immediately (fast path)
-    console.log("read header info");
     decoder.readAudioInfo();
     const infoTableComponent = new InfoTableComponent(
       this._metaFab?.audioMetaSelector ?? "#audioMeta",
@@ -554,10 +548,8 @@ export default class WebView extends Component {
     );
 
     // decode audio data
-    console.log("decode");
     decoder.decode();
 
-    console.log("show other ui");
     infoTableComponent.showAdditionalInfo(decoder.duration);
     this._disposables.push(infoTableComponent);
 

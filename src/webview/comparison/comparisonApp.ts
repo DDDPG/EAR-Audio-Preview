@@ -2210,7 +2210,7 @@ export class ComparisonApp {
         const title = document.createElement("h3");
         title.textContent = `Residual vs ${reference.name}`;
         const hint = document.createElement("p");
-        hint.textContent = `${range.start.toFixed(2)}–${range.end.toFixed(2)} s · current RMS matching gains · same timeline positions, no automatic alignment.`;
+        hint.textContent = `${range.start.toFixed(2)}–${range.end.toFixed(2)} s · current RMS matching gains · current session audio; apply Align separately to estimate a delay.`;
         const table = document.createElement("table");
         for (const [i, row] of [
           ["File", "RMS dBFS", "Peak dBFS", "Relative dB"],

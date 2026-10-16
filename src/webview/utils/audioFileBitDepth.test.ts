@@ -1,7 +1,9 @@
 import {
   parseFlacBitsPerSample,
   parseWavBitsPerSample,
+  parseWavSampleRate,
 } from "./audioFileBitDepth";
+import { encodeToWav } from "../encoder";
 
 /** Minimal RIFF/WAVE with 24-bit PCM `fmt` then empty `data` chunk. */
 function minimalWav24(): Uint8Array {
@@ -9,7 +11,7 @@ function minimalWav24(): Uint8Array {
   const dv = new DataView(u8.buffer);
   dv.setUint32(0, 0x46464952, true); // RIFF
   dv.setUint32(4, 36, true); // size - 8
-  dv.setUint32(8, 0x57415645, true); // WAVE
+  u8.set([87, 65, 86, 69], 8); // literal WAVE; do not duplicate parser magic
   dv.setUint32(12, 0x20746d66, true); // 'fmt '
   dv.setUint32(16, 16, true); // fmt body size
   dv.setUint16(20, 1, true); // PCM
@@ -24,6 +26,15 @@ function minimalWav24(): Uint8Array {
 }
 
 describe("audioFileBitDepth", () => {
+  test.each([44100, 48000, 96000])(
+    "reads a real encoder WAV at %i Hz without reversed magic bytes",
+    (rate) => {
+      const wav = encodeToWav([new Float32Array(10)], rate, 1, 24);
+      expect(String.fromCharCode(...wav.subarray(8, 12))).toBe("WAVE");
+      expect(parseWavSampleRate(wav)).toBe(rate);
+      expect(parseWavBitsPerSample(wav)).toBe(24);
+    },
+  );
   test("parseWavBitsPerSample reads wBitsPerSample", () => {
     expect(parseWavBitsPerSample(minimalWav24())).toBe(24);
   });

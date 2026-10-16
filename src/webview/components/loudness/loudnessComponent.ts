@@ -1,5 +1,6 @@
 import "./loudnessComponent.css";
 import Component from "../../component";
+import { ContextMenu } from "../contextMenu/contextMenu";
 import LoudnessService from "../../services/loudnessService";
 import PlayerService from "../../services/playerService";
 import AnalyzeSettingsService from "../../services/analyzeSettingsService";
@@ -84,10 +85,15 @@ export default class LoudnessComponent extends Component {
     };
 
     this._addEventlistener(expandBtn, "click", openOverlay);
+    const contextMenu = this._register(new ContextMenu());
 
+    this._addEventlistener(inlineMount, "contextmenu", (ev: MouseEvent) => {
+      contextMenu.open(ev, [{ label: "Fullscreen", action: openOverlay }]);
+    });
     this._addEventlistener(this._overlay, "contextmenu", (ev: MouseEvent) => {
-      ev.preventDefault();
-      closeOverlay();
+      contextMenu.open(ev, [
+        { label: "Exit fullscreen", action: closeOverlay },
+      ]);
     });
 
     this._addEventlistener(document, "keydown", (e: KeyboardEvent) => {

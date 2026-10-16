@@ -1,4 +1,4 @@
-import type PlayerService from "../services/playerService";
+import type { LivePlayback } from "../components/liveMeters/liveAnalysisInput";
 import {
   applyMonitoringToTimeDomain,
   type LiveMonitoringMode,
@@ -42,7 +42,7 @@ export function ensureStereoFrameBuffers(
  * Returns null when the live graph is inactive or playback is paused.
  */
 export function fetchMonitoringStereoFrame(
-  playerService: PlayerService,
+  playerService: LivePlayback,
   liveMonitoringMode: LiveMonitoringMode,
   buffers: StereoFrameBuffers,
 ): MonitoringStereoFrame | null {

@@ -97,6 +97,9 @@ export class WasmDecoder implements IAudioDecoder {
   get sampleRate() {
     return this._result?.sampleRate ?? 0;
   }
+  get sourceSampleRate() {
+    return this.sampleRate || null;
+  }
   get duration() {
     const sr = this.sampleRate;
     return sr > 0 ? (this._result?.samplesDecoded ?? 0) / sr : 0;

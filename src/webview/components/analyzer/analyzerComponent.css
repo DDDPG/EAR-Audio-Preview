@@ -1,5 +1,6 @@
 .analyzerComponent {
   border: 1px solid var(--edge-line);
+  border-radius: var(--r-3);
 }
 
 .analyzeResultBox {

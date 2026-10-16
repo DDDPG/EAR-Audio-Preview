@@ -16,8 +16,9 @@ import { loadLoudnessWorkletModule } from "../utils/loudnessWorkletLoader";
 import type { EditListenMode } from "./editExportSettingsService";
 import type HeadphoneEqSettingsService from "./headphoneEqSettingsService";
 import { createEqChain, disposeEqNodes } from "./headphoneEqService";
+import type { ITransport } from "./transportInterface";
 
-export default class PlayerService extends Service {
+export default class PlayerService extends Service implements ITransport {
   private _audioContext: AudioContext;
   private _audioBuffer: AudioBuffer;
   private _playerSettingsService: PlayerSettingsService;

@@ -18,6 +18,7 @@ import {
   renderExportWav,
   resolveExportSettings,
 } from "../../services/audioExportService";
+import { WavFormatControls, chooseOverload } from "./wavFormatControls";
 import EarEqSegmentedControl from "../../utils/earEqSegmentedControl";
 
 function formatTime(sec: number): string {
@@ -88,6 +89,7 @@ export default class EditExportComponent extends Component {
   private _listenSegment: EarEqSegmentedControl;
   private _destinationSegment: EarEqSegmentedControl;
   private _busy = false;
+  private readonly _format = new WavFormatControls();
 
   constructor(
     componentRootSelector: string,
@@ -98,6 +100,7 @@ export default class EditExportComponent extends Component {
     analyzeSettingsService: AnalyzeSettingsService,
     playerService: PlayerService,
     postMessage: PostMessage,
+    private readonly _sourceBitDepth: number | null = null,
   ) {
     super();
     this._audioBuffer = audioBuffer;
@@ -196,7 +199,7 @@ export default class EditExportComponent extends Component {
               </div>
               <div class="panelRow panelRow--stacked">
                 <div class="editExport__segmentSlot js-editExport-destinations"></div>
-                <p class="panelRow__hint">16-bit PCM WAV export. Decoders are import-only.</p>
+                <p class="panelRow__hint">WAV export. Sample rate and encoding are configurable.</p>
               </div>
               <div class="panelRow panelRow--stacked">
                 <button type="button" class="panelAction editExport__exportBtn js-editExport-export">Export WAV</button>
@@ -245,6 +248,7 @@ export default class EditExportComponent extends Component {
     ) as HTMLInputElement;
 
     this._filenameInput.value = defaultExportFilename();
+    this._filenameInput.closest(".panelGroup").prepend(this._format.element);
     const s = this._editExportSettings;
     this._channelSegment = this._mountSegment(
       root.querySelector(".js-editExport-channelModes") as HTMLElement,
@@ -664,7 +668,17 @@ export default class EditExportComponent extends Component {
     this._setBusy(true, "Rendering export…");
     try {
       const settings = this._resolvedSettings();
-      const samples = await renderExportWav(this._audioBuffer, settings);
+      const samples = await renderExportWav(
+        this._audioBuffer,
+        settings,
+        this._sourceBitDepth,
+        this._format.value,
+        chooseOverload,
+      );
+      if (!samples) {
+        this._setBusy(false, "Export cancelled");
+        return;
+      }
       const filename = sanitizeFilename(this._filenameInput.value);
       this._postMessage({
         type: WebviewMessageType.WRITE_WAV,

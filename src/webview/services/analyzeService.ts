@@ -50,6 +50,9 @@ function spectrogramDataColorCss(t: number): string {
 }
 
 export default class AnalyzeService extends Service {
+  private static _nextSourceId = 0;
+  private readonly _sourceId = ++AnalyzeService._nextSourceId;
+  private _melFilterCache: { key: string; bank: number[][] } | null = null;
   private _audioBuffer: AudioBuffer;
   private _essentiaHostClient: EssentiaHostClient | null = null;
 
@@ -69,6 +72,7 @@ export default class AnalyzeService extends Service {
   }
 
   public dispose(): void {
+    this._melFilterCache = null;
     this._essentiaHostClient = null;
     super.dispose();
   }
@@ -118,6 +122,7 @@ export default class AnalyzeService extends Service {
         this._audioBuffer.sampleRate,
         this._audioBuffer.length,
         wire,
+        this._sourceId,
       )
     ) {
       return;
@@ -128,6 +133,7 @@ export default class AnalyzeService extends Service {
       data,
       this._audioBuffer.sampleRate,
       wire,
+      this._sourceId,
     );
   }
 
@@ -145,6 +151,7 @@ export default class AnalyzeService extends Service {
         this._audioBuffer.sampleRate,
         this._audioBuffer.length,
         wire,
+        this._sourceId,
       ) ?? null
     );
   }
@@ -461,39 +468,53 @@ export default class AnalyzeService extends Service {
     minFreqIndex: number,
     maxFreqIndex: number,
   ) {
-    const minMel = AnalyzeService.hzToMel(
-      (minFreqIndex * sampleRate) / spectrum.length,
-    );
-    const maxMel = AnalyzeService.hzToMel(
-      (maxFreqIndex * sampleRate) / spectrum.length,
-    );
-    const melStep = (maxMel - minMel) / (numFilters + 1);
+    // One entry bounds memory and invalidates on every parameter affecting
+    // the weights. Keep the accumulation order (including zero weights).
+    const key = [
+      numFilters,
+      spectrum.length,
+      sampleRate,
+      minFreqIndex,
+      maxFreqIndex,
+    ].join(",");
+    let filterBank =
+      this._melFilterCache?.key === key ? this._melFilterCache.bank : null;
+    if (!filterBank) {
+      const minMel = AnalyzeService.hzToMel(
+        (minFreqIndex * sampleRate) / spectrum.length,
+      );
+      const maxMel = AnalyzeService.hzToMel(
+        (maxFreqIndex * sampleRate) / spectrum.length,
+      );
+      const melStep = (maxMel - minMel) / (numFilters + 1);
 
-    const filterBank: number[][] = [];
-    for (let i = 0; i < numFilters; i++) {
-      const filter: number[] = [];
-      const startMel = minMel + i * melStep;
-      const centerMel = minMel + (i + 1) * melStep;
-      const endMel = minMel + (i + 2) * melStep;
-      const startIndex = Math.round(
-        (AnalyzeService.melToHz(startMel) * spectrum.length) / sampleRate,
-      );
-      const centerIndex = Math.round(
-        (AnalyzeService.melToHz(centerMel) * spectrum.length) / sampleRate,
-      );
-      const endIndex = Math.round(
-        (AnalyzeService.melToHz(endMel) * spectrum.length) / sampleRate,
-      );
-      for (let j = 0; j < spectrum.length; j++) {
-        if (j < startIndex || j > endIndex) {
-          filter.push(0);
-        } else if (j < centerIndex) {
-          filter.push((j - startIndex) / (centerIndex - startIndex));
-        } else {
-          filter.push((endIndex - j) / (endIndex - centerIndex));
+      filterBank = [];
+      for (let i = 0; i < numFilters; i++) {
+        const filter: number[] = [];
+        const startMel = minMel + i * melStep;
+        const centerMel = minMel + (i + 1) * melStep;
+        const endMel = minMel + (i + 2) * melStep;
+        const startIndex = Math.round(
+          (AnalyzeService.melToHz(startMel) * spectrum.length) / sampleRate,
+        );
+        const centerIndex = Math.round(
+          (AnalyzeService.melToHz(centerMel) * spectrum.length) / sampleRate,
+        );
+        const endIndex = Math.round(
+          (AnalyzeService.melToHz(endMel) * spectrum.length) / sampleRate,
+        );
+        for (let j = 0; j < spectrum.length; j++) {
+          if (j < startIndex || j > endIndex) {
+            filter.push(0);
+          } else if (j < centerIndex) {
+            filter.push((j - startIndex) / (centerIndex - startIndex));
+          } else {
+            filter.push((endIndex - j) / (endIndex - centerIndex));
+          }
         }
+        filterBank.push(filter);
       }
-      filterBank.push(filter);
+      this._melFilterCache = { key, bank: filterBank };
     }
 
     const melSpectrum: number[] = [];

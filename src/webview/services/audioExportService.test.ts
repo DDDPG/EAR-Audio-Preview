@@ -3,7 +3,9 @@ import {
   applyOfflineFilters,
   bufferRms,
   extractRegion,
+  renderExportWav,
 } from "./audioExportService";
+import EditExportSettingsService from "./editExportSettingsService";
 import { createAudioContext, MockAudioBuffer } from "../../__mocks__/helper";
 
 function makeBuffer(
@@ -28,6 +30,30 @@ function makeBuffer(
 }
 
 describe("audioExportService", () => {
+  test.each([8, 16, 24, 32, null])(
+    "export carries source depth %s through rendering",
+    async (depth) => {
+      const buffer = makeBuffer(48000, 2, 0.01, () => 1 / 8388608);
+      const settings = EditExportSettingsService.create(buffer).toProps();
+      const wav = await renderExportWav(
+        buffer,
+        { ...settings, enableHpf: false, enableLpf: false },
+        depth,
+      );
+      const view = new DataView(wav.buffer);
+      const expectedDepth = depth ?? 32;
+      expect(view.getUint16(34, true)).toBe(expectedDepth);
+      expect(view.getUint16(22, true)).toBe(2);
+      expect(view.getUint32(24, true)).toBe(48000);
+      expect(view.getUint32(28, true)).toBe((48000 * 2 * expectedDepth) / 8);
+      if (depth === 24) {
+        expect(wav[44]).toBe(1);
+      }
+      if (expectedDepth === 32) {
+        expect(view.getFloat32(58, true)).toBe(1 / 8388608);
+      }
+    },
+  );
   beforeAll(() => {
     const ctx = createAudioContext(44100);
     globalThis.AudioContext = function mockAudioContext() {

@@ -1,6 +1,7 @@
 import { EventType } from "../../events";
 import Component from "../../component";
-import PlayerService from "../../services/playerService";
+import type { LivePlayback, LiveComparisonInput } from "./liveAnalysisInput";
+import { traceColor } from "./liveAnalysisInput";
 import AnalyzeSettingsService from "../../services/analyzeSettingsService";
 import { quinticBSplineSmooth } from "../../utils/quinticBSpline";
 import { akimaResample } from "../../utils/modifiedAkima";
@@ -57,13 +58,17 @@ export default class PhaseCorrelationSpectrumComponent extends Component {
   private _container: HTMLElement;
   private _canvas: HTMLCanvasElement;
   private _readoutEl: HTMLElement;
-  private _playerService: PlayerService;
+  private _playerService: LivePlayback;
   private _analyzeSettingsService: AnalyzeSettingsService;
   private _rafId = 0;
   private _frameBuffers: StereoFrameBuffers = ensureStereoFrameBuffers(2048);
   private _engine = new FrequencyPhaseCorrelationEngine();
   private _emaRho = new Float32Array(logPoints);
   private _broadbandRho = 0;
+  private _comparisonTraces = new Map<
+    string,
+    { revision: string; stamp: number; rho: Float32Array; broadband: number }
+  >();
   private _hoverCx = 0;
   private _hoverCy = 0;
   private _hoverClientX = 0;
@@ -71,7 +76,9 @@ export default class PhaseCorrelationSpectrumComponent extends Component {
   private _hoverActive = false;
 
   private _shouldRunRaf(): boolean {
-    return this._playerService.isPlaying || this._hoverActive;
+    return (
+      (!this._comparison && this._playerService.isPlaying) || this._hoverActive
+    );
   }
 
   private _syncRafToState() {
@@ -84,8 +91,9 @@ export default class PhaseCorrelationSpectrumComponent extends Component {
 
   constructor(
     containerEl: HTMLElement,
-    playerService: PlayerService,
+    playerService: LivePlayback,
     analyzeSettingsService: AnalyzeSettingsService,
+    private readonly _comparison?: LiveComparisonInput,
   ) {
     super();
     this._playerService = playerService;
@@ -140,6 +148,14 @@ export default class PhaseCorrelationSpectrumComponent extends Component {
       },
     );
 
+    if (_comparison) {
+      const redraw = () => {
+        if (containerEl.clientWidth > 0 && containerEl.clientHeight > 0) {
+          this._draw();
+        }
+      };
+      this._register({ dispose: _comparison.subscribe(redraw) });
+    }
     this._syncRafToState();
   }
 
@@ -199,11 +215,14 @@ export default class PhaseCorrelationSpectrumComponent extends Component {
       padT + ((corrMax - c) / (corrMax - corrMin)) * drawH;
     const zeroY = corrToY(0);
 
-    const frame = fetchMonitoringStereoFrame(
-      this._playerService,
-      this._analyzeSettingsService.liveMonitoringMode,
-      this._frameBuffers,
-    );
+    const snapshot = this._comparison?.snapshot();
+    const frame = this._comparison
+      ? null
+      : fetchMonitoringStereoFrame(
+          this._playerService,
+          this._analyzeSettingsService.liveMonitoringMode,
+          this._frameBuffers,
+        );
 
     if (frame) {
       const { srcXs, srcYs, broadbandRho } = this._engine.computeRhoPerBin(
@@ -282,18 +301,21 @@ export default class PhaseCorrelationSpectrumComponent extends Component {
       );
     }
 
-    const drawCurves = () => {
+    const drawCurves = (
+      rhoValues = this._emaRho,
+      color: string | null = null,
+    ) => {
       const xAt = (i: number) => freqToCanvasX(logFreqs[i], padL, drawW);
-      const yAt = (i: number) => corrToY(clampCorr(this._emaRho[i]));
+      const yAt = (i: number) => corrToY(clampCorr(rhoValues[i]));
 
       const inPhaseFill = ctx.createLinearGradient(0, padT, 0, zeroY);
-      inPhaseFill.addColorStop(0, inPhaseFillTop);
-      inPhaseFill.addColorStop(1, inPhaseFillMid);
+      inPhaseFill.addColorStop(0, traceColor(color, 0.24, inPhaseFillTop));
+      inPhaseFill.addColorStop(1, traceColor(color, 0.08, inPhaseFillMid));
       ctx.fillStyle = inPhaseFill;
       ctx.beginPath();
       ctx.moveTo(xAt(0), zeroY);
       for (let i = 0; i < logPoints; i++) {
-        const rho = clampCorr(this._emaRho[i]);
+        const rho = clampCorr(rhoValues[i]);
         ctx.lineTo(xAt(i), corrToY(Math.max(0, rho)));
       }
       ctx.lineTo(xAt(logPoints - 1), zeroY);
@@ -301,13 +323,13 @@ export default class PhaseCorrelationSpectrumComponent extends Component {
       ctx.fill();
 
       const antiPhaseFill = ctx.createLinearGradient(0, zeroY, 0, padT + drawH);
-      antiPhaseFill.addColorStop(0, antiPhaseFillMid);
-      antiPhaseFill.addColorStop(1, antiPhaseFillDeep);
+      antiPhaseFill.addColorStop(0, traceColor(color, 0.08, antiPhaseFillMid));
+      antiPhaseFill.addColorStop(1, traceColor(color, 0.24, antiPhaseFillDeep));
       ctx.fillStyle = antiPhaseFill;
       ctx.beginPath();
       ctx.moveTo(xAt(0), zeroY);
       for (let i = 0; i < logPoints; i++) {
-        const rho = clampCorr(this._emaRho[i]);
+        const rho = clampCorr(rhoValues[i]);
         ctx.lineTo(xAt(i), corrToY(Math.min(0, rho)));
       }
       ctx.lineTo(xAt(logPoints - 1), zeroY);
@@ -317,8 +339,8 @@ export default class PhaseCorrelationSpectrumComponent extends Component {
       ctx.lineWidth = 1.25 * dpr;
       ctx.lineJoin = "round";
       for (let i = 1; i < logPoints; i++) {
-        const r0 = clampCorr(this._emaRho[i - 1]);
-        const r1 = clampCorr(this._emaRho[i]);
+        const r0 = clampCorr(rhoValues[i - 1]);
+        const r1 = clampCorr(rhoValues[i]);
         const x0 = xAt(i - 1);
         const x1 = xAt(i);
         const y0 = yAt(i - 1);
@@ -331,7 +353,11 @@ export default class PhaseCorrelationSpectrumComponent extends Component {
           ey: number,
           positive: boolean,
         ) => {
-          ctx.strokeStyle = positive ? inPhaseStroke : antiPhaseStroke;
+          ctx.strokeStyle = traceColor(
+            color,
+            positive ? 0.95 : 0.65,
+            positive ? inPhaseStroke : antiPhaseStroke,
+          );
           ctx.beginPath();
           ctx.moveTo(sx, sy);
           ctx.lineTo(ex, ey);
@@ -351,7 +377,79 @@ export default class PhaseCorrelationSpectrumComponent extends Component {
       }
     };
 
-    drawCurves();
+    if (snapshot) {
+      const ids = new Set(snapshot.tracks.map((track) => track.id));
+      for (const id of this._comparisonTraces.keys()) {
+        if (!ids.has(id)) {
+          this._comparisonTraces.delete(id);
+        }
+      }
+      for (const track of snapshot.tracks) {
+        let state = this._comparisonTraces.get(track.id);
+        if (!state || state.revision !== track.revision) {
+          state = {
+            revision: track.revision,
+            stamp: -1,
+            rho: new Float32Array(logPoints),
+            broadband: 0,
+          };
+          this._comparisonTraces.set(track.id, state);
+        }
+        if (state.stamp !== snapshot.revision) {
+          let count = 0;
+          while (
+            count < track.phaseRho.length &&
+            track.frequencies[count] <= track.sampleRate / 2
+          ) {
+            count++;
+          }
+          if (count >= 2) {
+            const inst = quinticBSplineSmooth(
+              akimaResample(
+                track.frequencies.subarray(0, count),
+                Float32Array.from(track.phaseRho.subarray(0, count), clampCorr),
+                logFreqs,
+              ),
+            );
+            const decay = emaDecayFromReleaseDbPerSec(
+              this._analyzeSettingsService.liveSpectrumReleaseDbPerSec,
+            );
+            for (let i = 0; i < logPoints; i++) {
+              state.rho[i] =
+                decay * state.rho[i] + (1 - decay) * clampCorr(inst[i]);
+            }
+            state.broadband =
+              decay * state.broadband + (1 - decay) * track.broadbandRho;
+          }
+          state.stamp = snapshot.revision;
+        }
+        ctx.save();
+        ctx.beginPath();
+        const low = freqToCanvasX(
+          Math.max(freqMin, track.frequencies[0]),
+          padL,
+          drawW,
+        );
+        ctx.rect(
+          low,
+          padT,
+          Math.max(
+            0,
+            freqToCanvasX(
+              Math.min(freqMax, track.sampleRate / 2),
+              padL,
+              drawW,
+            ) - low,
+          ),
+          drawH,
+        );
+        ctx.clip();
+        drawCurves(state.rho, track.color);
+        ctx.restore();
+      }
+    } else if (!this._comparison) {
+      drawCurves();
+    }
 
     const barX = padL + drawW + 14 * dpr;
     const barW = 6 * dpr;
@@ -359,11 +457,35 @@ export default class PhaseCorrelationSpectrumComponent extends Component {
     const barH = drawH;
     ctx.fillStyle = "rgba(255,255,255,0.08)";
     ctx.fillRect(barX, barTop, barW, barH);
-    const bb = clampCorr(this._broadbandRho);
-    const fillTop = bb >= 0 ? corrToY(bb) : zeroY;
-    const fillBottom = bb >= 0 ? zeroY : corrToY(bb);
-    ctx.fillStyle = bb >= 0 ? "rgba(0, 180, 216, 0.75)" : antiPhaseStroke;
-    ctx.fillRect(barX, fillTop, barW, fillBottom - fillTop);
+    const drawBar = (
+      value: number,
+      x: number,
+      width: number,
+      color: string | null = null,
+    ) => {
+      const bb = clampCorr(value),
+        top = bb >= 0 ? corrToY(bb) : zeroY,
+        bottom = bb >= 0 ? zeroY : corrToY(bb);
+      ctx.fillStyle = traceColor(
+        color,
+        0.85,
+        bb >= 0 ? "rgba(0, 180, 216, 0.75)" : antiPhaseStroke,
+      );
+      ctx.fillRect(x, top, width, bottom - top);
+    };
+    if (snapshot) {
+      const width = barW / Math.max(1, snapshot.tracks.length);
+      snapshot.tracks.forEach((track, i) =>
+        drawBar(
+          this._comparisonTraces.get(track.id)?.broadband ?? 0,
+          barX + i * width,
+          width,
+          track.color,
+        ),
+      );
+    } else {
+      drawBar(this._broadbandRho, barX, barW);
+    }
 
     if (this._hoverActive && drawW > 0 && drawH > 0) {
       const mx = this._hoverCx;
@@ -387,6 +509,16 @@ export default class PhaseCorrelationSpectrumComponent extends Component {
       const rhoStr = lerpF32(this._emaRho, li, 0).toFixed(2);
       this._readoutEl.style.visibility = "visible";
       this._readoutEl.innerHTML = `${fmtHzLive(hz)}<br>ρ ${rhoStr}<br>Y ${corrY.toFixed(2)}<br>BB ${this._broadbandRho.toFixed(2)}`;
+      if (snapshot) {
+        this._readoutEl.textContent = `${fmtHzLive(hz)} · Y ${corrY.toFixed(2)}`;
+        for (const track of snapshot.tracks) {
+          const state = this._comparisonTraces.get(track.id),
+            row = document.createElement("div");
+          row.style.color = track.color;
+          row.textContent = `${track.name} · ${hz > track.sampleRate / 2 || !state ? "—" : `ρ ${lerpF32(state.rho, li, 0).toFixed(2)} · broadband ${state.broadband.toFixed(2)}`}`;
+          this._readoutEl.append(row);
+        }
+      }
       this._readoutEl.style.left = `${Math.min(
         this._hoverClientX + 12,
         window.innerWidth - this._readoutEl.offsetWidth - 8,
@@ -399,6 +531,7 @@ export default class PhaseCorrelationSpectrumComponent extends Component {
 
   override dispose() {
     this._stopRaf();
+    this._comparisonTraces.clear();
     super.dispose();
   }
 }

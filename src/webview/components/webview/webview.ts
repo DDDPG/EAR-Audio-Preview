@@ -536,6 +536,7 @@ export default class WebView extends Component {
 
   private async activateUI() {
     const decoder = await this._createDecoder(this._fileData, this._fileExt);
+    const sourceBitDepth = decoder.bitDepth;
 
     // Phase 1: show header info immediately (fast path)
     console.log("read header info");
@@ -578,7 +579,7 @@ export default class WebView extends Component {
 
     const analyzeService = new AnalyzeService(audioBuffer);
     analyzeService.attachEssentiaHostClient(
-      new EssentiaHostClient(this._postMessage),
+      this._register(new EssentiaHostClient(this._postMessage)),
     );
     const loudnessService = new LoudnessService(audioBuffer);
     const analyzeSettingsService = AnalyzeSettingsService.fromDefaultSetting(
@@ -1093,6 +1094,7 @@ export default class WebView extends Component {
         analyzeSettingsService,
         playerService,
         this._postMessage,
+        sourceBitDepth,
       );
       this._disposables.push(editExportComponent);
     };

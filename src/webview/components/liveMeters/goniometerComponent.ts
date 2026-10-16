@@ -1,6 +1,11 @@
 import { EventType } from "../../events";
 import Component from "../../component";
-import PlayerService from "../../services/playerService";
+import type {
+  LivePlayback,
+  LiveComparisonInput,
+  LiveTrackFrame,
+} from "./liveAnalysisInput";
+import { traceColor } from "./liveAnalysisInput";
 import AnalyzeSettingsService from "../../services/analyzeSettingsService";
 import { applyMonitoringToTimeDomain } from "../../utils/liveMonitoring";
 import {
@@ -63,7 +68,7 @@ export default class GoniometerComponent extends Component {
   private _fieldTag: HTMLElement;
   private _canvas: HTMLCanvasElement;
 
-  private _playerService: PlayerService;
+  private _playerService: LivePlayback;
   private _analyzeSettingsService: AnalyzeSettingsService;
   private _rafId: number = 0;
   private _bufL: Float32Array = new Float32Array(2048);
@@ -82,11 +87,87 @@ export default class GoniometerComponent extends Component {
   private _polarSampleRms: Float32Array = new Float32Array(polarBinCount);
   private _polarSamplePeak: Float32Array = new Float32Array(polarBinCount);
   private _polarDisplayScale = 0;
+  private _traceColor: string | null = null;
+  private _comparisonTraces = new Map<
+    string,
+    {
+      revision: string;
+      stamp: number;
+      state: ReturnType<GoniometerComponent["_captureTraceState"]>;
+    }
+  >();
+  private _captureTraceState() {
+    return {
+      _lissajouPoints: this._lissajouPoints,
+      _polarSampleAcc: this._polarSampleAcc,
+      _polarSampleAccCtx: this._polarSampleAccCtx,
+      _polarInstant: this._polarInstant,
+      _polarScratch: this._polarScratch,
+      _polarRms: this._polarRms,
+      _polarPeak: this._polarPeak,
+      _polarSampleInstant: this._polarSampleInstant,
+      _polarSampleScratch: this._polarSampleScratch,
+      _polarSampleRms: this._polarSampleRms,
+      _polarSamplePeak: this._polarSamplePeak,
+      _polarDisplayScale: this._polarDisplayScale,
+    };
+  }
+  private _freshTraceState(): ReturnType<
+    GoniometerComponent["_captureTraceState"]
+  > {
+    return {
+      _lissajouPoints: [],
+      _polarSampleAcc: null,
+      _polarSampleAccCtx: null,
+      _polarDisplayScale: 0,
+      _polarInstant: new Float32Array(polarBinCount),
+      _polarScratch: new Float32Array(polarBinCount),
+      _polarRms: new Float32Array(polarBinCount),
+      _polarPeak: new Float32Array(polarBinCount),
+      _polarSampleInstant: new Float32Array(polarBinCount),
+      _polarSampleScratch: new Float32Array(polarBinCount),
+      _polarSampleRms: new Float32Array(polarBinCount),
+      _polarSamplePeak: new Float32Array(polarBinCount),
+    };
+  }
+  private _forEachTrace(draw: () => void, update = false) {
+    const snapshot = this._comparison?.snapshot();
+    if (!snapshot) {
+      return;
+    }
+    const ids = new Set(snapshot.tracks.map((t) => t.id));
+    for (const id of this._comparisonTraces.keys()) {
+      if (!ids.has(id)) {
+        this._comparisonTraces.delete(id);
+      }
+    }
+    for (const track of snapshot.tracks) {
+      let entry = this._comparisonTraces.get(track.id);
+      if (!entry || entry.revision !== track.revision) {
+        entry = {
+          revision: track.revision,
+          stamp: -1,
+          state: this._freshTraceState(),
+        };
+        this._comparisonTraces.set(track.id, entry);
+      }
+      Object.assign(this, entry.state);
+      this._traceColor = track.color;
+      if (update && entry.stamp !== snapshot.revision) {
+        this._updateAudioData(track);
+        entry.stamp = snapshot.revision;
+      }
+      draw();
+      entry.state = this._captureTraceState();
+    }
+    this._traceColor = null;
+  }
 
   constructor(
     containerEl: HTMLElement,
-    playerService: PlayerService,
+    playerService: LivePlayback,
     analyzeSettingsService: AnalyzeSettingsService,
+    private readonly _comparison?: LiveComparisonInput,
   ) {
     super();
     this._playerService = playerService;
@@ -109,7 +190,7 @@ export default class GoniometerComponent extends Component {
     this._syncFieldTag();
 
     this._addEventlistener(playerService, EventType.UPDATE_IS_PLAYING, () => {
-      if (!playerService.isPlaying) {
+      if (!playerService.isPlaying && !_comparison) {
         // /* Freeze last frame like spectral analyzer; do not wipe buffers. */
         // TODO: Make it a choise in setting, freeze or erase
         this._lissajouPoints.length = 0;
@@ -127,7 +208,7 @@ export default class GoniometerComponent extends Component {
         this._clearPolarSampleState();
         this._clearPolarLevelState();
         this._syncFieldTag();
-        this._drawFrame(false);
+        this._drawFrame(!!this._comparison);
       },
     );
 
@@ -141,6 +222,14 @@ export default class GoniometerComponent extends Component {
       requestAnimationFrame(() => this._drawFrame(false));
     });
 
+    if (_comparison) {
+      const redraw = () => {
+        if (containerEl.clientWidth > 0 && containerEl.clientHeight > 0) {
+          this._drawFrame(true);
+        }
+      };
+      this._register({ dispose: _comparison.subscribe(redraw) });
+    }
     this._syncRaf();
   }
 
@@ -177,13 +266,18 @@ export default class GoniometerComponent extends Component {
     if (acc.width !== w || acc.height !== h) {
       acc.width = w;
       acc.height = h;
-      accCtx.fillStyle = polarSampleAccBg;
-      accCtx.fillRect(0, 0, w, h);
+      if (this._comparison) {
+        accCtx.clearRect(0, 0, w, h);
+      } else {
+        accCtx.fillStyle = polarSampleAccBg;
+        accCtx.fillRect(0, 0, w, h);
+      }
     }
     return accCtx;
   }
 
   private _clearPolarSampleState(): void {
+    this._comparisonTraces.clear();
     this._polarSampleRms.fill(0);
     this._polarSamplePeak.fill(0);
     if (this._polarSampleAccCtx && this._polarSampleAcc) {
@@ -212,8 +306,13 @@ export default class GoniometerComponent extends Component {
     h: number,
   ): void {
     const fadeAlpha = this._fieldFadeOverlayAlpha();
+    accCtx.save();
+    if (this._comparison) {
+      accCtx.globalCompositeOperation = "destination-out";
+    }
     accCtx.fillStyle = `rgba(17, 17, 17, ${fadeAlpha})`;
     accCtx.fillRect(0, 0, w, h);
+    accCtx.restore();
   }
 
   private _stampPolarSampleAcc(
@@ -263,9 +362,17 @@ export default class GoniometerComponent extends Component {
     /* No glow — only cyan / orange RMS-positioned dots. */
     accCtx.shadowBlur = 0;
     accCtx.globalAlpha = drawAlpha;
-    accCtx.fillStyle = `rgba(0, 180, 216, ${inAlpha})`;
+    accCtx.fillStyle = traceColor(
+      this._traceColor,
+      inAlpha,
+      `rgba(0, 180, 216, ${inAlpha})`,
+    );
     accCtx.fill(pathIn);
-    accCtx.fillStyle = `rgba(255, 152, 0, ${outAlpha})`;
+    accCtx.fillStyle = traceColor(
+      this._traceColor,
+      outAlpha * 0.7,
+      `rgba(255, 152, 0, ${outAlpha})`,
+    );
     accCtx.fill(pathOut);
     accCtx.restore();
   }
@@ -277,7 +384,7 @@ export default class GoniometerComponent extends Component {
   }
 
   private _syncRaf() {
-    if (this._playerService.isPlaying) {
+    if (!this._comparison && this._playerService.isPlaying) {
       this._startRaf();
     } else {
       this._stopRaf();
@@ -337,29 +444,32 @@ export default class GoniometerComponent extends Component {
     }
   }
 
-  private _updateAudioData() {
-    const analysers = this._playerService.getAnalysers();
-    if (!analysers || !this._playerService.isPlaying) {
+  private _updateAudioData(track?: LiveTrackFrame) {
+    const analysers = track ? null : this._playerService.getAnalysers();
+    if (!track && (!analysers || !this._playerService.isPlaying)) {
       return;
     }
-
-    const fftSize = analysers.left.fftSize;
-    if (this._bufL.length !== fftSize) {
-      this._bufL = new Float32Array(fftSize);
-      this._bufR = new Float32Array(fftSize);
-      this._mixL = new Float32Array(fftSize);
-      this._mixR = new Float32Array(fftSize);
+    const fftSize = track ? track.left.length : analysers.left.fftSize;
+    if (track) {
+      this._mixL = track.left;
+      this._mixR = track.right;
+    } else {
+      if (this._bufL.length !== fftSize) {
+        this._bufL = new Float32Array(fftSize);
+        this._bufR = new Float32Array(fftSize);
+        this._mixL = new Float32Array(fftSize);
+        this._mixR = new Float32Array(fftSize);
+      }
+      analysers.left.getFloatTimeDomainData(this._bufL);
+      analysers.right.getFloatTimeDomainData(this._bufR);
+      applyMonitoringToTimeDomain(
+        this._analyzeSettingsService.liveMonitoringMode,
+        this._bufL,
+        this._bufR,
+        this._mixL,
+        this._mixR,
+      );
     }
-
-    analysers.left.getFloatTimeDomainData(this._bufL);
-    analysers.right.getFloatTimeDomainData(this._bufR);
-    applyMonitoringToTimeDomain(
-      this._analyzeSettingsService.liveMonitoringMode,
-      this._bufL,
-      this._bufR,
-      this._mixL,
-      this._mixR,
-    );
 
     if (!this._canvasReady(this._canvasWrap)) {
       return;
@@ -471,7 +581,9 @@ export default class GoniometerComponent extends Component {
   }
 
   private _drawFrame(updateAudio: boolean) {
-    if (updateAudio) {
+    if (this._comparison) {
+      this._forEachTrace(() => undefined, updateAudio);
+    } else if (updateAudio) {
       this._updateAudioData();
     }
     this._drawSoundField();
@@ -672,7 +784,11 @@ export default class GoniometerComponent extends Component {
       this._drawCircularMsGrid(ctx, cx, cy, radius, dpr);
       ctx.save();
       clipCircle(ctx, cx, cy, radius);
-      this._drawLissajous(ctx, cx, cy, radius, dpr);
+      if (this._comparison) {
+        this._forEachTrace(() => this._drawLissajous(ctx, cx, cy, radius, dpr));
+      } else {
+        this._drawLissajous(ctx, cx, cy, radius, dpr);
+      }
       ctx.restore();
       return;
     }
@@ -684,12 +800,20 @@ export default class GoniometerComponent extends Component {
     clipUpperSemicircle(ctx, cx, cy, radius);
 
     if (mode === "polarSample") {
-      this._ensurePolarSampleAcc(w, h);
-      this._drawPolarSample(ctx, w, h);
+      if (this._comparison) {
+        this._forEachTrace(() => this._drawPolarSample(ctx, w, h));
+      } else {
+        this._ensurePolarSampleAcc(w, h);
+        this._drawPolarSample(ctx, w, h);
+      }
       this._drawSoundFieldGridSemicircleLines(ctx, cx, cy, radius, dpr);
       this._drawSoundFieldGridSemicircleLabels(ctx, cx, cy, radius, dpr);
     } else {
-      this._drawPolarLevel(ctx, cx, cy, radius);
+      if (this._comparison) {
+        this._forEachTrace(() => this._drawPolarLevel(ctx, cx, cy, radius));
+      } else {
+        this._drawPolarLevel(ctx, cx, cy, radius);
+      }
     }
 
     ctx.restore();
@@ -727,7 +851,11 @@ export default class GoniometerComponent extends Component {
       const py = cy - pt.m * radius;
       const radial = Math.min(1, Math.hypot(pt.s, pt.m) / scatterUnitRadius);
       ctx.globalAlpha = pt.alpha * scatterDrawAlpha * (0.75 + 0.25 * radial);
-      ctx.fillStyle = "rgba(0, 180, 216, 0.9)";
+      ctx.fillStyle = traceColor(
+        this._traceColor,
+        0.9,
+        "rgba(0, 180, 216, 0.9)",
+      );
       ctx.fillRect(px - dot * 0.5, py - dot * 0.5, dot, dot);
     }
     ctx.globalAlpha = 1;
@@ -753,8 +881,14 @@ export default class GoniometerComponent extends Component {
     const bottomY = cy;
 
     const rmsGradient = ctx.createLinearGradient(0, cy - radius, 0, cy);
-    rmsGradient.addColorStop(0, "rgba(24,198,232,0.62)");
-    rmsGradient.addColorStop(1, "rgba(12,140,198,0.22)");
+    rmsGradient.addColorStop(
+      0,
+      traceColor(this._traceColor, 0.45, "rgba(24,198,232,0.62)"),
+    );
+    rmsGradient.addColorStop(
+      1,
+      traceColor(this._traceColor, 0.12, "rgba(12,140,198,0.22)"),
+    );
 
     ctx.fillStyle = rmsGradient;
     ctx.beginPath();
@@ -775,6 +909,7 @@ export default class GoniometerComponent extends Component {
 
   override dispose() {
     this._stopRaf();
+    this._comparisonTraces.clear();
     super.dispose();
   }
 }

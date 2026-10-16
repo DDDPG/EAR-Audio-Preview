@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.6.0] - Unreleased
+
+- Compare up to four native-rate mono/stereo files with one transport, independent active/mute/focus states and stable track colors.
+- Share waveform/STFT/Loudness time ranges; choose STFT layouts and fullscreen through a themed visualization context menu.
+- Overlay native-buffer Live spectrum, stereo phase, correlation and Loudness/F0/onset/true-peak profiles, including muted active sources.
+- Export a selected stem mix with output-rate/channel/bit-depth controls and explicit integer-overload choices.
+- Add versioned file reload, cancellable bounded worker analysis, and regression coverage for asynchronous state changes and WAV metadata.
+- Unify single-file and comparison styling, track state controls and loudness summaries.
+- Reuse Monitor and headphone correction controls; add precise playback entry and double-click volume reset.
+- Add an interactive comparison onboarding guide and scrollable pane settings.
+
 All notable changes to **EAR Audio Preview** are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).

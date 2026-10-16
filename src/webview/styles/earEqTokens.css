@@ -73,6 +73,11 @@
   --viz-grid: rgba(236, 229, 211, 0.09);
 
   /* Neutral elevation / inset shadows */
+  --chrome-bg: linear-gradient(180deg, var(--surface-2), var(--surface-1));
+  --card-bg: linear-gradient(180deg, var(--surface-1), var(--surface-0));
+  --shadow-card: 0 3px 12px rgba(0, 0, 0, 0.18);
+  --floating-bg: var(--surface-2);
+  --floating-filter: none;
   --shadow-modal: 0 10px 32px rgba(0, 0, 0, 0.45);
   --shadow-popover: 0 4px 16px rgba(0, 0, 0, 0.35);
   --well-inset: inset 0 1px 3px rgba(0, 0, 0, 0.25);
@@ -83,6 +88,7 @@
   --r-1: 3px;
   --r-2: 6px;
   --r-3: 10px;
+  --r-4: 12px;
   --r-full: 9999px;
 
   --dur-1: 130ms;
@@ -181,6 +187,7 @@
 /* Solid sliding focus inside a recessed track (workspace tabs, segments) */
 .earEqSlidingFocus,
 .workspaceChrome__focus {
+  box-sizing: border-box;
   position: absolute;
   top: 0;
   left: 0;
@@ -260,5 +267,14 @@ button.earEqSegment__option:focus {
   .earEqSlidingFocus,
   .workspaceChrome__focus {
     transition: none;
+  }
+}
+
+/* Keep opaque surfaces on engines without both blur and color mixing. */
+@supports (backdrop-filter: blur(10px)) and
+  (background: color-mix(in srgb, #222226 88%, transparent)) {
+  :root {
+    --floating-bg: color-mix(in srgb, var(--surface-2) 88%, transparent);
+    --floating-filter: blur(10px) saturate(1.15);
   }
 }

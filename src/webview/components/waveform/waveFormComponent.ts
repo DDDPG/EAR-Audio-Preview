@@ -6,22 +6,36 @@ import {
   readTimelinePadFromElement,
 } from "../../utils/timelinePlotLayout";
 
+export interface WaveformAppearance {
+  color?: string;
+  /** Optional precomputed envelope keeps long comparison redraws bounded. */
+  envelope?: (from: number, to: number) => readonly [number, number];
+}
 export default class WaveFormComponent {
   public static readonly MIN_DATA_POINTS_PER_PIXEL = 5;
 
   constructor(
-    componentRootSelector: string,
+    componentRootSelector: string | HTMLElement,
     width: number,
     height: number,
-    settings: AnalyzeSettingsProps,
+    settings: Pick<
+      AnalyzeSettingsProps,
+      | "minTime"
+      | "maxTime"
+      | "minAmplitude"
+      | "maxAmplitude"
+      | "waveformVerticalScale"
+    >,
     sampleRate: number,
     channelData: Float32Array,
     ch: number,
     numOfCh: number,
+    appearance: WaveformAppearance = {},
   ) {
-    const componentRoot = document.querySelector(
-      componentRootSelector,
-    ) as HTMLElement;
+    const componentRoot =
+      typeof componentRootSelector === "string"
+        ? (document.querySelector(componentRootSelector) as HTMLElement)
+        : componentRootSelector;
     const dpr = Math.min(
       typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1,
       2,
@@ -53,8 +67,8 @@ export default class WaveFormComponent {
     canvas.style.height = `${height}px`;
     const context = canvas.getContext("2d", { alpha: false });
     context.setTransform(dpr, 0, 0, dpr, 0, 0);
-    context.fillStyle = "rgb(160,60,200)";
-    context.strokeStyle = "rgb(160,60,200)";
+    context.fillStyle = appearance.color ?? "rgb(160,60,200)";
+    context.strokeStyle = appearance.color ?? "rgb(160,60,200)";
     componentRoot.appendChild(canvas);
 
     const axisCanvas = document.createElement("canvas");
@@ -79,12 +93,16 @@ export default class WaveFormComponent {
       const t = t0 + niceT * i;
       const x = padL + (t - settings.minTime) * dx;
 
-      axisContext.fillStyle = "rgb(245,130,32)";
+      axisContext.fillStyle = appearance.color
+        ? `${appearance.color}b3`
+        : "rgb(245,130,32)";
       if (plotRight * (5 / 100) < x && x < plotRight * (95 / 100)) {
         axisContext.fillText(`${t.toFixed(digitT)}`, x, 10);
       }
 
-      axisContext.fillStyle = "rgb(180,120,20)";
+      axisContext.fillStyle = appearance.color
+        ? `${appearance.color}26`
+        : "rgb(180,120,20)";
       for (let j = 0; j < height; j++) {
         axisContext.fillRect(x, j, 1, 1);
       }
@@ -104,12 +122,16 @@ export default class WaveFormComponent {
       const a = a0 + niceA * i;
       const y = height - (a - settings.minAmplitude) * dy;
 
-      axisContext.fillStyle = "rgb(245,130,32)";
+      axisContext.fillStyle = appearance.color
+        ? `${appearance.color}b3`
+        : "rgb(245,130,32)";
       if (12 < y && y < height) {
         axisContext.fillText(`${a.toFixed(digitA)}`, 4, y - 2);
       }
 
-      axisContext.fillStyle = "rgb(180,120,20)";
+      axisContext.fillStyle = appearance.color
+        ? `${appearance.color}26`
+        : "rgb(180,120,20)";
       if (12 < y && y < height) {
         for (let j = padL; j < plotRight; j++) {
           axisContext.fillRect(j, y, 1, 1);
@@ -122,7 +144,9 @@ export default class WaveFormComponent {
       Math.floor(settings.maxTime * sampleRate),
       channelData.length,
     );
-    const n = Math.max(0, endIndex - startIndex);
+    const validSamples = Math.max(0, endIndex - startIndex);
+    // Time geometry follows the shared view even when this source ends earlier.
+    const n = Math.max(0, Math.floor(timeSpan * sampleRate));
     const ar = settings.maxAmplitude - settings.minAmplitude;
 
     if (n > 0 && ar > 0 && plotW > 0) {
@@ -131,7 +155,19 @@ export default class WaveFormComponent {
       const maxSamplesPerColumn = 16384;
       for (let col = 0; col < plotW; col++) {
         const t0i = Math.floor((col / plotW) * n);
-        const t1i = Math.min(n, Math.ceil(((col + 1) / plotW) * n));
+        const t1i = Math.min(validSamples, Math.ceil(((col + 1) / plotW) * n));
+        if (t0i >= t1i) {
+          continue;
+        }
+        if (appearance.envelope) {
+          const [lo, hi] = appearance.envelope(
+            startIndex + t0i,
+            startIndex + t1i,
+          );
+          ymin[col] = lo;
+          ymax[col] = hi;
+          continue;
+        }
         const span = Math.max(1, t1i - t0i);
         const step = Math.max(1, Math.ceil(span / maxSamplesPerColumn));
         for (let k = t0i; k < t1i; k += step) {
@@ -145,7 +181,7 @@ export default class WaveFormComponent {
         }
       }
 
-      context.fillStyle = "rgb(160,60,200)";
+      context.fillStyle = appearance.color ?? "rgb(160,60,200)";
       for (let col = 0; col < plotW; col++) {
         const lo = ymin[col];
         const hi = ymax[col];

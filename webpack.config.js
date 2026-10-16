@@ -29,6 +29,9 @@ class ExtractLoudnessWorkletPlugin {
       const outPath = path.join(__dirname, "dist/loudness.worklet.js");
       fs.mkdirSync(path.dirname(outPath), { recursive: true });
       fs.writeFileSync(outPath, body, "utf8");
+      const prelude = fs.readFileSync(path.join(__dirname, "src/webview/comparison/loudnessWorkerPrelude.js"), "utf8");
+      const adapter = fs.readFileSync(path.join(__dirname, "src/webview/comparison/loudnessWorkerAdapter.js"), "utf8");
+      fs.writeFileSync(path.join(__dirname, "dist/comparisonLoudnessWorker.js"), prelude + "\n" + body + "\n" + adapter, "utf8");
     });
   }
 }
@@ -70,10 +73,10 @@ const extensionConfig = {
 const webviewConfig = {
   target: "web",
 
-  entry: "./src/webview/index.ts",
+  entry: {audioPreview: "./src/webview/index.ts", comparison: "./src/webview/comparison/index.ts", comparisonWorker: "./src/webview/comparison/analysisWorker.ts"},
   output: {
     path: path.resolve(__dirname, "dist"),
-    filename: "audioPreview.js",
+    filename: "[name].js",
   },
   devtool: "source-map",
   resolve: {

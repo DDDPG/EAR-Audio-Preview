@@ -38,6 +38,30 @@ describe("computeEssentiaStftSpectrogram", () => {
   };
   const sampleRate = 8;
 
+  test("normalization owns its output and never overwrites borrowed spectra or previous results", async () => {
+    const spectrum = new Float32Array([1, 2, 3, 4, 5]);
+    const original = spectrum.slice();
+    const essentia = makeEssentia([spectrum]);
+    const first = await computeEssentiaStftSpectrogram(
+      essentia,
+      new Float32Array(8),
+      sampleRate,
+      settings,
+    );
+    const saved = new Uint8Array(first.dbValues).slice();
+    expect(spectrum).toEqual(original);
+    spectrum[0] = 10;
+    const second = await computeEssentiaStftSpectrogram(
+      essentia,
+      new Float32Array(8),
+      sampleRate,
+      settings,
+    );
+    expect(new Uint8Array(first.dbValues)).toEqual(saved);
+    expect(new Uint8Array(second.dbValues)).not.toEqual(saved);
+    expect(first.dbValues).not.toBe(spectrum.buffer);
+  });
+
   test("layout: dbValues holds frameCount * binCount floats (binCount = windowSize/2)", async () => {
     const spec = new Float32Array(5).fill(1);
     const wire = await computeEssentiaStftSpectrogram(

@@ -12,6 +12,8 @@ design-demo/
 tmp_files/**
 bench/**
 .bench/**
+.cross-gan/**
+.tasks/**
 tsconfig.bench.json
 .gitignore
 .eslintignore

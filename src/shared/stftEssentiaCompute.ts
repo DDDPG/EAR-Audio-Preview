@@ -100,7 +100,8 @@ export async function computeEssentiaStftSpectrogram(
     frameIdx++;
   }
 
-  const dbFlat = new Float32Array(powerFlat.length);
+  // This buffer is locally owned and power values are no longer needed.
+  const dbFlat = powerFlat;
   for (let i = 0; i < powerFlat.length; i++) {
     dbFlat[i] = 10 * Math.log10(powerFlat[i] / maxValue);
   }
@@ -110,10 +111,7 @@ export async function computeEssentiaStftSpectrogram(
   return {
     frameCount,
     binCount,
-    dbValues: dbFlat.buffer.slice(
-      dbFlat.byteOffset,
-      dbFlat.byteOffset + dbFlat.byteLength,
-    ),
+    dbValues: dbFlat.buffer,
   };
 }
 

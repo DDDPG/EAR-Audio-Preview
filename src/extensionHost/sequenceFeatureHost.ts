@@ -11,6 +11,7 @@ export async function analyzeSequenceFeaturesInHost(
   sampleRate: number,
   hopSec: number,
   onProgress?: SequenceAnalysisProgress,
+  shouldCancel?: () => boolean,
 ): Promise<SequenceFeatureProfileWire | null> {
   const essentia = await loadEssentiaInNode();
   if (!essentia) {
@@ -23,6 +24,7 @@ export async function analyzeSequenceFeaturesInHost(
       sampleRate,
       hopSec,
       onProgress,
+      shouldCancel,
     );
     return profileToWire(profile);
   } catch (err) {

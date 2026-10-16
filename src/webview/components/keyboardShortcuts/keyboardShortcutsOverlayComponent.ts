@@ -7,7 +7,7 @@ interface ShortcutItem {
   description: string;
 }
 
-interface ShortcutGroup {
+export interface ShortcutGroup {
   title: string;
   shortcuts: ShortcutItem[];
 }
@@ -20,7 +20,10 @@ export default class KeyboardShortcutsOverlayComponent extends Component {
   private _hideTimer: ReturnType<typeof setTimeout> | undefined;
   private readonly _modKey: string;
 
-  constructor(selector: string) {
+  constructor(
+    selector: string,
+    private readonly groups?: ShortcutGroup[],
+  ) {
     super();
 
     const isMac = navigator.platform.toLowerCase().includes("mac");
@@ -40,7 +43,7 @@ export default class KeyboardShortcutsOverlayComponent extends Component {
   }
 
   private _generateHTML(): string {
-    const groups = this._getShortcutGroups();
+    const groups = this.groups ?? this._getShortcutGroups();
 
     const groupsHTML = groups
       .map(

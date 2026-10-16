@@ -7,6 +7,29 @@ function fourccLE(dv: DataView, offset: number): number {
   return dv.getUint32(offset, true);
 }
 
+/** Source rate must be read before decodeAudioData can resample the audio. */
+export function parseWavSampleRate(data: Uint8Array): number | null {
+  if (data.length < 12) {
+    return null;
+  }
+  const view = new DataView(data.buffer, data.byteOffset, data.byteLength);
+  if (fourccLE(view, 0) !== 0x46464952 || fourccLE(view, 8) !== 0x45564157) {
+    return null;
+  }
+  for (let offset = 12; offset + 8 <= data.length; ) {
+    const size = view.getUint32(offset + 4, true);
+    if (offset + 8 + size > data.length) {
+      return null;
+    }
+    if (fourccLE(view, offset) === 0x20746d66 && size >= 16) {
+      const rate = view.getUint32(offset + 12, true);
+      return rate >= 8000 && rate <= 192000 ? rate : null;
+    }
+    offset += 8 + size + (size & 1);
+  }
+  return null;
+}
+
 /** Standard WAVE / RIFF: walk chunks for `fmt `, read wBitsPerSample (PCM / float). */
 export function parseWavBitsPerSample(data: Uint8Array): number | null {
   if (data.byteLength < 12) {
@@ -16,7 +39,7 @@ export function parseWavBitsPerSample(data: Uint8Array): number | null {
   if (fourccLE(dv, 0) !== 0x46464952 /* RIFF */) {
     return null;
   }
-  if (fourccLE(dv, 8) !== 0x57415645 /* WAVE */) {
+  if (fourccLE(dv, 8) !== 0x45564157 /* WAVE */) {
     return null;
   }
   let off = 12;

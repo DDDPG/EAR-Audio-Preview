@@ -1,0 +1,818 @@
+@import "../styles/earEqTokens.css";
+@import "../styles/earPrimitives.css";
+@import "../styles/panelSurface.css";
+.comparisonApp {
+  max-width: 1800px;
+  margin: 0 auto;
+  padding: 10px 0 40px;
+  color: var(--text-secondary);
+}
+
+/* Drag-zoom selection band shared with single-file panels. */
+.figureSelectionOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 6;
+}
+.figureSelection__band {
+  position: absolute;
+  box-sizing: border-box;
+  border: 1px solid rgba(255, 0, 0, 0.85);
+  background: rgba(255, 0, 0, 0.1);
+  pointer-events: none;
+  box-shadow: 0 0 0 9999px var(--selection-shroud);
+}
+.comparisonApp button:where(:not(.workspacePane__tab)),
+.comparisonApp select,
+.comparisonApp input {
+  font: inherit;
+}
+.comparisonChrome {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: var(--chrome-bg);
+  border: 1px solid var(--edge-line);
+  border-top: 1px solid var(--hairline);
+  border-radius: var(--r-3);
+  box-shadow: var(--shadow-card);
+  margin-bottom: 10px;
+  overflow: hidden;
+}
+.comparisonTracks,
+.comparisonTabs,
+.comparisonTransport,
+.comparisonSettings,
+.comparisonExport {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  padding: 10px;
+}
+.comparisonSettings {
+  border-top: 1px solid var(--edge-line);
+  background: color-mix(in srgb, var(--surface-0) 30%, transparent);
+}
+.comparisonTracks {
+  border-bottom: 1px solid var(--edge-line);
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 0;
+  padding: 0;
+}
+.comparisonTrack {
+  position: relative;
+  flex: 1 1 0;
+  min-width: 0;
+  border-right: 1px solid var(--edge-line);
+  box-sizing: border-box;
+  display: flex;
+  align-items: stretch;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--track-color) 4%, transparent);
+  transition:
+    background var(--dur-2) var(--ease-swift),
+    opacity var(--dur-2) var(--ease-swift),
+    border-color var(--dur-2) var(--ease-swift);
+}
+.comparisonTrack:hover {
+  background: color-mix(in srgb, var(--track-color) 9%, transparent);
+}
+.comparisonTrack:last-child {
+  border-right: 0;
+}
+.comparisonTrack[data-active="false"] {
+  opacity: 0.45;
+}
+.comparisonTrack[data-active="false"] .comparisonTrack__name {
+  text-decoration: line-through;
+}
+.comparisonTrack[data-focused="true"] {
+  background: color-mix(in srgb, var(--track-color) 11%, transparent);
+  box-shadow: inset 0 -2px 0 var(--track-color);
+}
+.comparisonTrack__actions {
+  position: absolute;
+  inset: 0 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  padding: 0 6px 0 16px;
+  background: linear-gradient(90deg, transparent, var(--surface-2) 16px);
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    opacity var(--dur-1) var(--ease-swift),
+    transform var(--dur-1) var(--ease-swift);
+}
+.comparisonTrack:hover .comparisonTrack__actions,
+.comparisonTrack__name:focus-visible + .comparisonTrack__actions,
+.comparisonTrack__actions:focus-within {
+  opacity: 1;
+  pointer-events: auto;
+  transform: none;
+}
+.comparisonApp button:where(:not(.workspacePane__tab)) {
+  width: auto;
+  background: var(--surface-2);
+  color: var(--text-secondary);
+  border: 1px solid var(--edge-line);
+  border-radius: var(--r-2);
+  box-shadow: inset 0 1px 0 var(--edge-hi);
+  padding: 6px 9px;
+  cursor: pointer;
+  transition:
+    background var(--dur-1) var(--ease-swift),
+    color var(--dur-1) var(--ease-swift),
+    transform var(--dur-1) var(--ease-swift);
+}
+.comparisonApp button:where(:not(.workspacePane__tab)):hover {
+  color: var(--text-primary);
+}
+.comparisonTracks {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+}
+.comparisonTabs {
+  flex-wrap: nowrap;
+}
+.comparisonFigure__axis {
+  display: flex;
+  justify-content: space-between;
+  color: var(--text-faint);
+  font-size: 10px;
+  padding-top: 5px;
+}
+.comparisonFigure__frequencies {
+  color: var(--text-faint);
+  font-size: 10px;
+  padding-bottom: 5px;
+}
+.comparisonApp button:where(:not(.workspacePane__tab)):hover,
+.comparisonApp button:where(:not(.workspacePane__tab)):focus-visible,
+.comparisonApp button:where(:not(.workspacePane__tab))[aria-selected="true"],
+.comparisonApp button:where(:not(.workspacePane__tab))[aria-pressed="true"] {
+  color: var(--text-primary);
+  background: var(--surface-3);
+}
+.comparisonApp button:where(:not(.workspacePane__tab)):disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.comparisonApp select,
+.comparisonApp input[type="number"] {
+  color: var(--text-primary);
+  background: var(--surface-0);
+  border: 1px solid var(--edge-line);
+  padding: 5px;
+  box-shadow: var(--well-inset);
+  border-radius: var(--r-2);
+}
+.comparisonApp label {
+  display: inline-flex;
+  gap: 5px;
+  align-items: center;
+  font-size: 11px;
+}
+.comparisonApp input[type="number"] {
+  width: 78px;
+}
+.comparisonStatus {
+  min-height: 18px;
+  padding: 5px 10px;
+  font-size: 11px;
+  color: var(--text-faint);
+}
+.comparisonWave {
+  margin-bottom: 8px;
+}
+.comparisonWave__row {
+  position: relative;
+  border: 1px solid var(--edge-line);
+  border-top: 1px solid var(--hairline);
+  border-left: 3px solid var(--track-color);
+  border-radius: var(--r-2);
+  background: var(--surface-1);
+  overflow: hidden;
+  margin-bottom: 6px;
+  box-shadow: var(--well-inset);
+}
+.comparisonWave__label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  padding: 3px 8px;
+  color: var(--track-color);
+  opacity: 0.95;
+}
+.comparisonWave canvas,
+.comparisonFigure canvas {
+  display: block;
+  width: 100%;
+  flex: 1 1 auto;
+  min-height: 0;
+  touch-action: none;
+}
+.comparisonWave__extra {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transition:
+    grid-template-rows var(--dur-2) var(--ease-swift),
+    opacity var(--dur-2) var(--ease-swift);
+}
+.comparisonApp button:where(:not(.workspacePane__tab))[data-waves-expand] {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 2px 0 8px;
+  padding: 4px 10px;
+  font-size: 11px;
+  color: var(--text-secondary);
+  background: var(--surface-2);
+  border: 1px solid var(--edge-line);
+  border-radius: var(--r-full);
+  box-shadow: inset 0 1px 0 var(--edge-hi);
+}
+.comparisonWave__extra[data-expanded="true"] {
+  grid-template-rows: 1fr;
+  opacity: 1;
+}
+.comparisonWave__extraInner {
+  min-height: 0;
+  overflow: hidden;
+}
+.comparisonFigure {
+  position: relative;
+  background: var(--card-bg);
+  border: 1px solid var(--edge-line);
+  border-top: 1px solid var(--hairline);
+  border-radius: var(--r-3);
+  padding: 10px;
+  min-width: 260px;
+  box-shadow: var(--shadow-card);
+  display: flex;
+  flex-direction: column;
+}
+.comparisonFigure h3 {
+  font-size: 12px;
+  font-weight: 500;
+  margin: 0 0 8px;
+  flex: 0 0 auto;
+}
+.comparisonDeck {
+  min-height: 280px;
+  padding: 2px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.comparisonGrid {
+  display: grid;
+  gap: 10px;
+  overflow-x: auto;
+  grid-template-columns: repeat(var(--columns, 1), minmax(260px, 1fr));
+}
+.comparisonLegend {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  font-size: 11px;
+  padding: 8px 0;
+}
+.comparisonLoudnessSummary {
+  overflow-x: auto;
+  background: var(--surface-1);
+  border: 1px solid var(--edge-line);
+  border-radius: var(--r-2);
+  margin-bottom: 10px;
+}
+.comparisonLoudnessSummary table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  font-size: 11px;
+}
+.comparisonLoudnessSummary th,
+.comparisonLoudnessSummary td {
+  padding: 9px 12px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.comparisonLoudnessSummary thead {
+  color: var(--text-faint);
+  background: var(--surface-0);
+}
+.comparisonLoudnessSummary th:first-child {
+  width: 40%;
+  text-align: left;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.comparisonLoudnessSummary tbody th {
+  color: var(--track-color);
+  font-weight: 500;
+}
+.comparisonLoudnessSummary tbody tr + tr {
+  border-top: 1px solid var(--hairline);
+}
+.comparisonLoudnessSummary td {
+  font-family: var(--font-mono);
+}
+.comparisonPlayhead {
+  pointer-events: none;
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 1px;
+  background: #ffffffb0;
+}
+.comparisonSelection {
+  pointer-events: none;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  background: #ffffff10;
+  border-left: 1px solid #ffffff50;
+  border-right: 1px solid #ffffff50;
+}
+.comparisonTransport {
+  position: fixed;
+  z-index: 15;
+  bottom: 10px;
+  left: 24px;
+  right: 24px;
+  border: 1px solid var(--edge-line);
+  border-top: 1px solid var(--hairline);
+  border-radius: var(--r-4);
+  box-shadow:
+    var(--shadow-popover),
+    inset 0 1px 0 var(--edge-hi);
+  opacity: 0;
+  transform: translateY(calc(100% - 18px));
+  transition:
+    opacity var(--dur-2) var(--ease-swift),
+    transform var(--dur-2) var(--ease-swift);
+  background: var(--floating-bg);
+  backdrop-filter: var(--floating-filter);
+}
+.comparisonTransport::before {
+  content: "";
+  position: absolute;
+  inset: -14px 0 auto;
+  height: 14px;
+}
+.comparisonTransport::after {
+  content: "";
+  position: absolute;
+  top: 5px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 44px;
+  height: 4px;
+  border-radius: var(--r-full);
+  background: var(--text-faint);
+  opacity: 0.55;
+  transition: opacity var(--dur-1) var(--ease-swift);
+}
+.comparisonTransport:hover,
+.comparisonTransport:focus-within,
+.comparisonTransport[data-pinned="true"],
+.comparisonApp[data-monitor-open="true"] .comparisonTransport,
+.comparisonApp[data-transport-hold="true"] .comparisonTransport {
+  opacity: 1;
+  transform: translateY(0);
+}
+.comparisonTransport:hover::after,
+.comparisonTransport:focus-within::after,
+.comparisonTransport[data-pinned="true"]::after {
+  opacity: 0.15;
+}
+.comparisonTransport input[type="range"][data-seek] {
+  flex: 1 1 160px;
+  width: 160px;
+  max-width: 360px;
+  min-width: 80px;
+}
+.comparisonMeter {
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+  font-size: 11px;
+}
+.comparisonMeter [data-meter] {
+  display: inline-block;
+  min-width: 13ch;
+  text-align: left;
+  font-variant-numeric: tabular-nums;
+}
+.comparisonMeter[data-overload="true"] {
+  color: var(--signal-red);
+}
+.comparisonEmpty {
+  padding: 65px 20px;
+  text-align: center;
+  color: var(--text-faint);
+}
+.comparisonFullscreen {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 100;
+  background: var(--surface-0);
+  padding: 20px;
+  overflow: auto;
+  border-radius: 0;
+}
+@media (max-width: 620px) {
+  .comparisonLive {
+    grid-template-columns: 1fr;
+  }
+  .comparisonTrack__name {
+    max-width: 90px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .comparisonWave__extra {
+    transition: none;
+  }
+}
+
+.comparisonMeter {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.comparisonMeter__bars {
+  width: 70px;
+  height: 13px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  background: var(--surface-0);
+  border: 1px solid var(--edge-line);
+  border-radius: var(--r-1);
+  box-shadow: var(--well-inset);
+  overflow: hidden;
+}
+.comparisonMeter__bars i {
+  display: block;
+  height: 5px;
+  width: 0;
+  background: var(--accent, #5cc248);
+}
+.comparisonMeter__bars i[data-overload="true"] {
+  background: var(--signal-red, #ef6868);
+}
+.comparisonFigure--overlayHost {
+  position: relative;
+}
+.comparisonFigure__canvasWrap {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+.comparisonTimelineOverlay {
+  position: absolute;
+  pointer-events: none;
+  overflow: hidden;
+  border-radius: var(--r-1);
+}
+
+.comparisonApp .comparisonTrack__name {
+  display: block;
+  width: 100%;
+  max-width: none;
+  min-width: 0;
+  padding: 0 12px 0 30px;
+  height: 100%;
+  margin: 0;
+  box-sizing: border-box;
+  box-shadow: none;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--track-color);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: left;
+  font-size: 12px;
+  font-weight: 600;
+}
+.comparisonTrack__actions button {
+  padding: 3px 6px;
+  font-size: 10px;
+}
+.comparisonTrack__actions [aria-pressed="true"] {
+  color: var(--track-color);
+}
+
+.comparisonLiveMount {
+  height: min(78vh, 980px);
+  min-height: 520px;
+}
+.comparisonLiveMount .liveAnalysisComponent {
+  flex: 1 1 0;
+}
+.comparisonChrome {
+  background: var(--chrome-bg);
+}
+
+.comparisonApp {
+  max-width: none;
+  padding-top: 0;
+}
+.comparisonTabs.workspaceChrome {
+  padding: 2px 8px 2px 6px;
+  min-height: 28px;
+  gap: 4px;
+  background: var(--chrome-bg);
+}
+.comparisonChrome {
+  margin-bottom: 6px;
+}
+.comparisonTracks.workspaceChrome {
+  height: 40px;
+  min-height: 40px;
+  align-items: stretch;
+  padding: 0;
+  gap: 0;
+  border-radius: 0;
+}
+.comparisonTrack__actions button {
+  font-size: 10px;
+}
+.comparisonApp .workspaceChrome__settingsBtn {
+  border-color: transparent;
+  background: transparent;
+  border-radius: var(--r-2);
+  padding: 4px 7px;
+}
+.comparisonApp .settingsOverlay .comparisonSettings {
+  display: flex;
+  padding: 0 0 16px;
+}
+
+.comparisonWave__row {
+  background: var(--surface-1);
+}
+.comparisonWave__label {
+  padding: 4px 8px;
+  font-size: 10px;
+}
+.comparisonWave__row .canvasBox {
+  margin-bottom: 0;
+}
+
+.comparisonAdvancedSettings .panelGroup {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+}
+.comparisonAdvancedSettings label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.comparisonAdvancedSettings input[type="number"] {
+  width: 100px;
+}
+.comparisonAdvancedSettings p {
+  color: var(--text-faint);
+  font-size: 11px;
+}
+.comparisonAdvancedSettings h3 {
+  margin: 0;
+}
+.comparisonGrid[hidden],
+.comparisonWave[hidden] {
+  display: none;
+}
+
+/* Persistent controls: stable hit areas and no text-width changes on toggle. */
+.comparisonApp .comparisonTrack__active {
+  position: absolute;
+  inset: 0 auto 0 0;
+  z-index: 2;
+  width: 28px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+}
+.comparisonTrack__active span {
+  width: 7px;
+  height: 7px;
+  border-radius: var(--r-full);
+  background: var(--text-faint);
+  transition:
+    background var(--dur-2) var(--ease-swift),
+    box-shadow var(--dur-2) var(--ease-swift);
+}
+.comparisonTrack__active[aria-pressed="true"] span {
+  background: var(--track-color);
+  box-shadow: 0 0 6px var(--track-color);
+}
+.comparisonApp .comparisonTrack__active:hover,
+.comparisonApp .comparisonTrack__active[aria-pressed="true"] {
+  background: transparent;
+}
+.comparisonApp .comparisonTrack__icon {
+  width: 28px;
+  height: 26px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  flex: 0 0 28px;
+}
+.comparisonApp .comparisonTrack__icon[hidden] {
+  display: none;
+}
+.comparisonTrack__icon svg {
+  grid-area: 1 / 1;
+}
+.comparisonTrack__icon .speakerOn,
+.comparisonTrack__icon .speakerOff {
+  transition: opacity var(--dur-1) var(--ease-swift);
+}
+.comparisonTrack__icon .speakerOff,
+.comparisonTrack__icon[aria-pressed="true"] .speakerOn {
+  opacity: 0;
+}
+.comparisonTrack__icon[aria-pressed="true"] .speakerOff {
+  opacity: 1;
+}
+.comparisonTrack__actions {
+  border-radius: 0;
+}
+.comparisonFigure {
+  transition:
+    opacity var(--dur-2) var(--ease-swift),
+    filter var(--dur-2) var(--ease-swift);
+}
+.comparisonFigure[data-active="false"] {
+  opacity: 0.3;
+  filter: grayscale(0.7);
+  pointer-events: none;
+}
+.comparisonMonitorPanel {
+  position: fixed;
+  z-index: 120;
+  width: min(420px, calc(100vw - 32px));
+  box-sizing: border-box;
+  padding: 12px;
+  overflow-y: auto;
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-3);
+  background: var(--floating-bg);
+  backdrop-filter: var(--floating-filter);
+  box-shadow:
+    var(--shadow-popover),
+    inset 0 1px 0 var(--edge-hi);
+}
+.comparisonMonitorPanel[hidden] {
+  display: none;
+}
+.comparisonMonitorPanel header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.comparisonMonitorPanel h2 {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 500;
+}
+.comparisonMonitorPanel .liveMonitoringBar {
+  flex-direction: column;
+  align-items: stretch;
+}
+.comparisonMonitorPanel .liveMonitoringBar__core {
+  flex-wrap: wrap;
+}
+.comparisonMonitorPanel .liveMonitoringBar__bands {
+  flex-wrap: wrap;
+}
+.comparisonMonitorPanel .liveMonitoringBar__label {
+  display: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .comparisonTrack,
+  .comparisonTrack__active span,
+  .comparisonTrack__icon path,
+  .comparisonFigure {
+    transition: none;
+  }
+}
+
+/* Only the outer chrome clips the banner corners; rows fill its inner bounds. */
+.comparisonApp .comparisonTrack__name:hover,
+.comparisonApp .comparisonTrack__name:focus-visible {
+  background: transparent;
+}
+.comparisonApp .comparisonTrack__active,
+.comparisonApp .comparisonTrack__active:hover,
+.comparisonApp .comparisonTrack__active:focus,
+.comparisonApp .comparisonTrack__active:active {
+  height: 100%;
+  margin: 0;
+  box-sizing: border-box;
+  border-radius: 0;
+  border: 0;
+  background: transparent;
+  outline: none !important;
+  box-shadow: none;
+}
+.comparisonTrack__active:focus-visible span {
+  outline: 1px solid var(--track-color);
+  outline-offset: 3px;
+}
+.comparisonTrack__active:active span {
+  transform: scale(0.85);
+}
+.comparisonTrack__active span {
+  transition:
+    background var(--dur-2) var(--ease-swift),
+    box-shadow var(--dur-2) var(--ease-swift),
+    transform var(--dur-1) var(--ease-swift);
+}
+.comparisonTransport {
+  box-sizing: border-box;
+  gap: 10px;
+}
+.comparisonTransport > button,
+.comparisonTransport input[type="number"] {
+  height: 28px;
+  box-sizing: border-box;
+  margin: 0;
+}
+.comparisonTime {
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.comparisonApp .comparisonTime input {
+  width: 84px;
+  padding: 3px 6px;
+  font-family: var(--font-mono);
+}
+.comparisonVolume {
+  margin-left: auto;
+  white-space: nowrap;
+}
+.comparisonVolume input {
+  width: 100px;
+  min-width: 60px;
+}
+.comparisonTransport [data-open-monitor] {
+  margin-left: auto;
+}
+.comparisonLoudnessSummary {
+  overflow: hidden;
+}
+@media (max-width: 720px) {
+  .comparisonTransport {
+    left: 12px;
+    right: 12px;
+    gap: 8px;
+  }
+  .comparisonTransport input[data-seek] {
+    max-width: none;
+  }
+  .comparisonVolume {
+    margin-left: 0;
+  }
+  .comparisonMeter {
+    margin-left: auto;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .comparisonTrack__active span {
+    transition: none;
+  }
+}
+
+/* Comparison mounts settings directly, without the single-file tab scroller. */
+.comparisonApp #settingTab {
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  scrollbar-gutter: stable;
+}
+.comparisonApp #settingTab > * {
+  flex-shrink: 0;
+}
+.comparisonApp[data-tour-active="true"] .comparisonTransport {
+  transform: translateY(0);
+  opacity: 1;
+  pointer-events: auto;
+  transition: none;
+}

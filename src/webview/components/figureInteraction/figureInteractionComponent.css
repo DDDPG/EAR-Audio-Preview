@@ -39,6 +39,14 @@
   max-width: min(320px, calc(100vw - 12px));
   overflow: hidden;
   text-overflow: ellipsis;
+  padding: 4px 6px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-2);
+  background: var(--floating-bg);
+  backdrop-filter: var(--floating-filter);
+  box-shadow:
+    var(--shadow-popover),
+    inset 0 1px 0 var(--edge-hi);
 }
 
 .figureHoverReadout--waveform {

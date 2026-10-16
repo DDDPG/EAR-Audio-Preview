@@ -10,6 +10,8 @@ import {
 } from "../../shared/stftEssentiaCompute";
 
 interface PendingStft {
+  owner: EssentiaHostClient;
+  cacheKey: string;
   resolve: (spectrogram: number[][] | null) => void;
   reject: (err: Error) => void;
 }
@@ -19,9 +21,11 @@ function stftCacheKey(
   sampleRate: number,
   dataLength: number,
   settings: StftSettingsWire,
+  sourceId: number,
 ): string {
   return JSON.stringify({
     ch,
+    sourceId,
     sampleRate,
     dataLength,
     windowSize: settings.windowSize,
@@ -35,7 +39,8 @@ function stftCacheKey(
 /** Webview client for Essentia STFT in Extension Host (CSP-safe). */
 export default class EssentiaHostClient {
   private static _pending = new Map<string, PendingStft>();
-  private static _cache = new Map<string, number[][]>();
+  private _cache = new Map<string, number[][]>();
+  private _disposed = false;
 
   constructor(private _postMessage: PostMessage) {}
 
@@ -54,12 +59,24 @@ export default class EssentiaHostClient {
       return;
     }
     const spectrogram = stftWireToSpectrogram(msg.data.wire);
-    EssentiaHostClient._cache.set(msg.data.cacheKey, spectrogram);
+    // The request owns the key and audio lifetime; never trust a late response
+    // to populate a different document's cache.
+    pending.owner._cache.set(pending.cacheKey, spectrogram);
+    if (pending.owner._cache.size > 4) {
+      pending.owner._cache.delete(pending.owner._cache.keys().next().value);
+    }
     pending.resolve(spectrogram);
   }
 
-  public static clearCache(): void {
-    EssentiaHostClient._cache.clear();
+  public dispose(): void {
+    this._disposed = true;
+    this._cache.clear();
+    for (const [id, pending] of EssentiaHostClient._pending) {
+      if (pending.owner === this) {
+        EssentiaHostClient._pending.delete(id);
+        pending.resolve(null);
+      }
+    }
   }
 
   public getCached(
@@ -67,9 +84,10 @@ export default class EssentiaHostClient {
     sampleRate: number,
     dataLength: number,
     settings: StftSettingsWire,
+    sourceId = 0,
   ): number[][] | undefined {
-    return EssentiaHostClient._cache.get(
-      stftCacheKey(ch, sampleRate, dataLength, settings),
+    return this._cache.get(
+      stftCacheKey(ch, sampleRate, dataLength, settings, sourceId),
     );
   }
 
@@ -78,9 +96,19 @@ export default class EssentiaHostClient {
     channelData: Float32Array,
     sampleRate: number,
     settings: StftSettingsWire,
+    sourceId = 0,
   ): Promise<number[][] | null> {
-    const cacheKey = stftCacheKey(ch, sampleRate, channelData.length, settings);
-    const cached = EssentiaHostClient._cache.get(cacheKey);
+    if (this._disposed) {
+      return Promise.resolve(null);
+    }
+    const cacheKey = stftCacheKey(
+      ch,
+      sampleRate,
+      channelData.length,
+      settings,
+      sourceId,
+    );
+    const cached = this._cache.get(cacheKey);
     if (cached) {
       return Promise.resolve(cached);
     }
@@ -96,18 +124,28 @@ export default class EssentiaHostClient {
     );
 
     return new Promise((resolve, reject) => {
-      EssentiaHostClient._pending.set(requestId, { resolve, reject });
-      this._postMessage({
-        type: WebviewMessageType.ANALYZE_STFT,
-        data: {
-          requestId,
-          cacheKey,
-          channel: ch,
-          samples,
-          sampleRate,
-          settings: settings as StftSettingsWireMessage,
-        },
+      EssentiaHostClient._pending.set(requestId, {
+        resolve,
+        reject,
+        owner: this,
+        cacheKey,
       });
+      try {
+        this._postMessage({
+          type: WebviewMessageType.ANALYZE_STFT,
+          data: {
+            requestId,
+            cacheKey,
+            channel: ch,
+            samples,
+            sampleRate,
+            settings: settings as StftSettingsWireMessage,
+          },
+        });
+      } catch (err) {
+        EssentiaHostClient._pending.delete(requestId);
+        reject(err);
+      }
     });
   }
 }

@@ -78,7 +78,7 @@ export default class SettingsOverlayComponent extends Component {
   }
 
   private _focusGearButton(): void {
-    this._gearBtn?.focus();
+    this._gearBtn?.focus({ preventScroll: true });
   }
 
   private _close(): void {
@@ -105,7 +105,7 @@ export default class SettingsOverlayComponent extends Component {
     });
     const firstFocus =
       this._dialog.querySelector<HTMLElement>(focusableSelector);
-    firstFocus?.focus();
+    firstFocus?.focus({ preventScroll: true });
   }
 
   private _toggle(): void {

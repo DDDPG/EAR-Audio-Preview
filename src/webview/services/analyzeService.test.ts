@@ -2,6 +2,56 @@ import { MockAudioBuffer } from "../../__mocks__/helper";
 import AnalyzeService from "./analyzeService";
 
 describe("analyzeService", () => {
+  test("Mel reuse preserves outputs when spectrum or any filter parameter changes", () => {
+    const buffer = new MockAudioBuffer(1, 128, 48000) as unknown as AudioBuffer;
+    const cached = new AnalyzeService(buffer);
+    const cases: Array<[number, number, number, number, number]> = [
+      [8, 128, 48000, 0, 64],
+      [8, 128, 48000, 0, 64],
+      [12, 128, 48000, 0, 64],
+      [12, 256, 48000, 0, 64],
+      [12, 256, 44100, 0, 64],
+      [12, 256, 44100, 2, 64],
+      [12, 256, 44100, 2, 80],
+      [8, 128, 48000, 0, 64],
+    ];
+    for (const [index, [filters, length, rate, low, high]] of cases.entries()) {
+      const spectrum = Array.from(
+        { length },
+        (_, bin) => Math.sin(bin + index) ** 2,
+      );
+      const fresh = new AnalyzeService(buffer);
+      const expected = fresh["applyMelFilterBank"](
+        filters,
+        spectrum,
+        rate,
+        low,
+        high,
+      );
+      const actual = cached["applyMelFilterBank"](
+        filters,
+        spectrum,
+        rate,
+        low,
+        high,
+      );
+      expect(new Uint8Array(new Float64Array(actual).buffer)).toEqual(
+        new Uint8Array(new Float64Array(expected).buffer),
+      );
+    }
+    // Skipping zero-weight terms would change NaN/Infinity behavior.
+    const invalid = Array(128).fill(0);
+    invalid[127] = Infinity;
+    expect(cached["applyMelFilterBank"](8, invalid, 48000, 0, 64)).toEqual(
+      new AnalyzeService(buffer)["applyMelFilterBank"](
+        8,
+        invalid,
+        48000,
+        0,
+        64,
+      ),
+    );
+  });
   test("roundToNearestNiceNumber", () => {
     const examples = [
       { input: -5, expNice: 0, expDigs: 0 },

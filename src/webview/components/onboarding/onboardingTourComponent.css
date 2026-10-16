@@ -17,15 +17,15 @@
    rest of the UI. Transitions make step changes glide between anchors. */
 .onboardingTour__spotlight {
   position: absolute;
-  border-radius: 6px;
+  border-radius: var(--r-2);
   box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.58);
   outline: 1px solid var(--accent, #3f6f5f);
   pointer-events: none;
   transition:
-    top 200ms cubic-bezier(0.22, 1, 0.36, 1),
-    left 200ms cubic-bezier(0.22, 1, 0.36, 1),
-    width 200ms cubic-bezier(0.22, 1, 0.36, 1),
-    height 200ms cubic-bezier(0.22, 1, 0.36, 1);
+    top var(--dur-2) var(--ease-swift),
+    left var(--dur-2) var(--ease-swift),
+    width var(--dur-2) var(--ease-swift),
+    height var(--dur-2) var(--ease-swift);
 }
 
 .onboardingTour__spotlight--none {
@@ -41,15 +41,15 @@
   width: 320px;
   max-width: calc(100vw - 24px);
   padding: 14px 16px 12px;
-  border-radius: 8px;
+  border-radius: var(--r-3);
   border: 1px solid var(--edge-line, #3a3a3d);
   background: var(--surface-1, #1e1e20);
   color: var(--vscode-foreground, #ddd);
-  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.45);
+  box-shadow: var(--shadow-popover);
   pointer-events: auto;
   transition:
-    top 200ms cubic-bezier(0.22, 1, 0.36, 1),
-    left 200ms cubic-bezier(0.22, 1, 0.36, 1);
+    top var(--dur-2) var(--ease-swift),
+    left var(--dur-2) var(--ease-swift);
 }
 
 .onboardingTour__title {
@@ -101,7 +101,7 @@
   color: inherit;
   font-size: 11px;
   padding: 3px 10px;
-  border-radius: 4px;
+  border-radius: var(--r-1);
   cursor: pointer;
 }
 

@@ -1,0 +1,43 @@
+.wavFormatControls {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 8px 0;
+}
+.wavFormatControls label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+}
+.wavFormatControls select {
+  color: var(--text-primary, #fff);
+  background: var(--surface-0, #111);
+  border: 1px solid var(--edge-line);
+  box-shadow: var(--well-inset);
+  padding: 5px;
+  border-radius: var(--r-2);
+}
+.earExportDialogBackdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 2000000000;
+  display: grid;
+  place-items: center;
+  background: var(--backdrop-dim);
+}
+.earExportDialog {
+  max-width: 440px;
+  padding: 24px;
+  border: 1px solid var(--hairline, #333);
+  border-radius: var(--r-4);
+  color: var(--text-primary, #fff);
+  box-shadow:
+    var(--shadow-modal),
+    inset 0 1px 0 var(--edge-hi);
+  background: var(--floating-bg);
+  backdrop-filter: var(--floating-filter);
+}
+.earExportDialog button {
+  margin: 4px;
+}

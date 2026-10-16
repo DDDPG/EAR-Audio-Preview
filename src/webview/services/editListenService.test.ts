@@ -6,6 +6,7 @@ import EditExportSettingsService from "./editExportSettingsService";
 import EditListenService from "./editListenService";
 import PlayerService from "./playerService";
 import PlayerSettingsService from "./playerSettingsService";
+import * as audioExport from "./audioExportService";
 
 describe("EditListenService", () => {
   let audioBuffer: AudioBuffer;
@@ -49,6 +50,44 @@ describe("EditListenService", () => {
     editListen.leave();
     playerService.dispose();
     editListen.dispose();
+    jest.restoreAllMocks();
+  });
+
+  test.each(["leave", "dispose"] as const)(
+    "late rendering cannot reactivate after %s",
+    async (action) => {
+      let resolve: (buffer: AudioBuffer) => void;
+      jest.spyOn(audioExport, "renderExportBuffer").mockImplementation(
+        () =>
+          new Promise((r) => {
+            resolve = r;
+          }),
+      );
+      editExportSettings.listenMode = "processed";
+      editListen.enter();
+      editListen[action]();
+      resolve(audioBuffer);
+      await new Promise((r) => setTimeout(r, 0));
+      expect(editListen.active).toBe(false);
+      expect(playerService.editListenActive).toBe(false);
+    },
+  );
+
+  test("late old render cannot replace the current settings cache", async () => {
+    const resolvers: Array<(buffer: AudioBuffer) => void> = [];
+    jest
+      .spyOn(audioExport, "renderExportBuffer")
+      .mockImplementation(() => new Promise((r) => resolvers.push(r)));
+    const first = editListen.getProcessedBuffer();
+    editExportSettings.setRegion(2, 4);
+    editListen.invalidateCache();
+    const second = editListen.getProcessedBuffer();
+    const newer = createAudioContext(44100).createBuffer(2, 10, 44100);
+    resolvers[1](newer);
+    await second;
+    resolvers[0](audioBuffer);
+    await first;
+    expect(await editListen.getProcessedBuffer()).toBe(newer);
   });
 
   test("enter syncs analyze range and activates player edit listen", () => {

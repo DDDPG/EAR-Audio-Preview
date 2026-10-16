@@ -1,0 +1,46 @@
+.earContextMenu {
+  position: fixed;
+  z-index: 2147483647;
+  min-width: 176px;
+  max-width: calc(100vw - 12px);
+  padding: 5px;
+  border: 1px solid var(--hairline, #333);
+  border-radius: var(--r-3);
+  color: var(--text-primary, #fff);
+  box-shadow:
+    var(--shadow-popover),
+    inset 0 1px 0 var(--edge-hi);
+  font: 12px var(--vscode-font-family, sans-serif);
+  text-align: left;
+  background: var(--floating-bg);
+  backdrop-filter: var(--floating-filter);
+}
+.earContextMenu button {
+  display: block;
+  width: 100%;
+  padding: 7px 10px;
+  border: 0;
+  border-radius: var(--r-2);
+  background: transparent;
+  color: var(--text-secondary, #aaa);
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+}
+.earContextMenu button:hover,
+.earContextMenu button:focus-visible {
+  color: var(--text-primary, #fff);
+  background: var(--surface-4, #343438);
+  outline: none;
+}
+.earContextMenu button[aria-checked="true"] {
+  color: var(--text-primary, #fff);
+}
+.earContextMenu button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.earContextMenu__separator {
+  margin: 4px 6px;
+  border-top: 1px solid var(--hairline, #333);
+}

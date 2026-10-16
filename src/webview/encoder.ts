@@ -2,39 +2,83 @@ export function encodeToWav(
   samples: Float32Array[],
   sampleRate: number,
   numChannels: number,
+  bitDepth: 8 | 16 | 24 | 32 = 16,
 ): Uint8Array {
-  const dataBytes = samples[0].length * numChannels * 2;
-  const buffer = new ArrayBuffer(44 + dataBytes);
+  if (
+    ![8, 16, 24, 32].includes(bitDepth) ||
+    numChannels < 1 ||
+    numChannels !== samples.length ||
+    samples.some((s) => s.length !== samples[0].length)
+  ) {
+    throw new Error("Invalid WAV sample layout");
+  }
+  const bytesPerSample = bitDepth / 8;
+  const dataBytes = samples[0].length * numChannels * bytesPerSample;
+  const isFloat = bitDepth === 32;
+  // IEEE float WAV uses WAVEFORMATEX and a fact chunk with the frame count.
+  const dataOffset = isFloat ? 58 : 44;
+  const buffer = new ArrayBuffer(dataOffset + dataBytes + (dataBytes % 2));
   const view = new DataView(buffer);
 
   // RIFF header
   writeString(view, 0, "RIFF");
   // file size
-  view.setUint32(4, 32 + dataBytes, true);
+  view.setUint32(4, buffer.byteLength - 8, true);
   // WAVE header
   writeString(view, 8, "WAVE");
   // fmt chunk
   writeString(view, 12, "fmt ");
   // byte of fmt chunk
-  view.setUint32(16, 16, true);
+  view.setUint32(16, isFloat ? 18 : 16, true);
   // fmt id
-  view.setUint16(20, 1, true);
+  view.setUint16(20, isFloat ? 3 : 1, true);
   // number of channels
   view.setUint16(22, numChannels, true);
   // sample rate
   view.setUint32(24, sampleRate, true);
   // byte rate
-  view.setUint32(28, sampleRate * 2, true);
+  view.setUint32(28, sampleRate * numChannels * bytesPerSample, true);
   // block size
-  view.setUint16(32, 2, true);
+  view.setUint16(32, numChannels * bytesPerSample, true);
   // bit depth
-  view.setUint16(34, 16, true);
+  view.setUint16(34, bitDepth, true);
+  if (isFloat) {
+    view.setUint16(36, 0, true);
+    writeString(view, 38, "fact");
+    view.setUint32(42, 4, true);
+    view.setUint32(46, samples[0].length, true);
+  }
   // data chunk
-  writeString(view, 36, "data");
+  writeString(view, dataOffset - 8, "data");
   // byte of data chunk
-  view.setUint32(40, dataBytes, true);
+  view.setUint32(dataOffset - 4, dataBytes, true);
   // audio data
-  floatTo16BitPCM(buffer, 44, samples);
+  if (bitDepth === 16) {
+    floatTo16BitPCM(buffer, dataOffset, samples);
+  } else {
+    let offset = dataOffset;
+    for (let i = 0; i < samples[0].length; i++) {
+      for (let ch = 0; ch < numChannels; ch++, offset += bytesPerSample) {
+        const sample = samples[ch][i];
+        if (isFloat) {
+          view.setFloat32(offset, sample, true);
+        } else if (bitDepth === 8) {
+          view.setUint8(
+            offset,
+            Math.max(0, Math.min(255, Math.round(sample * 128 + 128))),
+          );
+        } else {
+          const value = Math.max(
+            -8388608,
+            Math.min(8388607, Math.round(sample * 8388608)),
+          );
+          view.setUint8(offset, value & 255);
+          view.setUint8(offset + 1, (value >> 8) & 255);
+          view.setUint8(offset + 2, (value >> 16) & 255);
+        }
+      }
+    }
+  }
 
   return new Uint8Array(buffer);
 }

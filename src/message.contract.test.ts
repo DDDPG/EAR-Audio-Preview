@@ -85,6 +85,7 @@ describe("custom editor contract", () => {
   test("activation event targets the custom editor", () => {
     expect(pkg.activationEvents).toEqual([
       "onCustomEditor:earAudioPreview.audioPreview",
+      "onCommand:earAudioPreview.compare",
     ]);
   });
 

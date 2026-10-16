@@ -4,6 +4,12 @@ import {
   ExportChannelMode,
 } from "./editExportSettingsService";
 import PlayerSettingsService from "./playerSettingsService";
+import {
+  encodeRenderedWav,
+  renderMix,
+  type WavExportFormat,
+  type OverloadHandler,
+} from "./wavExportFormat";
 
 const filterQ = Math.SQRT1_2;
 
@@ -181,13 +187,42 @@ export async function renderExportBuffer(
 export async function renderExportWav(
   buffer: AudioBuffer,
   settings: EditExportSettingsProps,
+  sourceBitDepth: number | null = null,
+  format?: WavExportFormat,
+  onOverload?: OverloadHandler,
 ): Promise<Uint8Array> {
-  const rendered = await renderExportBuffer(buffer, settings);
+  let rendered = await renderExportBuffer(buffer, settings);
+  if (format) {
+    if (format.sampleRate && format.sampleRate !== rendered.sampleRate) {
+      rendered = await renderMix(
+        [rendered],
+        0,
+        rendered.duration,
+        format.sampleRate,
+        { enableHpf: false, hpfHz: 0, enableLpf: false, lpfHz: 0 },
+      );
+    }
+    return encodeRenderedWav(
+      rendered,
+      { ...format, channelMode: "as_is" },
+      sourceBitDepth,
+      onOverload,
+    );
+  }
   const audioData: Float32Array[] = [];
   for (let ch = 0; ch < rendered.numberOfChannels; ch++) {
     audioData.push(rendered.getChannelData(ch));
   }
-  return encodeToWav(audioData, rendered.sampleRate, rendered.numberOfChannels);
+  const bitDepth =
+    sourceBitDepth === 8 || sourceBitDepth === 16 || sourceBitDepth === 24
+      ? sourceBitDepth
+      : 32;
+  return encodeToWav(
+    audioData,
+    rendered.sampleRate,
+    rendered.numberOfChannels,
+    bitDepth,
+  );
 }
 
 export function bufferRms(buffer: AudioBuffer, channel = 0): number {

@@ -27,6 +27,7 @@ function monoDownmix(buffer: AudioBuffer): Float32Array {
 }
 
 interface PendingRequest {
+  owner: SequenceFeatureService;
   resolve: (profile: SequenceFeatureProfile | null) => void;
   reject: (err: Error) => void;
   onProgress?: SequenceAnalysisProgress;
@@ -68,6 +69,9 @@ export default class SequenceFeatureService extends Service {
     hopSec?: number,
     onProgress?: SequenceAnalysisProgress,
   ): Promise<SequenceFeatureProfile | null> {
+    if (this._isDisposed) {
+      return Promise.resolve(null);
+    }
     const effectiveHop =
       hopSec ??
       computeAdaptiveSequenceHopSec(
@@ -98,13 +102,12 @@ export default class SequenceFeatureService extends Service {
         ? crypto.randomUUID()
         : `seq-${Date.now()}-${Math.random().toString(36).slice(2)}`;
     const mono = monoDownmix(this._audioBuffer);
-    const samples = mono.buffer.slice(
-      mono.byteOffset,
-      mono.byteOffset + mono.byteLength,
-    );
+    // monoDownmix always returns an owned full buffer, including mono inputs.
+    const samples = mono.buffer;
 
     return new Promise((resolve, reject) => {
       SequenceFeatureService._pending.set(requestId, {
+        owner: this,
         resolve: (profile) => {
           this._profileCache = profile;
           resolve(profile);
@@ -123,5 +126,16 @@ export default class SequenceFeatureService extends Service {
         },
       });
     });
+  }
+
+  public dispose(): void {
+    for (const [id, pending] of SequenceFeatureService._pending) {
+      if (pending.owner === this) {
+        SequenceFeatureService._pending.delete(id);
+        pending.resolve(null);
+      }
+    }
+    this._profileCache = null;
+    super.dispose();
   }
 }

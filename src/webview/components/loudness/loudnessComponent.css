@@ -276,8 +276,15 @@
   font-family: var(--font-mono);
   font-size: var(--text-xs);
   color: rgba(255, 255, 255, 0.95);
-  background: rgba(0, 0, 0, 0.45);
   /* readout contrast without glow */
+  background: var(--floating-bg);
+  backdrop-filter: var(--floating-filter);
+  padding: 4px 6px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-2);
+  box-shadow:
+    var(--shadow-popover),
+    inset 0 1px 0 var(--edge-hi);
 }
 
 .loudnessComponent__selection {

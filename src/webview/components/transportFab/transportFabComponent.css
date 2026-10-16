@@ -94,10 +94,11 @@
   max-height: min(60vh, 420px);
   display: flex;
   flex-direction: column;
-  background: var(--surface-2);
   border: 1px solid var(--edge-line);
   border-radius: var(--r-3);
-  box-shadow: var(--shadow-popover);
+  box-shadow:
+    var(--shadow-popover),
+    inset 0 1px 0 var(--edge-hi);
   pointer-events: auto;
   overflow: hidden;
   opacity: 0;
@@ -105,6 +106,8 @@
   transition:
     opacity var(--dur-2) var(--ease-swift),
     transform var(--dur-2) var(--ease-swift);
+  background: var(--floating-bg);
+  backdrop-filter: var(--floating-filter);
 }
 
 .transportPopover--open .transportPopover__panel {

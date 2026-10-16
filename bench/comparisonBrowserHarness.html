@@ -1,0 +1,29 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><title>EAR comparison browser integration</title>
+<style>:root{--vscode-editor-background:#19191b;--vscode-foreground:#eee;--vscode-font-size:13px;--vscode-font-weight:400;--vscode-font-family:system-ui;--vscode-focusBorder:#78b9ed}body{margin:12px;background:#19191b;color:#eee;font:13px system-ui}aside{padding:8px;border:1px solid #666}#report{white-space:pre-wrap}button{width:auto}</style>
+<aside>Integration harness · production comparison bundle · real Web Audio · excludes VS Code IPC.<button id="capture">Capture 15 seconds of playback</button><output id="report"></output></aside><div id="root"></div>
+<script>
+let manifest;
+const send = data => window.postMessage(data,location.origin);
+window.acquireVsCodeApi = () => ({getState: () => JSON.parse(sessionStorage.getItem("comparison-state") || "{}"), setState: state => sessionStorage.setItem("comparison-state", JSON.stringify(state)), postMessage: async message => {
+ try {
+  if(message.type==='compare.ready') {manifest = await (await fetch('/manifest')).json(); send({type:'compare.files',initial:true,files:manifest,workerUri:'/dist/comparisonWorker.js',loudnessWorkerUri:'/dist/comparisonLoudnessWorker.js',loudnessWorkletUri:'/dist/loudness.worklet.js'});}
+  else if(message.type==='compare.read') { const index=manifest.findIndex(f=>f.id===message.id); const result=await fetch(`/audio?track=${index}&offset=${message.offset}`); send({type:'compare.data',id:message.id,revision:message.revision,offset:message.offset,length:Number(result.headers.get('X-Audio-Length')),samples:await result.arrayBuffer()}); }
+  else if(message.type==='compare.confirm') {send({type:'compare.confirmed',requestId:message.requestId,accepted:true});}
+  else if(message.type==='compare.remove') {manifest=manifest.filter(f=>f.id!==message.id);}
+  else if(message.type==='compare.export') {const result=await fetch('/export',{method:'POST',body:message.samples}); if(!result.ok){throw new Error(await result.text());} send({type:'compare.exported',requestId:message.requestId,path:await result.text()});}
+  else if(message.type==='compare.sequence') {send({type:'compare.sequenceResult',message:{type:'sequenceFeatures',data:{requestId:message.requestId,error:'Host sequence analysis is outside the browser benchmark'}}});}
+ } catch(error) {send({type:'compare.failure',id:message.id,revision:message.revision,message:String(error)});}
+}});
+document.getElementById('capture').onclick = async () => {
+ const root=document.getElementById('root'), output=document.getElementById('report');
+ const frames=[], batches=[], batchMs=[], times=[]; let previous=performance.now(), lastBatch=previous, active=true;
+ const observer=new MutationObserver(records=>{if(records.some(r=>r.attributeName==='data-live-time')){const now=performance.now();batches.push(now-lastBatch);lastBatch=now;batchMs.push(Number(root.dataset.liveAnalysisMs));times.push(Number(root.dataset.liveTime));}});
+ observer.observe(root,{attributes:true,attributeFilter:['data-live-time']});
+ const tick=time=>{if(!active)return;frames.push(time-previous);previous=time;requestAnimationFrame(tick);};requestAnimationFrame(tick);
+ output.textContent='Capturing… keep the Live pane playing.';
+ await new Promise(resolve=>setTimeout(resolve,15000));active=false;observer.disconnect();
+ const stats=values=>{const sorted=[...values].sort((a,b)=>a-b);return{count:values.length,medianMs:sorted[Math.floor(sorted.length*.5)],p95Ms:sorted[Math.floor(sorted.length*.95)],maxMs:Math.max(...values)}};
+ const result={label:'Actual browser production bundle, real native buffers and Web Audio; excludes VS Code host IPC',userAgent:navigator.userAgent,files:manifest.map(f=>f.name),activeTracks:root.querySelectorAll('.comparisonTrack[data-active="true"]').length,pane:root.querySelector('[role="tab"][aria-selected="true"]').textContent,timeRange:[times[0],times.at(-1)],animationFrames:stats(frames.slice(1)),livePresentationIntervals:stats(batches.slice(1)),liveBatchRoundtripAndDraw:stats(batchMs.slice(1)),heap:performance.memory?{usedJSHeapSize:performance.memory.usedJSHeapSize,totalJSHeapSize:performance.memory.totalJSHeapSize}:null,timestamp:new Date().toISOString()};
+ output.textContent=JSON.stringify(result,null,2);await fetch('/report',{method:'POST',body:JSON.stringify(result)});
+};
+</script><script src="/dist/comparison.js"></script></html>

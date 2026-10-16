@@ -31,6 +31,19 @@
 
 ---
 
+## What's new in v0.6.0
+
+- **Four-file comparison** — select up to four mono/stereo files in Explorer and choose **EAR Audio: Compare Files**. The editor-title command joins the most recent comparison; **Add audio…** adds files from the comparison page.
+- **Independent track states** — stable theme colors, focus, active/bypass, mute and removal. Analysis includes active muted sources; playback and export include only active unmuted sources. All sources start at zero on one transport clock; shorter sources end in silence and empty plots.
+- **Shared views** — focused waveform with animated expansion, synchronized time zoom, linked STFT frequency zoom, automatic 1×2 / 1×3 / 2×2 layouts, and themed Live/Loudness overlays. **Right-click a visualization** for layout choices and fullscreen. Drag to zoom a selected time/frequency region; Ctrl/Cmd-drag constrains to time and Shift-drag to frequency. The wheel scrolls the page without changing zoom; double-click resets the view.
+- **Native-rate analysis** — shared window/hop durations, calibrated STFT dBFS, common Nyquist extent and bounded worker segments. Different or unknown source rates require confirmation. The floating transport’s right-side Monitor opens the shared channel-mode, band-solo and headphone-EQ controls, including the original curve editor and preset import. Monitoring affects listening only.
+- **Comparison guide** — the first comparison opens an interactive walkthrough; reopen it with the toolbar ? button. The adjacent keyboard button opens shortcut help. Settings scroll independently inside their dialog.
+- **Transport controls** — enter a playback position in seconds (Enter to seek, Escape to cancel); double-click the Volume slider to reset to 100%. Monitor opens above the floating transport.
+- **Mix export** — selected region summed without normalization, mono center-panned at −3.01 dB per side, selectable output rate and PCM8/16/24 or float32 WAV. Integer overload offers float, attenuation, clipping or cancellation. Master volume and monitoring EQ are excluded; playback filters can be explicitly synchronized.
+- **Reload and lifecycle** — externally changed files receive a manual reload badge. Pending reads/analysis are versioned and cancelled on replacement or disposal. Comparison sessions are not persisted after closing.
+
+Comparison keeps decoded PCM in memory. Four long high-rate stereo files therefore require substantial memory. The first version supports FFT spectrum overlays; the Live grid enum is reserved for a later view. The local browser integration harness is `node bench/comparisonBrowserHarness.mjs <fixture-directory>`; its results exclude VS Code host IPC and are separate from the existing single-file benchmark baseline.
+
 ## What's new in v0.5.0
 
 - **Getting-started tour** — first open launches a 24-step interactive spotlight guide (try-it steps auto-advance as you click tabs, toggle meters or open panels); replay anytime via the `?` button top-right
@@ -211,7 +224,7 @@ Offline EBU R128 loudness profile with stacked timeline strips (shared time axis
 Export selected audio regions:
 
 - **EasyCut** — Select a time range in any pane, then export as WAV from this tab.
-- **Format** — Exports preserve original sample rate and bit depth.
+- **Format** — WAV exports use the decoded audio's sample rate (browser decoding may resample the source). Known 8/16/24-bit sources retain that PCM depth; 32-bit and unknown-depth sources use 32-bit float WAV to retain decoded sample precision. Decoding and processing operate on float32 samples, so this is not a bit-perfect container conversion.
 
 ### Common Operations
 

@@ -1,5 +1,6 @@
 import Component from "../../component";
-import PlayerService from "../../services/playerService";
+import { ContextMenu } from "../contextMenu/contextMenu";
+import type { LivePlayback, LiveComparisonInput } from "./liveAnalysisInput";
 import AnalyzeSettingsService from "../../services/analyzeSettingsService";
 import GoniometerComponent from "./goniometerComponent";
 import SpectralAnalyzerComponent from "./spectralAnalyzerComponent";
@@ -53,8 +54,9 @@ export default class LiveAnalysisComponent extends Component {
 
   constructor(
     containerEl: HTMLElement,
-    playerService: PlayerService,
+    playerService: LivePlayback,
     analyzeSettingsService: AnalyzeSettingsService,
+    private readonly _comparison?: LiveComparisonInput,
   ) {
     super();
 
@@ -103,11 +105,30 @@ export default class LiveAnalysisComponent extends Component {
       "[data-gonio-phase-mount]",
     ) as HTMLElement;
 
+    const visibleInput = (overlay: boolean): LiveComparisonInput | undefined =>
+      _comparison
+        ? {
+            snapshot: () =>
+              this._overlay.classList.contains("hidden") !== overlay
+                ? _comparison.snapshot()
+                : null,
+            subscribe: (draw) =>
+              _comparison.subscribe(() => {
+                if (this._overlay.classList.contains("hidden") !== overlay) {
+                  draw();
+                }
+              }),
+            invalidate: () => _comparison.invalidate?.(),
+          }
+        : undefined;
+    const inlineInput = visibleInput(false),
+      overlayInput = visibleInput(true);
     this._goniometer = this._register(
       new GoniometerComponent(
         polarMount,
         playerService,
         analyzeSettingsService,
+        inlineInput,
       ),
     );
     this._phaseCorrelation = this._register(
@@ -115,6 +136,7 @@ export default class LiveAnalysisComponent extends Component {
         phaseMount,
         playerService,
         analyzeSettingsService,
+        inlineInput,
       ),
     );
     this._spectrum = this._register(
@@ -122,6 +144,7 @@ export default class LiveAnalysisComponent extends Component {
         this._spectrumWrap,
         playerService,
         analyzeSettingsService,
+        inlineInput,
       ),
     );
     this._overlayGoniometer = this._register(
@@ -129,6 +152,7 @@ export default class LiveAnalysisComponent extends Component {
         overlayPolarMount,
         playerService,
         analyzeSettingsService,
+        overlayInput,
       ),
     );
     this._overlayPhaseCorrelation = this._register(
@@ -136,6 +160,7 @@ export default class LiveAnalysisComponent extends Component {
         overlayPhaseMount,
         playerService,
         analyzeSettingsService,
+        overlayInput,
       ),
     );
     this._overlaySpectrum = this._register(
@@ -143,6 +168,7 @@ export default class LiveAnalysisComponent extends Component {
         this._overlaySpectrumWrap,
         playerService,
         analyzeSettingsService,
+        overlayInput,
       ),
     );
 
@@ -153,14 +179,31 @@ export default class LiveAnalysisComponent extends Component {
 
     this._initColResizeHandle(this._colHandle, "inline");
     this._initColResizeHandle(this._overlayColHandle, "overlay");
+    const contextMenu = this._register(new ContextMenu());
 
     this._addEventlistener(this._inner, "contextmenu", (e: MouseEvent) => {
-      e.preventDefault();
-      this._openOverlay();
+      contextMenu.open(e, [
+        ...(_comparison
+          ? [{ label: "Overlay", checked: true, action: () => undefined }]
+          : []),
+        {
+          label: "Fullscreen",
+          separator: !!_comparison,
+          action: () => this._openOverlay(),
+        },
+      ]);
     });
     this._addEventlistener(this._overlay, "contextmenu", (e: MouseEvent) => {
-      e.preventDefault();
-      this._closeOverlay();
+      contextMenu.open(e, [
+        ...(_comparison
+          ? [{ label: "Overlay", checked: true, action: () => undefined }]
+          : []),
+        {
+          label: "Exit fullscreen",
+          separator: !!_comparison,
+          action: () => this._closeOverlay(),
+        },
+      ]);
     });
     this._addEventlistener(document, "keydown", (e: KeyboardEvent) => {
       if (e.code === "Escape" && !this._overlay.classList.contains("hidden")) {
@@ -185,11 +228,15 @@ export default class LiveAnalysisComponent extends Component {
     return mode === "overlay" ? this._overlaySplits : this._inlineSplits;
   }
 
+  public refreshLayout(): void {
+    this._applyAllLayout();
+  }
   private _applyAllLayout() {
     this._applyRowSplit("inline");
     this._applyGonioColSplit("inline");
     this._applyRowSplit("overlay");
     this._applyGonioColSplit("overlay");
+    this._comparison?.invalidate?.();
   }
 
   private _applyRowSplit(mode: LiveAnalysisLayoutMode) {
@@ -369,9 +416,11 @@ export default class LiveAnalysisComponent extends Component {
     this._overlay.classList.remove("hidden");
     this._applyRowSplit("overlay");
     this._applyGonioColSplit("overlay");
+    this._comparison?.invalidate?.();
   }
 
   private _closeOverlay() {
     this._overlay.classList.add("hidden");
+    this._comparison?.invalidate?.();
   }
 }

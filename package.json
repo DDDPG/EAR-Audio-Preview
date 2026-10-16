@@ -2,7 +2,7 @@
   "name": "ear-audio-preview",
   "displayName": "EAR Audio Preview",
   "description": "EAR Audio Preview — play, preview & analyze audio files in VS Code. (wav,mp3,ogg,aac,flac,opus,m4a,sph)",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "engines": {
     "vscode": "^1.59.1"
   },
@@ -30,7 +30,8 @@
   },
   "license": "MIT",
   "activationEvents": [
-    "onCustomEditor:earAudioPreview.audioPreview"
+    "onCustomEditor:earAudioPreview.audioPreview",
+    "onCommand:earAudioPreview.compare"
   ],
   "main": "./dist/extension.js",
   "browser": "./dist/web/extension.js",
@@ -102,6 +103,28 @@
           "description": "When no saved headphone EQ profile exists, start playback with curve correction bypassed (safe default)."
         }
       }
+    },
+    "commands": [
+      {
+        "command": "earAudioPreview.compare",
+        "title": "EAR Audio: Compare Files"
+      }
+    ],
+    "menus": {
+      "explorer/context": [
+        {
+          "command": "earAudioPreview.compare",
+          "when": "resourceExtname =~ /\\.(wav|mp3|ogg|aac|flac|opus|m4a|sph)$/i",
+          "group": "navigation@20"
+        }
+      ],
+      "editor/title": [
+        {
+          "command": "earAudioPreview.compare",
+          "when": "activeCustomEditorId == earAudioPreview.audioPreview",
+          "group": "navigation@20"
+        }
+      ]
     }
   },
   "capabilities": {

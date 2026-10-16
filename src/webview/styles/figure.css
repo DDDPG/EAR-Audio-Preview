@@ -3,6 +3,9 @@
   padding: 0;
   margin-bottom: 5px;
   border: 1px solid var(--edge-line);
+  border-radius: var(--r-2);
+  background: var(--surface-0);
+  box-shadow: var(--well-inset);
 }
 
 .mainCanvas {

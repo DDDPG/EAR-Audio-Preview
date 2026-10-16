@@ -91,12 +91,13 @@ export async function computeSequenceFeatures(
   sampleRate: number,
   hopSec: number,
   onProgress?: SequenceAnalysisProgress,
+  shouldCancel?: () => boolean,
 ): Promise<SequenceFeatureProfile> {
   const hopSize = Math.max(1, Math.round(hopSec * sampleRate));
   const startCenter = Math.floor(frameSize / 2);
   const endCenter = data.length - Math.floor(frameSize / 2);
   const frameCount =
-    endCenter > startCenter
+    endCenter >= startCenter
       ? Math.floor((endCenter - startCenter) / hopSize) + 1
       : 0;
 
@@ -110,8 +111,12 @@ export async function computeSequenceFeatures(
 
   // Reused per-frame buffer — essentia copies it into a WASM vector each call.
   const frameBuf = new Float32Array(frameSize);
+  let previousSpectrum: Float32Array | null = null;
 
   for (let center = startCenter; center <= endCenter; center += hopSize) {
+    if (shouldCancel?.()) {
+      throw new Error("Sequence analysis cancelled");
+    }
     if (frameIdx > 0 && Date.now() - lastYieldMs >= yieldIntervalMs) {
       onProgress?.(Math.min(99, (frameIdx / Math.max(1, frameCount)) * 100));
       await yieldToMain();
@@ -154,12 +159,22 @@ export async function computeSequenceFeatures(
       f0Hz[frameIdx] = NaN;
     }
 
-    if (frameIdx > 0) {
-      const fluxOut = essentia.Flux(specOut.spectrum, true, "L2");
-      onsetFlux[frameIdx] = Number.isFinite(fluxOut.flux) ? fluxOut.flux : 0;
-    } else {
-      onsetFlux[frameIdx] = 0;
+    // The standard Essentia JS wrapper creates a fresh Flux algorithm per
+    // invocation. Keep history here instead of relying on its internal state.
+    const spectrum = essentia.vectorToArray(specOut.spectrum);
+    let fluxSquared = 0;
+    if (previousSpectrum) {
+      for (let i = 0; i < spectrum.length; i++) {
+        const increase = Math.max(0, spectrum[i] - previousSpectrum[i]);
+        fluxSquared += increase * increase;
+      }
     }
+    const flux = Math.sqrt(fluxSquared);
+    onsetFlux[frameIdx] = Number.isFinite(flux) ? flux : 0;
+    if (!previousSpectrum || previousSpectrum.length !== spectrum.length) {
+      previousSpectrum = new Float32Array(spectrum.length);
+    }
+    previousSpectrum.set(spectrum);
     // Release per-frame WASM vectors — embind heap is not GC-managed.
     freeEssentiaVector(frameVec);
     freeEssentiaVector(windowed.frame);

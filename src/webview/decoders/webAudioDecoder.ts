@@ -1,11 +1,15 @@
 import { IAudioDecoder } from "./audioDecoderInterface";
-import { parseWavBitsPerSample } from "../utils/audioFileBitDepth";
+import {
+  parseWavBitsPerSample,
+  parseWavSampleRate,
+} from "../utils/audioFileBitDepth";
 
 export class WebAudioDecoder implements IAudioDecoder {
   private _data: Uint8Array;
   private _ext: string;
   private _audioBuffer: AudioBuffer | null = null;
   private _fileBitDepth: number | null = null;
+  public sourceSampleRate: number | null = null;
 
   constructor(data: Uint8Array, ext: string) {
     this._data = data;
@@ -61,9 +65,26 @@ export class WebAudioDecoder implements IAudioDecoder {
       ext === "wav" || ext === "wave"
         ? parseWavBitsPerSample(this._data)
         : null;
-    const ctx = new AudioContext();
-    this._audioBuffer = await ctx.decodeAudioData(this._data.buffer.slice(0));
-    await ctx.close();
+    this.sourceSampleRate =
+      ext === "wav" || ext === "wave" ? parseWavSampleRate(this._data) : null;
+    let ctx: AudioContext;
+    try {
+      ctx = this.sourceSampleRate
+        ? new AudioContext({ sampleRate: this.sourceSampleRate })
+        : new AudioContext();
+    } catch {
+      ctx = new AudioContext();
+    }
+    try {
+      this._audioBuffer = await ctx.decodeAudioData(
+        this._data.buffer.slice(
+          this._data.byteOffset,
+          this._data.byteOffset + this._data.byteLength,
+        ),
+      );
+    } finally {
+      await ctx.close();
+    }
   }
 
   dispose() {

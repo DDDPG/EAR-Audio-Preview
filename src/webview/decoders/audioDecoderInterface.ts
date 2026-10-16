@@ -1,6 +1,7 @@
 export interface IAudioDecoder {
   readonly numChannels: number;
   readonly sampleRate: number;
+  readonly sourceSampleRate?: number | null;
   readonly duration: number;
   readonly length: number;
   readonly format: string;

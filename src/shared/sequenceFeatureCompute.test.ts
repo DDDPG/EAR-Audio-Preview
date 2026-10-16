@@ -85,8 +85,12 @@ describe("computeSequenceFeatures", () => {
     );
   });
 
-  test("onset flux: first frame is 0, later frames take essentia flux", async () => {
+  test("onset flux: first frame is 0, later rising spectra have L2 flux", async () => {
     const essentia = makeEssentia([{ pitch: 440, pitchConfidence: 0.9 }], 1.5);
+    let magnitude = 0;
+    essentia.Spectrum = () => ({
+      spectrum: new Float32Array([(magnitude += 1.5)]),
+    });
     const profile = await computeSequenceFeatures(
       essentia,
       data,
@@ -108,6 +112,42 @@ describe("computeSequenceFeatures", () => {
     );
     expect(profile.timeSec.length).toBe(0);
     expect(profile.f0Hz.length).toBe(0);
+  });
+
+  test("exactly one frame returns one time point and zero onset", async () => {
+    const result = await computeSequenceFeatures(
+      makeEssentia([{ pitch: 440, pitchConfidence: 1 }], 0),
+      new Float32Array(2048),
+      sampleRate,
+      hopSec,
+    );
+    expect(Array.from(result.timeSec)).toEqual([
+      Math.fround(1024 / sampleRate),
+    ]);
+    expect(Array.from(result.onsetFlux)).toEqual([0]);
+  });
+
+  test("flux measures only positive spectral changes and owns the previous frame", async () => {
+    const essentia = makeEssentia([{ pitch: 440, pitchConfidence: 1 }], 99);
+    const reused = new Float32Array(2);
+    const spectra = [
+      [3, 4],
+      [3, 4],
+      [6, 8],
+      [1, 1],
+    ];
+    let frame = 0;
+    essentia.Spectrum = () => {
+      reused.set(spectra[frame++]);
+      return { spectrum: reused };
+    };
+    const result = await computeSequenceFeatures(
+      essentia,
+      new Float32Array(3584),
+      sampleRate,
+      hopSec,
+    );
+    expect(Array.from(result.onsetFlux)).toEqual([0, 0, 5, 0]);
   });
 });
 

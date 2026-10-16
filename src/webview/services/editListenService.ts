@@ -18,6 +18,8 @@ interface AnalyzeTimeSnapshot {
 
 export default class EditListenService extends Service {
   private _active = false;
+  private _renderGeneration = 0;
+  private _listenGeneration = 0;
   private _analyzeSnapshot: AnalyzeTimeSnapshot | null = null;
   private _audioBuffer: AudioBuffer;
   private _editExportSettings: EditExportSettingsService;
@@ -130,7 +132,7 @@ export default class EditListenService extends Service {
   }
 
   public enter() {
-    if (this._active) {
+    if (this._active || this._isDisposed) {
       return;
     }
     this._active = true;
@@ -192,6 +194,8 @@ export default class EditListenService extends Service {
   }
 
   public invalidateCache() {
+    this._renderGeneration++;
+    this._listenGeneration++;
     this._processedCacheKey = "";
     this._processedBuffer = null;
     this._processedPromise = null;
@@ -222,6 +226,9 @@ export default class EditListenService extends Service {
   }
 
   public async getProcessedBuffer(): Promise<AudioBuffer | null> {
+    if (this._isDisposed) {
+      return null;
+    }
     const key = this._settingsCacheKey();
     if (this._processedBuffer && key === this._processedCacheKey) {
       return this._processedBuffer;
@@ -230,11 +237,16 @@ export default class EditListenService extends Service {
       return this._processedPromise;
     }
     this._processedCacheKey = key;
+    this._processedBuffer = null;
+    const generation = ++this._renderGeneration;
     this._processedPromise = renderExportBuffer(
       this._audioBuffer,
       this._resolvedSettings(),
     )
       .then((buf) => {
+        if (generation !== this._renderGeneration || this._isDisposed) {
+          return null;
+        }
         this._processedBuffer = buf;
         return buf;
       })
@@ -249,10 +261,22 @@ export default class EditListenService extends Service {
     const mode: EditListenMode = this._editExportSettings.listenMode;
     const regionStart = this._editExportSettings.regionStartSec;
     const regionEnd = this._editExportSettings.regionEndSec;
+    const generation = ++this._listenGeneration;
+    const settingsKey = this._settingsCacheKey();
     let processedBuffer: AudioBuffer | null = null;
 
     if (mode === "processed") {
       processedBuffer = await this.getProcessedBuffer();
+    }
+
+    if (
+      !this._active ||
+      this._isDisposed ||
+      generation !== this._listenGeneration ||
+      mode !== this._editExportSettings.listenMode ||
+      settingsKey !== this._settingsCacheKey()
+    ) {
+      return;
     }
 
     this._playerService.setEditListenState({
@@ -271,9 +295,9 @@ export default class EditListenService extends Service {
     if (this._editExportSettings.listenMode !== "processed") {
       return;
     }
-    if (this._renderDebounceTimer !== null) {
-      clearTimeout(this._renderDebounceTimer);
-    }
+    // Invalidate immediately, not when the debounce expires: an old render
+    // may finish during that interval.
+    this.invalidateCache();
     this._renderDebounceTimer = setTimeout(() => {
       this._renderDebounceTimer = null;
       void this._refreshProcessedListenState();
@@ -297,9 +321,12 @@ export default class EditListenService extends Service {
       return;
     }
     this._pauseIfPlaying();
-    if (this._editExportSettings.listenMode === "processed") {
-      await this.getProcessedBuffer();
-    }
     await this._updatePlayerListenState();
+  }
+
+  public dispose(): void {
+    this.leave();
+    this.invalidateCache();
+    super.dispose();
   }
 }

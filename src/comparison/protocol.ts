@@ -1,3 +1,7 @@
+import type {
+  AnalysisJob,
+  AnalysisReply,
+} from "../webview/comparison/analysisProtocol";
 /** Comparison panels have their own protocol; single-file IPC stays compatible. */
 import type { HeadphoneEqPersistedState } from "../webview/types/headphoneEq";
 import type {
@@ -26,6 +30,8 @@ export interface ComparisonFile {
 }
 
 export type ComparisonRequest =
+  | { type: "compare.analysis"; job: AnalysisJob; revision: number }
+  | { type: "compare.cancelAnalysis"; id: number }
   | { type: "compare.eq"; message: ComparisonEqRequest }
   | { type: "compare.ready" }
   | { type: "compare.onboardingSeen" }
@@ -48,6 +54,7 @@ export type ComparisonRequest =
   | { type: "compare.error"; message: string };
 
 export type ComparisonResponse =
+  | { type: "compare.analysisResult"; reply: AnalysisReply }
   | { type: "compare.eqResult"; message: ComparisonEqResponse }
   | {
       type: "compare.files";

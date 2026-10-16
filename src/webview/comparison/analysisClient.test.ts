@@ -66,3 +66,55 @@ test("cancel and disposal settle requests even if worker messaging throws", asyn
   client.dispose();
   expect(worker.terminate).toHaveBeenCalledTimes(1);
 });
+
+test("Essentia jobs use the host bridge and Ooura jobs stay in the CSP-safe worker", async () => {
+  const { worker, job } = harness();
+  const post = jest.fn();
+  const client = new ComparisonAnalysisClient(
+    worker as unknown as Worker,
+    post,
+  );
+  const hostJob = {
+    ...job,
+    options: { ...job.options, fftBackend: "essentia" as const },
+  };
+  const hosted = client.request(hostJob);
+  expect(worker.postMessage).not.toHaveBeenCalled();
+  expect(post.mock.calls[0][0]).toMatchObject({
+    type: "compare.analysis",
+    job: { id: 1, options: { fftBackend: "essentia" } },
+  });
+  client.handleHostResponse({
+    ...post.mock.calls[0][0].job,
+    error: "test host error",
+  });
+  await expect(hosted).resolves.toMatchObject({ error: "test host error" });
+  const native = client.request(job);
+  expect(worker.postMessage).toHaveBeenCalledTimes(1);
+  client.cancel();
+  await expect(native).resolves.toBeNull();
+  client.dispose();
+});
+
+test("cancelling host analysis settles its wait and ignores late replies", async () => {
+  const { worker, job } = harness();
+  const post = jest.fn();
+  const client = new ComparisonAnalysisClient(
+    worker as unknown as Worker,
+    post,
+  );
+  const result = client.request({
+    ...job,
+    options: { ...job.options, fftBackend: "essentia" },
+  });
+  client.dispose();
+  await expect(result).resolves.toBeNull();
+  expect(post.mock.calls[1][0]).toEqual({
+    type: "compare.cancelAnalysis",
+    id: 1,
+  });
+  expect(() =>
+    client.handleHostResponse(post.mock.calls[0][0].job),
+  ).not.toThrow();
+  expect(client["_pending"].size).toBe(0);
+});

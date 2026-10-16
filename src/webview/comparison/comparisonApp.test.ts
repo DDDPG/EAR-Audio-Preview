@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/naming-convention -- Mock keys must match the Web Audio and ES module interfaces. */
 import * as exportFormat from "../services/wavExportFormat";
 import { ComparisonApp } from "./comparisonApp";
+import { ComparisonAnalysisClient } from "./analysisClient";
 import { MockAudioBuffer } from "../../__mocks__/helper";
 import { canvasContext } from "./waveformStrip";
 import { analyzeNativeLoudness } from "./loudnessAnalysis";
@@ -23,6 +24,9 @@ jest.mock("./comparisonTransport", () => ({
     public tick() {}
     public dispose() {}
     public seek() {}
+    public pause() {
+      this.playing = false;
+    }
     public setVolume() {}
     public setMonitoring() {}
   },
@@ -1238,4 +1242,70 @@ test("shared sequence RPC cancels the host job on pane exit and ignores a late r
   });
   await flush();
   expect(app["_profiles"].has("a")).toBe(false);
+});
+
+test("reload settles pending Essentia work even when reading the replacement fails", async () => {
+  const track = add("a");
+  app.session.pane = "edit";
+  const worker = {
+    onmessage: null,
+    onerror: null,
+    onmessageerror: null,
+    postMessage: jest.fn(),
+    terminate: jest.fn(),
+  };
+  const postHost = jest.fn();
+  const analysis = new ComparisonAnalysisClient(
+    worker as unknown as Worker,
+    postHost,
+  );
+  app["_analysis"] = analysis;
+  app["_analysisReady"] = Promise.resolve(analysis);
+  const pending = analysis.request({
+    kind: "stft",
+    trackId: "a",
+    audioRevision: 1,
+    settingsRevision: 1,
+    audio: { left: new Float32Array(480), sampleRate: 48000, origin: 0 },
+    time: 0,
+    options: {
+      windowMs: 10,
+      fftBackend: "essentia",
+      minHz: 20,
+      maxHz: 24000,
+      bins: 16,
+      tiltDbPerOct: 0,
+      weighting: "none",
+    },
+  });
+  document.querySelector<HTMLButtonElement>('[data-action="reload"]').click();
+  await expect(pending).resolves.toBeNull();
+  expect(postHost.mock.calls[1][0]).toEqual({
+    type: "compare.cancelAnalysis",
+    id: 1,
+  });
+  app["_loader"].receive({
+    type: "compare.files",
+    initial: false,
+    files: [{ id: "a", uri: "a", name: "a", ext: "wav", revision: 2 }],
+    workerUri: "",
+    loudnessWorkerUri: "",
+    loudnessWorkletUri: "",
+  });
+  await flush();
+  expect(app["_loader"]["_reads"].has("a")).toBe(true);
+  app["receive"]({
+    type: "compare.failure",
+    id: "a",
+    revision: 2,
+    message: "replacement cannot be read",
+  });
+  await app["_loader"]["_queue"];
+  expect(app.session.tracks[0]).toBe(track);
+  expect(app.session.tracks[0].revision).toBe(1);
+  expect(analysis["_pending"].size).toBe(0);
+  expect(app["_liveBusy"]).toBe(false);
+  expect(document.querySelector("[data-status]").textContent).toContain(
+    "Failed to load a: Error: replacement cannot be read",
+  );
 });

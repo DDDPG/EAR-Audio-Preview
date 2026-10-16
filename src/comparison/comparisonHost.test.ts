@@ -1,6 +1,7 @@
 /** @jest-environment node */
 /* eslint-disable @typescript-eslint/naming-convention -- Mock properties match the VS Code API. */
 import * as vscode from "vscode";
+import { ComparisonAnalysisHost } from "../extensionHost/comparisonAnalysisHost";
 import { analyzeSequenceFeaturesInHost } from "../extensionHost/sequenceFeatureHost";
 import { ComparisonHost } from "./comparisonHost";
 import type { ComparisonRequest } from "./protocol";
@@ -263,4 +264,47 @@ test("disposal cancels queued work without reading the disposed panel webview", 
   gate.resolve(null);
   await first;
   expect(analyzeSequenceFeaturesInHost).toHaveBeenCalledTimes(1);
+});
+
+test("Essentia comparison jobs run in the cancellable host queue", async () => {
+  const h = harness();
+  await h.host.open([uri("/workspace/a.wav")]);
+  const gate = deferred<null>();
+  const analyze = jest
+    .spyOn(ComparisonAnalysisHost.prototype, "analyze")
+    .mockReturnValueOnce(gate.promise);
+  const job = {
+    id: 7,
+    trackId: "track-1",
+    audioRevision: 2,
+    settingsRevision: 3,
+    kind: "stft" as const,
+    audio: { left: new Float32Array(8), sampleRate: 48000, origin: 0 },
+    options: {
+      windowMs: 10,
+      fftBackend: "essentia" as const,
+      minHz: 20,
+      maxHz: 24000,
+      bins: 16,
+      weighting: "none" as const,
+      tiltDbPerOct: 0,
+    },
+    time: 0,
+  };
+  const result = h.receive({ type: "compare.analysis", revision: 1, job });
+  await Promise.resolve();
+  expect(analyze).toHaveBeenCalledWith(job, expect.any(Function));
+  const shouldCancel = analyze.mock.calls[0][1];
+  expect(shouldCancel()).toBe(false);
+  await h.receive({ type: "compare.cancelAnalysis", id: 7 });
+  expect(shouldCancel()).toBe(true);
+  gate.resolve(null);
+  await result;
+  expect(
+    h.webview.postMessage.mock.calls.some(
+      ([message]) => message.type === "compare.analysisResult",
+    ),
+  ).toBe(false);
+  h.host.dispose();
+  analyze.mockRestore();
 });

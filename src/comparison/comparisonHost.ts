@@ -1,3 +1,4 @@
+import { ComparisonAnalysisHost } from "../extensionHost/comparisonAnalysisHost";
 import { hostAnalysisTasks } from "../extensionHost/analysisTaskQueue";
 import { comparisonTrackLimit } from "./limits";
 import { handleComparisonEqRequest } from "./comparisonEqHost";
@@ -77,6 +78,7 @@ export class ComparisonHost implements vscode.Disposable {
     const webview = panel.webview;
     this._panels.add(panel);
     const files = new Map<string, HostFile>();
+    const analysis = new ComparisonAnalysisHost();
     const sequenceJobs = new Map<string, AbortController>();
     let counter = 0,
       ready = false,
@@ -89,6 +91,7 @@ export class ComparisonHost implements vscode.Disposable {
       disposed = true;
       listener?.dispose();
       hostAnalysisTasks.cancel(webview);
+      analysis.dispose();
       sequenceJobs.forEach((job) => job.abort());
       sequenceJobs.clear();
       files.forEach((f) => f.watcher.dispose());
@@ -347,6 +350,50 @@ export class ComparisonHost implements vscode.Disposable {
                 });
                 break;
               }
+              case "compare.analysis": {
+                const { job, revision } = message;
+                const requestId = `compare-analysis-${job.id}`;
+                await hostAnalysisTasks.run(
+                  webview,
+                  requestId,
+                  async (cancelled) => {
+                    const shouldCancel = () =>
+                      cancelled() ||
+                      disposed ||
+                      files.get(job.trackId)?.info.revision !== revision;
+                    try {
+                      if (shouldCancel()) {
+                        return;
+                      }
+                      const reply = await analysis.analyze(job, shouldCancel);
+                      if (reply && !shouldCancel()) {
+                        post({ type: "compare.analysisResult", reply });
+                      }
+                    } catch (error) {
+                      if (!shouldCancel()) {
+                        post({
+                          type: "compare.analysisResult",
+                          reply: {
+                            id: job.id,
+                            trackId: job.trackId,
+                            audioRevision: job.audioRevision,
+                            settingsRevision: job.settingsRevision,
+                            time: job.time,
+                            error: String(error),
+                          },
+                        });
+                      }
+                    }
+                  },
+                );
+                break;
+              }
+              case "compare.cancelAnalysis":
+                hostAnalysisTasks.cancel(
+                  webview,
+                  `compare-analysis-${message.id}`,
+                );
+                break;
               case "compare.sequence": {
                 const job = new AbortController();
                 sequenceJobs.set(message.requestId, job);
@@ -446,7 +493,10 @@ export class ComparisonHost implements vscode.Disposable {
           } catch (error) {
             post({
               type: "compare.failure",
-              id: "id" in message ? message.id : undefined,
+              id:
+                "id" in message && typeof message.id === "string"
+                  ? message.id
+                  : undefined,
               revision: "revision" in message ? message.revision : undefined,
               message: error instanceof Error ? error.message : String(error),
             });

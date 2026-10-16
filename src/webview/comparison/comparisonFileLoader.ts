@@ -119,6 +119,7 @@ export class ComparisonFileLoader {
     files: ComparisonFile[],
     initial: boolean,
   ): Promise<void> {
+    const errors: string[] = [];
     const staged: Array<
       Omit<ComparisonTrack, "color" | "active" | "muted" | "changed">
     > = [];
@@ -169,7 +170,14 @@ export class ComparisonFileLoader {
           decoder.dispose();
         }
       } catch (error) {
-        this.status(`${file.name}: ${String(error)}`);
+        const failure = `Failed to load ${file.name}: ${String(error)}`;
+        if (
+          !this.disposed &&
+          this._files.get(file.id)?.revision === file.revision
+        ) {
+          errors.push(failure);
+          this.status(failure);
+        }
         if (
           !this.session.tracks.some((t) => t.id === file.id) &&
           this._files.get(file.id)?.revision === file.revision
@@ -211,7 +219,7 @@ export class ComparisonFileLoader {
             this._post({ type: "compare.remove", id: track.id });
           }
         }
-        this.status("Comparison change cancelled");
+        this.status(["Comparison change cancelled", ...errors].join(" · "));
         return;
       }
     }
@@ -233,7 +241,10 @@ export class ComparisonFileLoader {
     if (!this.disposed) {
       this.session.notify("loaded");
       this.status(
-        `${this.session.tracks.length} / ${comparisonTrackLimit} audio files · analysis uses original decoded signals`,
+        [
+          `${this.session.tracks.length} / ${comparisonTrackLimit} audio files · analysis uses original decoded signals`,
+          ...errors,
+        ].join(" · "),
       );
     }
   }

@@ -495,6 +495,17 @@ export class ComparisonApp {
               );
               this._analysis = new ComparisonAnalysisClient(
                 new Worker(this._workerUrl),
+                (request) =>
+                  this._post(
+                    request.type === "compare.analysis"
+                      ? {
+                          ...request,
+                          revision:
+                            this._loader.revision(request.job.trackId) ??
+                            request.revision,
+                        }
+                      : request,
+                  ),
               );
               return this._analysis;
             });
@@ -517,6 +528,9 @@ export class ComparisonApp {
       case "compare.exported":
         this._exportRequests.get(message.requestId)?.(message);
         this._exportRequests.delete(message.requestId);
+        break;
+      case "compare.analysisResult":
+        this._analysis?.handleHostResponse(message.reply);
         break;
       case "compare.sequenceResult":
         this._rpc.handleResponse({
@@ -669,6 +683,9 @@ export class ComparisonApp {
           '[data-action="reload"]',
         ).onclick = () => {
           this.transport.pause();
+          // Settle old jobs before the host advances the source revision, even
+          // when reading or decoding the replacement file later fails.
+          this._analysis?.cancel(track.id);
           this._post({ type: "compare.reload", id: track.id });
         };
         item.querySelector<HTMLButtonElement>(

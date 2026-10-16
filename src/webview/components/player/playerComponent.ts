@@ -1,7 +1,7 @@
 import "./playerComponent.css";
 import { EventType } from "../../events";
 import Component from "../../component";
-import PlayerService from "../../services/playerService";
+import type { ISeekTransport } from "../../services/transportInterface";
 import PlayerSettingsService from "../../services/playerSettingsService";
 
 export interface PlayerComponentOptions {
@@ -10,11 +10,11 @@ export interface PlayerComponentOptions {
 
 export default class PlayerComponent extends Component {
   private _componentRoot: HTMLElement;
-  private _playerService: PlayerService;
+  private _playerService: ISeekTransport;
 
   constructor(
     componentRootID: string,
-    playerService: PlayerService,
+    playerService: ISeekTransport,
     playerSettingsService: PlayerSettingsService,
     options: PlayerComponentOptions = {},
   ) {

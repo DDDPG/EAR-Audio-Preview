@@ -1,7 +1,7 @@
 import "./transportFabComponent.css";
 import { EventType } from "../../events";
 import Component from "../../component";
-import PlayerService from "../../services/playerService";
+import type { ISeekTransport } from "../../services/transportInterface";
 import PlayerSettingsService from "../../services/playerSettingsService";
 import AnalyzeSettingsService from "../../services/analyzeSettingsService";
 import HeadphoneEqSettingsService from "../../services/headphoneEqSettingsService";
@@ -33,7 +33,7 @@ function defaultFabBottom(): number {
 
 function applyKnobVolume(
   knobValue: number,
-  playerService: PlayerService,
+  playerService: ISeekTransport,
 ): void {
   playerService.volume = knobPercentToGain(knobValue);
 }
@@ -55,14 +55,14 @@ export default class TransportFabComponent extends Component {
   private _seekPlayer: PlayerComponent;
   private _isOpen = false;
   private _loading = true;
-  private _playerService: PlayerService;
+  private _playerService: ISeekTransport;
   private _fabLeft = defaultFabLeft();
   private _fabBottom = defaultFabBottom();
   private _fabDragging = false;
 
   constructor(
     dockSelector: string,
-    playerService: PlayerService,
+    playerService: ISeekTransport,
     playerSettingsService: PlayerSettingsService,
     analyzeSettingsService: AnalyzeSettingsService,
     headphoneEqSettings?: HeadphoneEqSettingsService,

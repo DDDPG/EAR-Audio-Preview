@@ -91,3 +91,42 @@ describe("playerComponent", () => {
     expect(progressFill.style.transform).toBe("scaleX(0.5)");
   });
 });
+
+// A structural transport verifies that the control does not require PlayerService internals.
+test("seek control works with an independent transport implementation", () => {
+  document.body.innerHTML = '<div id="interfacePlayer"></div>';
+  const transport = Object.assign(new EventTarget(), {
+    isPlaying: false,
+    volume: 1,
+    play: jest.fn(),
+    pause: jest.fn(),
+    setPlaybackPosition: jest.fn(),
+    previewSeekFromPercent: jest.fn(),
+    onSeekbarInput: jest.fn(),
+  });
+  const control = new PlayerComponent(
+    "#interfacePlayer",
+    transport,
+    {} as PlayerSettingsService,
+    { seekOnly: true },
+  );
+  const slider = document.querySelector("input") as HTMLInputElement;
+  slider.value = "35";
+  slider.dispatchEvent(new Event("input"));
+  expect(transport.previewSeekFromPercent).toHaveBeenCalledWith(35);
+  slider.dispatchEvent(new Event("change"));
+  expect(transport.onSeekbarInput).toHaveBeenCalledWith(35);
+  transport.dispatchEvent(
+    new CustomEvent(EventType.UPDATE_SEEKBAR, { detail: { value: 35 } }),
+  );
+  expect(
+    (document.querySelector(".progressFill") as HTMLElement).style.transform,
+  ).toBe("scaleX(0.35)");
+  control.dispose();
+  transport.dispatchEvent(
+    new CustomEvent(EventType.UPDATE_SEEKBAR, { detail: { value: 80 } }),
+  );
+  expect(
+    (document.querySelector(".progressFill") as HTMLElement).style.transform,
+  ).toBe("scaleX(0.35)");
+});
